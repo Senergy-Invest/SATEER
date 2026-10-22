@@ -44,6 +44,7 @@ const {
     creerEvenement,
     afficherAgendaDiaspora,
     afficherFilDiasporaParCategorie,
+    afficherEspaceConsulat
 } = require("./services");
 
 
@@ -553,4 +554,10 @@ ouvrirExperience(
 afficherFilDiasporaParCategorie(
     1,
     "TOUT"
+);
+console.log("");
+console.log("===== TEST ESPACE CONSULAT =====");
+
+afficherEspaceConsulat(
+    1
 );

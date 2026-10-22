@@ -3071,6 +3071,177 @@ function afficherFilDiasporaParCategorie(
         }
     }
 }
+function afficherEspaceConsulat(organisationId) {
+
+    const organisation =
+        trouverOrganisationParId(
+            organisationId
+        );
+
+    if (organisation === undefined) {
+
+        console.log(
+            "Organisation introuvable."
+        );
+
+        return;
+    }
+
+
+    const requetesOrganisation =
+        requetes.filter(
+            requete =>
+                requete.organisationId === organisationId
+        );
+
+
+    const publicationsOrganisation =
+        publications.filter(
+            publication =>
+                publication.organisationId === organisationId &&
+                publication.statut === "PUBLIEE"
+        );
+
+
+    const alertesUrgentes =
+        publicationsOrganisation.filter(
+            publication =>
+                publication.priorite === "URGENTE"
+        );
+
+
+    const demandesEnAttente =
+        requetesOrganisation.filter(
+            requete =>
+                requete.statut === "EN_ATTENTE" ||
+                requete.statut === "NOUVELLE"
+        );
+
+
+    const demandesPrisesEnCharge =
+        requetesOrganisation.filter(
+            requete =>
+                requete.statut === "PRISE_EN_CHARGE" ||
+                requete.statut === "EN_COURS"
+        );
+
+
+    const demandesTraitees =
+        requetesOrganisation.filter(
+            requete =>
+                requete.statut === "TRAITEE" ||
+                requete.statut === "REPONDUE" ||
+                requete.statut === "CLOTUREE"
+        );
+
+
+    const profilsAutorisesConsulat =
+        autorisationsPartageProfil.filter(
+            autorisation =>
+                autorisation.typeDestinataire === "CONSULAT" &&
+                autorisation.autorise === true
+        );
+
+
+    const associations =
+        organisations.filter(
+            organisation =>
+                organisation.type === "ASSOCIATION"
+        );
+
+
+    console.log("");
+    console.log(
+        "======================================"
+    );
+
+    console.log(
+        "===== ESPACE CONSULAT ====="
+    );
+
+    console.log(
+        "======================================"
+    );
+
+    console.log("");
+
+    console.log(
+        organisation.nom
+    );
+
+    console.log("");
+
+    console.log(
+        "===== DEMANDES ====="
+    );
+
+    console.log(
+        "Demandes reçues : " +
+        requetesOrganisation.length
+    );
+
+    console.log(
+        "Demandes en attente : " +
+        demandesEnAttente.length
+    );
+
+    console.log(
+        "Demandes prises en charge : " +
+        demandesPrisesEnCharge.length
+    );
+
+    console.log(
+        "Demandes traitées : " +
+        demandesTraitees.length
+    );
+
+
+    console.log("");
+    console.log(
+        "===== COMMUNICATION ====="
+    );
+
+    console.log(
+        "Publications : " +
+        publicationsOrganisation.length
+    );
+
+    console.log(
+        "Alertes urgentes : " +
+        alertesUrgentes.length
+    );
+
+
+    console.log("");
+    console.log(
+        "===== DIASPORA ====="
+    );
+
+    console.log(
+        "Profils diaspora : " +
+        profilsDiaspora.length
+    );
+
+    console.log(
+        "Profils autorisés visibles : " +
+        profilsAutorisesConsulat.length
+    );
+
+
+    console.log("");
+    console.log(
+        "===== ASSOCIATIONS ====="
+    );
+
+    console.log(
+        "Associations connues : " +
+        associations.length
+    );
+
+    console.log(
+        "======================================"
+    );
+}
 module.exports = {
     trouverPersonneParId,
     trouverOrganisationParId,
@@ -3107,5 +3278,6 @@ module.exports = {
     rechercherProfilsDiasporaParCompetence,
     creerEvenement,
     afficherAgendaDiaspora,
+    afficherEspaceConsulat
     
 };
