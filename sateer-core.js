@@ -547,6 +547,35 @@ const publicationUrgente =
         3
     );
 
+    const publicationRejetee =
+    publierInformation(
+        1,
+        "Promotion commerciale non adaptée",
+        "Une offre commerciale souhaite être diffusée directement à toute la diaspora.",
+        "TOUS",
+        null,
+        "INFORMATION",
+        "NORMALE",
+        3
+    );
+
+
+soumettrePublicationADiaspora(
+    publicationRejetee.id,
+    3
+);
+
+
+rejeterDiffusionDiaspora(
+    publicationRejetee.id,
+    6,
+    "Contenu trop commercial pour le canal Diaspora général. Proposition de passage par une campagne sponsorisée SATEER."
+);
+
+
+afficherEspaceSateerCommunication(
+    6
+);
 
 soumettrePublicationADiaspora(
     publicationUrgente.id,

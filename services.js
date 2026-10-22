@@ -3840,6 +3840,121 @@ function afficherEspaceSateerCommunication(
     }
 
 
+    if (
+        rejetees.length > 0
+    ) {
+
+        console.log("");
+
+        console.log(
+            "===== REJETÉES ====="
+        );
+
+
+        for (
+            const publication
+            of rejetees
+        ) {
+
+            const organisationSource =
+                trouverOrganisationParId(
+                    publication.organisationId
+                );
+
+
+            console.log("");
+
+            console.log(
+                "--------------------------------"
+            );
+
+            console.log(
+                "ID publication : " +
+                publication.id
+            );
+
+            console.log(
+                "Source : " +
+                organisationSource.nom
+            );
+
+            console.log(
+                "Titre : " +
+                publication.titre
+            );
+
+            console.log(
+                "Motif du rejet : " +
+                publication.motifRejetDiaspora
+            );
+
+            console.log(
+                "Statut : REJETEE"
+            );
+        }
+    }
+
+
+    if (
+        diffusees.length > 0
+    ) {
+
+        console.log("");
+
+        console.log(
+            "===== DIFFUSÉES ====="
+        );
+
+
+        for (
+            const publication
+            of diffusees
+        ) {
+
+            const organisationSource =
+                trouverOrganisationParId(
+                    publication.organisationId
+                );
+
+
+            console.log("");
+
+            console.log(
+                "--------------------------------"
+            );
+
+            console.log(
+                "ID publication : " +
+                publication.id
+            );
+
+            console.log(
+                "Source : " +
+                organisationSource.nom
+            );
+
+            console.log(
+                "Titre : " +
+                publication.titre
+            );
+
+            console.log(
+                "Audience : " +
+                publication.audienceType
+            );
+
+            console.log(
+                "Priorité : " +
+                publication.priorite
+            );
+
+            console.log(
+                "Statut : DIFFUSEE"
+            );
+        }
+    }
+
+
     console.log("");
 
     console.log(
