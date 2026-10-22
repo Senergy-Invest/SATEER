@@ -540,7 +540,9 @@ publierInformation(
     "URGENTE",
     3
 );
-
+afficherNotificationsPersonne(
+    1
+);
 
 ouvrirExperience(
     1,

@@ -770,11 +770,13 @@ function publierInformation(
         return;
     }
 
+
     const personnesCiblees =
         trouverPersonnesCiblees(
             audienceType,
             audienceValeur
         );
+
 
     const nouvellePublication = {
         id: publications.length + 1,
@@ -791,9 +793,11 @@ function publierInformation(
         datePublication: new Date()
     };
 
+
     publications.push(
         nouvellePublication
     );
+
 
     console.log("");
 
@@ -825,6 +829,7 @@ function publierInformation(
         audienceType
     );
 
+
     if (
         audienceValeur !== null &&
         audienceValeur !== undefined
@@ -836,14 +841,75 @@ function publierInformation(
         );
     }
 
+
     console.log(
         "Personnes correspondant à l'audience : " +
         personnesCiblees.length
     );
 
+
+    if (priorite === "URGENTE") {
+
+        const experienceDiaspora =
+            experiences.find(
+                experience =>
+                    experience.code === "DIASPORA"
+            );
+
+        let nombreNotificationsUrgentes = 0;
+
+
+        for (
+            const personneCiblee
+            of personnesCiblees
+        ) {
+
+            const activationDiaspora =
+                activationsExperiences.find(
+                    activation =>
+                        activation.personneId === personneCiblee.id &&
+                        activation.experienceId === experienceDiaspora.id &&
+                        activation.statut === "ACTIVE"
+                );
+
+
+            if (
+                activationDiaspora !== undefined
+            ) {
+
+                const nouvelleNotification = {
+                    id: notifications.length + 1,
+                    personneId: personneCiblee.id,
+                    titre:
+                        "ALERTE URGENTE - " +
+                        organisation.nom,
+                    message:
+                        titre +
+                        " : " +
+                        contenu,
+                    lue: false,
+                    dateCreation: new Date()
+                };
+
+
+                notifications.push(
+                    nouvelleNotification
+                );
+
+                nombreNotificationsUrgentes++;
+            }
+        }
+
+
+        console.log(
+            "Notifications urgentes envoyées : " +
+            nombreNotificationsUrgentes
+        );
+    }
+
+
     return nouvellePublication;
 }
-
 function trouverPersonnesParCompetence(competence) {
 
     return personnes.filter(
