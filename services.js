@@ -3663,6 +3663,176 @@ function afficherEspaceConsulat(organisationId) {
     );
 }
 
+function modifierCiblageDiffusionDiaspora(
+    publicationId,
+    personneId,
+    nouvelAudienceType,
+    nouvelleAudienceValeur
+) {
+
+    const organisationSateer =
+        organisations.find(
+            organisation =>
+                organisation.type === "SATEER"
+        );
+
+
+    if (
+        organisationSateer === undefined
+    ) {
+
+        console.log(
+            "Organisation SATEER introuvable."
+        );
+
+        return;
+    }
+
+
+    const autorise =
+        aPermission(
+            personneId,
+            "GERER_DIFFUSION_DIASPORA",
+            organisationSateer.id
+        );
+
+
+    if (autorise === false) {
+
+        console.log(
+            "Permission refusée : seuls les agents SATEER peuvent modifier le ciblage Diaspora."
+        );
+
+        return;
+    }
+
+
+    const publication =
+        publications.find(
+            publication =>
+                publication.id === publicationId
+        );
+
+
+    if (
+        publication === undefined
+    ) {
+
+        console.log(
+            "Publication introuvable."
+        );
+
+        return;
+    }
+
+
+    if (
+        publication.statutDiffusionDiaspora !==
+        "SOUMISE"
+    ) {
+
+        console.log(
+            "Le ciblage ne peut être modifié que pour une publication SOUMISE."
+        );
+
+        return;
+    }
+
+
+    /*
+        On conserve l'audience proposée
+        initialement par l'organisation.
+    */
+
+    if (
+        publication.audienceTypeProposee ===
+        undefined
+    ) {
+
+        publication.audienceTypeProposee =
+            publication.audienceType;
+
+        publication.audienceValeurProposee =
+            publication.audienceValeur;
+    }
+
+
+    publication.audienceType =
+        nouvelAudienceType;
+
+    publication.audienceValeur =
+        nouvelleAudienceValeur;
+
+    publication.ciblageModifieParSateer =
+        personneId;
+
+    publication.dateModificationCiblage =
+        new Date();
+
+
+    const personnesCiblees =
+        trouverPersonnesCiblees(
+            nouvelAudienceType,
+            nouvelleAudienceValeur
+        );
+
+
+    console.log("");
+
+    console.log(
+        "===== MODIFICATION CIBLAGE SATEER ====="
+    );
+
+    console.log(
+        "Publication : " +
+        publication.titre
+    );
+
+    console.log(
+        "Audience proposée initialement : " +
+        publication.audienceTypeProposee
+    );
+
+
+    if (
+        publication.audienceValeurProposee !== null &&
+        publication.audienceValeurProposee !== undefined
+    ) {
+
+        console.log(
+            "Cible proposée initialement : " +
+            publication.audienceValeurProposee
+        );
+    }
+
+
+    console.log(
+        "Nouvelle audience : " +
+        publication.audienceType
+    );
+
+
+    if (
+        publication.audienceValeur !== null &&
+        publication.audienceValeur !== undefined
+    ) {
+
+        console.log(
+            "Nouvelle cible : " +
+            publication.audienceValeur
+        );
+    }
+
+
+    console.log(
+        "Personnes désormais ciblées : " +
+        personnesCiblees.length
+    );
+
+
+    return publication;
+}
+
 function afficherEspaceSateerCommunication(
     personneId
 ) {
@@ -4001,6 +4171,7 @@ module.exports = {
     soumettrePublicationADiaspora,
     approuverDiffusionDiaspora,
     rejeterDiffusionDiaspora,
-    afficherEspaceSateerCommunication
+    afficherEspaceSateerCommunication,
+    modifierCiblageDiffusionDiaspora
     
 };

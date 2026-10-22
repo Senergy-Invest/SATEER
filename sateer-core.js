@@ -48,7 +48,8 @@ const {
     soumettrePublicationADiaspora,
     approuverDiffusionDiaspora,
     rejeterDiffusionDiaspora,
-    afficherEspaceSateerCommunication
+    afficherEspaceSateerCommunication,
+    modifierCiblageDiffusionDiaspora
 } = require("./services");
 
 
@@ -571,6 +572,58 @@ rejeterDiffusionDiaspora(
     6,
     "Contenu trop commercial pour le canal Diaspora général. Proposition de passage par une campagne sponsorisée SATEER."
 );
+
+console.log("");
+console.log(
+    "===== TEST MODIFICATION CIBLAGE SATEER ====="
+);
+
+
+
+const publicationCiblage =
+    publierInformation(
+        1,
+        "Rencontre spéciale à Bordeaux",
+        "Une rencontre est organisée pour les Sénégalais vivant en Gironde.",
+        "TOUS",
+        null,
+        "EVENEMENT",
+        "IMPORTANTE",
+        3
+    );
+
+
+soumettrePublicationADiaspora(
+    publicationCiblage.id,
+    3
+);
+
+
+afficherEspaceSateerCommunication(
+    6
+);
+
+
+modifierCiblageDiffusionDiaspora(
+    publicationCiblage.id,
+    6,
+    "DEPARTEMENT",
+    "Gironde"
+);
+
+
+approuverDiffusionDiaspora(
+    publicationCiblage.id,
+    6
+);
+
+
+afficherEspaceSateerCommunication(
+    6
+);
+
+
+
 
 
 afficherEspaceSateerCommunication(
