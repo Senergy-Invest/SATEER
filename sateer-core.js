@@ -44,7 +44,9 @@ const {
     creerEvenement,
     afficherAgendaDiaspora,
     afficherFilDiasporaParCategorie,
-    afficherEspaceConsulat
+    afficherEspaceConsulat,
+    soumettrePublicationADiaspora,
+    approuverDiffusionDiaspora
 } = require("./services");
 
 
@@ -531,15 +533,32 @@ ouvrirExperience(
 );
 
 
-publierInformation(
-    1,
-    "Fermeture exceptionnelle du Consulat",
-    "Le Consulat sera exceptionnellement fermé demain matin.",
-    "TOUS",
-    null,
-    "ALERTE",
-    "URGENTE",
+const publicationUrgente =
+    publierInformation(
+        1,
+        "Fermeture exceptionnelle du Consulat",
+        "Le Consulat sera exceptionnellement fermé demain matin.",
+        "TOUS",
+        null,
+        "ALERTE",
+        "URGENTE",
+        3
+    );
+
+
+soumettrePublicationADiaspora(
+    publicationUrgente.id,
     3
+);
+
+
+approuverDiffusionDiaspora(
+    publicationUrgente.id
+);
+
+
+afficherNotificationsPersonne(
+    1
 );
 afficherNotificationsPersonne(
     1

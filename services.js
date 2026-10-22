@@ -741,13 +741,15 @@ function publierInformation(
     medias
 ) {
 
-    const organisation = trouverOrganisationParId(
-        organisationId
-    );
+    const organisation =
+        trouverOrganisationParId(
+            organisationId
+        );
 
-    const personne = trouverPersonneParId(
-        personneId
-    );
+    const personne =
+        trouverPersonneParId(
+            personneId
+        );
 
     const peutPublier =
         aPermission(
@@ -771,26 +773,38 @@ function publierInformation(
     }
 
 
-    const personnesCiblees =
-        trouverPersonnesCiblees(
-            audienceType,
-            audienceValeur
-        );
-
-
     const nouvellePublication = {
+
         id: publications.length + 1,
+
         organisationId: organisationId,
+
         titre: titre,
+
         contenu: contenu,
+
         audienceType: audienceType,
+
         audienceValeur: audienceValeur,
+
         categorie: categorie,
+
         priorite: priorite,
+
         medias: medias || [],
+
         statut: "PUBLIEE",
+
         publiePar: personneId,
-        datePublication: new Date()
+
+        datePublication: new Date(),
+
+        statutDiffusionDiaspora:
+            "NON_DEMANDEE",
+
+        dateSoumissionDiaspora: null,
+
+        dateDiffusionDiaspora: null
     };
 
 
@@ -843,20 +857,176 @@ function publierInformation(
 
 
     console.log(
+        "Diffusion Diaspora : " +
+        nouvellePublication
+            .statutDiffusionDiaspora
+    );
+
+
+    return nouvellePublication;
+}
+function soumettrePublicationADiaspora(
+    publicationId,
+    personneId
+) {
+
+    const publication =
+        publications.find(
+            publication =>
+                publication.id === publicationId
+        );
+
+
+    if (publication === undefined) {
+
+        console.log(
+            "Publication introuvable."
+        );
+
+        return;
+    }
+
+
+    const peutPublier =
+        aPermission(
+            personneId,
+            "PUBLIER_INFORMATION",
+            publication.organisationId
+        );
+
+
+    if (peutPublier === false) {
+
+        console.log(
+            "Vous n'avez pas l'autorisation de soumettre cette publication."
+        );
+
+        return;
+    }
+
+
+    publication.statutDiffusionDiaspora =
+        "SOUMISE";
+
+    publication.dateSoumissionDiaspora =
+        new Date();
+
+
+    console.log("");
+
+    console.log(
+        "===== SOUMISSION À SATEER COMMUNICATION ====="
+    );
+
+    console.log(
+        "Publication : " +
+        publication.titre
+    );
+
+    console.log(
+        "Statut Diaspora : SOUMISE"
+    );
+
+    console.log(
+        "La publication est maintenant en attente de validation par SATEER Communication."
+    );
+
+
+    return publication;
+}
+function approuverDiffusionDiaspora(
+    publicationId
+) {
+
+    const publication =
+        publications.find(
+            publication =>
+                publication.id === publicationId
+        );
+
+
+    if (publication === undefined) {
+
+        console.log(
+            "Publication introuvable."
+        );
+
+        return;
+    }
+
+
+    if (
+        publication
+            .statutDiffusionDiaspora
+        !== "SOUMISE"
+    ) {
+
+        console.log(
+            "Cette publication n'est pas en attente de validation SATEER."
+        );
+
+        return;
+    }
+
+
+    publication
+        .statutDiffusionDiaspora =
+        "DIFFUSEE";
+
+
+    publication
+        .dateDiffusionDiaspora =
+        new Date();
+
+
+    const personnesCiblees =
+        trouverPersonnesCiblees(
+            publication.audienceType,
+            publication.audienceValeur
+        );
+
+
+    console.log("");
+
+    console.log(
+        "===== VALIDATION SATEER COMMUNICATION ====="
+    );
+
+    console.log(
+        "Publication : " +
+        publication.titre
+    );
+
+    console.log(
+        "Statut Diaspora : DIFFUSEE"
+    );
+
+    console.log(
         "Personnes correspondant à l'audience : " +
         personnesCiblees.length
     );
 
 
-    if (priorite === "URGENTE") {
+    /*
+        Une publication urgente ne déclenche
+        les notifications qu'après validation
+        par SATEER.
+    */
+
+    if (
+        publication.priorite ===
+        "URGENTE"
+    ) {
 
         const experienceDiaspora =
             experiences.find(
                 experience =>
-                    experience.code === "DIASPORA"
+                    experience.code ===
+                    "DIASPORA"
             );
 
-        let nombreNotificationsUrgentes = 0;
+
+        let nombreNotifications = 0;
 
 
         for (
@@ -867,48 +1037,64 @@ function publierInformation(
             const activationDiaspora =
                 activationsExperiences.find(
                     activation =>
-                        activation.personneId === personneCiblee.id &&
-                        activation.experienceId === experienceDiaspora.id &&
-                        activation.statut === "ACTIVE"
+
+                        activation.personneId ===
+                            personneCiblee.id &&
+
+                        activation.experienceId ===
+                            experienceDiaspora.id &&
+
+                        activation.statut ===
+                            "ACTIVE"
                 );
 
 
             if (
-                activationDiaspora !== undefined
+                activationDiaspora !==
+                undefined
             ) {
 
-                const nouvelleNotification = {
-                    id: notifications.length + 1,
-                    personneId: personneCiblee.id,
-                    titre:
-                        "ALERTE URGENTE - " +
-                        organisation.nom,
-                    message:
-                        titre +
-                        " : " +
-                        contenu,
-                    lue: false,
-                    dateCreation: new Date()
-                };
-
-
                 notifications.push(
-                    nouvelleNotification
+                    {
+                        id:
+                            notifications.length +
+                            1,
+
+                        personneId:
+                            personneCiblee.id,
+
+                        titre:
+                            "ALERTE URGENTE - " +
+                            trouverOrganisationParId(
+                                publication.organisationId
+                            ).nom,
+
+                        message:
+                            publication.titre +
+                            " : " +
+                            publication.contenu,
+
+                        lue: false,
+
+                        dateCreation:
+                            new Date()
+                    }
                 );
 
-                nombreNotificationsUrgentes++;
+
+                nombreNotifications++;
             }
         }
 
 
         console.log(
             "Notifications urgentes envoyées : " +
-            nombreNotificationsUrgentes
+            nombreNotifications
         );
     }
 
 
-    return nouvellePublication;
+    return publication;
 }
 function trouverPersonnesParCompetence(competence) {
 
@@ -2546,65 +2732,77 @@ function afficherDiaspora(personneId) {
 
 
     const publicationsDiaspora =
-        publications
-            .filter(
-                publication => {
+    publications
+        .filter(
+            publication => {
 
-                    if (
-                        publication.statut !== "PUBLIEE"
-                    ) {
-                        return false;
-                    }
-
-                    const personnesCiblees =
-                        trouverPersonnesCiblees(
-                            publication.audienceType,
-                            publication.audienceValeur
-                        );
-
-                    const personneEstCiblee =
-                        personnesCiblees.some(
-                            personneCiblee =>
-                                personneCiblee.id ===
-                                personneId
-                        );
-
-                    return personneEstCiblee;
+                if (
+                    publication.statut !== "PUBLIEE"
+                ) {
+                    return false;
                 }
-            )
-            .sort(
-    (publicationA, publicationB) => {
 
-        const poidsPriorite = {
-            URGENTE: 3,
-            IMPORTANTE: 2,
-            NORMALE: 1
-        };
+                if (
+                    publication.statutDiffusionDiaspora !==
+                    "DIFFUSEE"
+                ) {
+                    return false;
+                }
 
-        const prioriteA =
-            poidsPriorite[
-                publicationA.priorite
-            ] || 0;
+                const personnesCiblees =
+                    trouverPersonnesCiblees(
+                        publication.audienceType,
+                        publication.audienceValeur
+                    );
 
-        const prioriteB =
-            poidsPriorite[
-                publicationB.priorite
-            ] || 0;
+                const personneEstCiblee =
+                    personnesCiblees.some(
+                        personneCiblee =>
+                            personneCiblee.id ===
+                            personneId
+                    );
 
-        if (prioriteA !== prioriteB) {
-            return prioriteB - prioriteA;
-        }
+                return personneEstCiblee;
+            }
+        )
+        .sort(
+            (publicationA, publicationB) => {
 
-        return (
-            new Date(
-                publicationB.datePublication
-            ) -
-            new Date(
-                publicationA.datePublication
-            )
+                const poidsPriorite = {
+                    URGENTE: 3,
+                    IMPORTANTE: 2,
+                    NORMALE: 1
+                };
+
+                const prioriteA =
+                    poidsPriorite[
+                        publicationA.priorite
+                    ] || 0;
+
+                const prioriteB =
+                    poidsPriorite[
+                        publicationB.priorite
+                    ] || 0;
+
+                if (
+                    prioriteA !== prioriteB
+                ) {
+                    return (
+                        prioriteB -
+                        prioriteA
+                    );
+                }
+
+                return (
+                    new Date(
+                        publicationB.datePublication
+                    ) -
+                    new Date(
+                        publicationA.datePublication
+                    )
+                );
+            }
         );
-    }
-);
 
     const evenementsPublies =
         evenements.filter(
@@ -2894,6 +3092,13 @@ function afficherFilDiasporaParCategorie(
                     }
 
                     if (
+                        publication.statutDiffusionDiaspora !==
+                        "DIFFUSEE"
+                    ) {
+                        return false;
+                    }
+
+                    if (
                         categorie !== "TOUT" &&
                         publication.categorie !== categorie
                     ) {
@@ -2916,38 +3121,43 @@ function afficherFilDiasporaParCategorie(
                 }
             )
             .sort(
-    (publicationA, publicationB) => {
+                (publicationA, publicationB) => {
 
-        const poidsPriorite = {
-            URGENTE: 3,
-            IMPORTANTE: 2,
-            NORMALE: 1
-        };
+                    const poidsPriorite = {
+                        URGENTE: 3,
+                        IMPORTANTE: 2,
+                        NORMALE: 1
+                    };
 
-        const prioriteA =
-            poidsPriorite[
-                publicationA.priorite
-            ] || 0;
+                    const prioriteA =
+                        poidsPriorite[
+                            publicationA.priorite
+                        ] || 0;
 
-        const prioriteB =
-            poidsPriorite[
-                publicationB.priorite
-            ] || 0;
+                    const prioriteB =
+                        poidsPriorite[
+                            publicationB.priorite
+                        ] || 0;
 
-        if (prioriteA !== prioriteB) {
-            return prioriteB - prioriteA;
-        }
+                    if (
+                        prioriteA !== prioriteB
+                    ) {
+                        return (
+                            prioriteB -
+                            prioriteA
+                        );
+                    }
 
-        return (
-            new Date(
-                publicationB.datePublication
-            ) -
-            new Date(
-                publicationA.datePublication
-            )
-        );
-    }
-);
+                    return (
+                        new Date(
+                            publicationB.datePublication
+                        ) -
+                        new Date(
+                            publicationA.datePublication
+                        )
+                    );
+                }
+            );
 
 
     console.log("");
@@ -2995,14 +3205,14 @@ function afficherFilDiasporaParCategorie(
         );
 
         console.log(
-    "[" +
-    organisation.type +
-    "] [" +
-    publication.categorie +
-    "] [" +
-    publication.priorite +
-    "]"
-);
+            "[" +
+            organisation.type +
+            "] [" +
+            publication.categorie +
+            "] [" +
+            publication.priorite +
+            "]"
+        );
 
         console.log(
             "Publié par : " +
@@ -3278,6 +3488,8 @@ module.exports = {
     rechercherProfilsDiasporaParCompetence,
     creerEvenement,
     afficherAgendaDiaspora,
-    afficherEspaceConsulat
+    afficherEspaceConsulat,
+    soumettrePublicationADiaspora,
+    approuverDiffusionDiaspora
     
 };
