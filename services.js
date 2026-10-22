@@ -42,23 +42,49 @@ function trouverAgentsParOrganisation(organisationId) {
 }
 
 
-function aPermission(personneId, action, organisationId) {
+function aPermission(
+    personneId,
+    action,
+    organisationId
+) {
 
-    const relation = relationsPersonneOrganisation.find(
-        relation =>
-            relation.personneId === personneId &&
-            relation.organisationId === organisationId
-    );
+    const relation =
+        relationsPersonneOrganisation.find(
+            relation =>
+                relation.personneId === personneId &&
+                relation.organisationId === organisationId
+        );
 
-    if (relation === undefined) {
+
+    if (
+        relation === undefined
+    ) {
         return false;
     }
 
-    const permissions = permissionsParRole[
-        relation.type
-    ];
 
-    return permissions.includes(action);
+    const permissions =
+        permissionsParRole[
+            relation.type
+        ];
+
+
+    if (
+        permissions === undefined
+    ) {
+
+        console.log(
+            "Aucune permission définie pour le rôle : " +
+            relation.type
+        );
+
+        return false;
+    }
+
+
+    return permissions.includes(
+        action
+    );
 }
 
 function changerStatutDossier(dossierId, nouveauStatut, personneId) {
@@ -935,8 +961,46 @@ function soumettrePublicationADiaspora(
     return publication;
 }
 function approuverDiffusionDiaspora(
-    publicationId
+    publicationId,
+    personneId
 ) {
+
+    const organisationSateer =
+        organisations.find(
+            organisation =>
+                organisation.type === "SATEER"
+        );
+
+
+    if (
+        organisationSateer === undefined
+    ) {
+
+        console.log(
+            "Organisation SATEER introuvable."
+        );
+
+        return;
+    }
+
+
+    const autorise =
+        aPermission(
+            personneId,
+            "GERER_DIFFUSION_DIASPORA",
+            organisationSateer.id
+        );
+
+
+    if (autorise === false) {
+
+        console.log(
+            "Permission refusée : seuls les agents SATEER autorisés peuvent valider une diffusion Diaspora."
+        );
+
+        return;
+    }
+
 
     const publication =
         publications.find(
@@ -945,7 +1009,9 @@ function approuverDiffusionDiaspora(
         );
 
 
-    if (publication === undefined) {
+    if (
+        publication === undefined
+    ) {
 
         console.log(
             "Publication introuvable."
@@ -956,9 +1022,8 @@ function approuverDiffusionDiaspora(
 
 
     if (
-        publication
-            .statutDiffusionDiaspora
-        !== "SOUMISE"
+        publication.statutDiffusionDiaspora !==
+        "SOUMISE"
     ) {
 
         console.log(
@@ -969,14 +1034,14 @@ function approuverDiffusionDiaspora(
     }
 
 
-    publication
-        .statutDiffusionDiaspora =
+    publication.statutDiffusionDiaspora =
         "DIFFUSEE";
 
-
-    publication
-        .dateDiffusionDiaspora =
+    publication.dateDiffusionDiaspora =
         new Date();
+
+    publication.valideeParSateer =
+        personneId;
 
 
     const personnesCiblees =
@@ -1002,16 +1067,15 @@ function approuverDiffusionDiaspora(
     );
 
     console.log(
+        "Validée par l'agent SATEER : " +
+        personneId
+    );
+
+    console.log(
         "Personnes correspondant à l'audience : " +
         personnesCiblees.length
     );
 
-
-    /*
-        Une publication urgente ne déclenche
-        les notifications qu'après validation
-        par SATEER.
-    */
 
     if (
         publication.priorite ===
@@ -1092,6 +1156,117 @@ function approuverDiffusionDiaspora(
             nombreNotifications
         );
     }
+
+
+    return publication;
+}
+function rejeterDiffusionDiaspora(
+    publicationId,
+    personneId,
+    motif
+) {
+
+    const organisationSateer =
+        organisations.find(
+            organisation =>
+                organisation.type === "SATEER"
+        );
+
+
+    if (
+        organisationSateer === undefined
+    ) {
+
+        console.log(
+            "Organisation SATEER introuvable."
+        );
+
+        return;
+    }
+
+
+    const autorise =
+        aPermission(
+            personneId,
+            "GERER_DIFFUSION_DIASPORA",
+            organisationSateer.id
+        );
+
+
+    if (autorise === false) {
+
+        console.log(
+            "Permission refusée : seuls les agents SATEER autorisés peuvent rejeter une diffusion Diaspora."
+        );
+
+        return;
+    }
+
+
+    const publication =
+        publications.find(
+            publication =>
+                publication.id === publicationId
+        );
+
+
+    if (
+        publication === undefined
+    ) {
+
+        console.log(
+            "Publication introuvable."
+        );
+
+        return;
+    }
+
+
+    if (
+        publication.statutDiffusionDiaspora !==
+        "SOUMISE"
+    ) {
+
+        console.log(
+            "Cette publication n'est pas en attente de validation SATEER."
+        );
+
+        return;
+    }
+
+
+    publication.statutDiffusionDiaspora =
+        "REJETEE";
+
+    publication.rejeteeParSateer =
+        personneId;
+
+    publication.motifRejetDiaspora =
+        motif;
+
+    publication.dateRejetDiaspora =
+        new Date();
+
+
+    console.log("");
+
+    console.log(
+        "===== REJET SATEER COMMUNICATION ====="
+    );
+
+    console.log(
+        "Publication : " +
+        publication.titre
+    );
+
+    console.log(
+        "Statut Diaspora : REJETEE"
+    );
+
+    console.log(
+        "Motif : " +
+        motif
+    );
 
 
     return publication;
@@ -2412,12 +2587,30 @@ function trouverPersonnesCiblees(
     return personnes.filter(
         personneCiblee => {
 
-            if (audienceType === "TOUS") {
+            /*
+                Les comptes internes SATEER
+                ne font pas partie des audiences
+                destinées à la diaspora.
+            */
+
+            if (
+                personneCiblee.profil ===
+                "AGENT_SATEER"
+            ) {
+                return false;
+            }
+
+
+            if (
+                audienceType === "TOUS"
+            ) {
                 return true;
             }
 
+
             if (
-                audienceType === "DEPARTEMENT"
+                audienceType ===
+                "DEPARTEMENT"
             ) {
 
                 return (
@@ -2426,8 +2619,10 @@ function trouverPersonnesCiblees(
                 );
             }
 
+
             if (
-                audienceType === "PROFIL"
+                audienceType ===
+                "PROFIL"
             ) {
 
                 return (
@@ -2436,37 +2631,52 @@ function trouverPersonnesCiblees(
                 );
             }
 
+
             if (
-                audienceType === "ASSOCIATION"
+                audienceType ===
+                "ASSOCIATION"
             ) {
 
                 return relationsPersonneOrganisation.some(
                     relation =>
-                        relation.personneId === personneCiblee.id &&
-                        relation.organisationId === audienceValeur
+                        relation.personneId ===
+                            personneCiblee.id &&
+                        relation.organisationId ===
+                            audienceValeur
                 );
             }
 
+
             if (
-                audienceType === "COMPETENCE"
+                audienceType ===
+                "COMPETENCE"
             ) {
 
                 const profilProfessionnel =
                     profilsDiaspora.find(
                         profil =>
-                            profil.personneId === personneCiblee.id
+                            profil.personneId ===
+                            personneCiblee.id
                     );
 
+
                 if (
-                    profilProfessionnel === undefined
+                    profilProfessionnel ===
+                    undefined
                 ) {
                     return false;
                 }
 
-                return profilProfessionnel.competences.includes(
-                    audienceValeur
+
+                return (
+                    profilProfessionnel
+                        .competences
+                        .includes(
+                            audienceValeur
+                        )
                 );
             }
+
 
             return false;
         }
@@ -3452,6 +3662,190 @@ function afficherEspaceConsulat(organisationId) {
         "======================================"
     );
 }
+
+function afficherEspaceSateerCommunication(
+    personneId
+) {
+
+    const organisationSateer =
+        organisations.find(
+            organisation =>
+                organisation.type === "SATEER"
+        );
+
+
+    if (
+        organisationSateer === undefined
+    ) {
+
+        console.log(
+            "Organisation SATEER introuvable."
+        );
+
+        return;
+    }
+
+
+    const autorise =
+        aPermission(
+            personneId,
+            "GERER_DIFFUSION_DIASPORA",
+            organisationSateer.id
+        );
+
+
+    if (autorise === false) {
+
+        console.log(
+            "Accès refusé à l'Espace SATEER Communication."
+        );
+
+        return;
+    }
+
+
+    const soumises =
+        publications.filter(
+            publication =>
+                publication.statutDiffusionDiaspora ===
+                "SOUMISE"
+        );
+
+
+    const diffusees =
+        publications.filter(
+            publication =>
+                publication.statutDiffusionDiaspora ===
+                "DIFFUSEE"
+        );
+
+
+    const rejetees =
+        publications.filter(
+            publication =>
+                publication.statutDiffusionDiaspora ===
+                "REJETEE"
+        );
+
+
+    console.log("");
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log(
+        "===== ESPACE SATEER COMMUNICATION ====="
+    );
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log("");
+
+    console.log(
+        "Soumissions à examiner : " +
+        soumises.length
+    );
+
+    console.log(
+        "Publications diffusées : " +
+        diffusees.length
+    );
+
+    console.log(
+        "Publications rejetées : " +
+        rejetees.length
+    );
+
+
+    if (
+        soumises.length > 0
+    ) {
+
+        console.log("");
+
+        console.log(
+            "===== À EXAMINER ====="
+        );
+
+
+        for (
+            const publication
+            of soumises
+        ) {
+
+            const organisationSource =
+                trouverOrganisationParId(
+                    publication.organisationId
+                );
+
+
+            console.log("");
+
+            console.log(
+                "--------------------------------"
+            );
+
+            console.log(
+                "ID publication : " +
+                publication.id
+            );
+
+            console.log(
+                "Source : " +
+                organisationSource.nom
+            );
+
+            console.log(
+                "Titre : " +
+                publication.titre
+            );
+
+            console.log(
+                "Catégorie : " +
+                publication.categorie
+            );
+
+            console.log(
+                "Priorité : " +
+                publication.priorite
+            );
+
+            console.log(
+                "Audience proposée : " +
+                publication.audienceType
+            );
+
+
+            if (
+                publication.audienceValeur !==
+                null &&
+                publication.audienceValeur !==
+                undefined
+            ) {
+
+                console.log(
+                    "Cible : " +
+                    publication.audienceValeur
+                );
+            }
+
+
+            console.log(
+                "Statut : SOUMISE"
+            );
+        }
+    }
+
+
+    console.log("");
+
+    console.log(
+        "=========================================="
+    );
+}
 module.exports = {
     trouverPersonneParId,
     trouverOrganisationParId,
@@ -3490,6 +3884,8 @@ module.exports = {
     afficherAgendaDiaspora,
     afficherEspaceConsulat,
     soumettrePublicationADiaspora,
-    approuverDiffusionDiaspora
+    approuverDiffusionDiaspora,
+    rejeterDiffusionDiaspora,
+    afficherEspaceSateerCommunication
     
 };

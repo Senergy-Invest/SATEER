@@ -24,7 +24,12 @@ const organisations = [
         nom: "Association des Étudiants Sénégalais de Bordeaux",
         type: "ASSOCIATION",
         pays: "France"
-}
+    },
+    {
+    id: 5,
+    nom: "SATEER France",
+    type: "SATEER"
+    }
 ];
 
 const personnes = [
@@ -78,7 +83,19 @@ const personnes = [
         nom: "Ba",
         pays: "France",
         profil: "AUTRE"
-    }
+    },
+    {
+        id: 6,
+        prenom: "Agent",
+        nom: "SATEER",
+        paysResidence: "France",
+        departement: "Gironde",
+        profil: "AGENT_SATEER",
+        competences: [
+            "COMMUNICATION",
+            "DIASPORA"
+    ]
+}
 ];
 
 const relationsPersonneOrganisation = [
@@ -117,6 +134,11 @@ const relationsPersonneOrganisation = [
         personneId: 1,
         organisationId: 4,
         type: "MEMBRE"
+    },
+    {
+        personneId: 6,
+        organisationId: 5,
+        type: "AGENT_SATEER"
     }
 ];
 
@@ -161,6 +183,10 @@ const permissionsParRole = {
         "TRAITER_DOSSIER",
         "GERER_AGENTS",
         "PUBLIER_INFORMATION"
+    ],
+    
+    AGENT_SATEER: [
+    "GERER_DIFFUSION_DIASPORA"
     ]
 };
 

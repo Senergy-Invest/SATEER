@@ -46,7 +46,9 @@ const {
     afficherFilDiasporaParCategorie,
     afficherEspaceConsulat,
     soumettrePublicationADiaspora,
-    approuverDiffusionDiaspora
+    approuverDiffusionDiaspora,
+    rejeterDiffusionDiaspora,
+    afficherEspaceSateerCommunication
 } = require("./services");
 
 
@@ -552,17 +554,26 @@ soumettrePublicationADiaspora(
 );
 
 
+afficherEspaceSateerCommunication(
+    6
+);
+
+
 approuverDiffusionDiaspora(
-    publicationUrgente.id
+    publicationUrgente.id,
+    6
+);
+
+
+afficherEspaceSateerCommunication(
+    6
 );
 
 
 afficherNotificationsPersonne(
     1
 );
-afficherNotificationsPersonne(
-    1
-);
+
 
 ouvrirExperience(
     1,
