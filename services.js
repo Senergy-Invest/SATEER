@@ -911,6 +911,181 @@ function publierInformation(
 
     return nouvellePublication;
 }
+async function publierInformationPostgreSQL(
+    organisationId,
+    titre,
+    contenu,
+    audienceType,
+    audienceValeur,
+    categorie,
+    priorite,
+    personneId,
+    tenantCode,
+    medias
+) {
+
+    const organisation =
+        trouverOrganisationParId(
+            organisationId
+        );
+
+    const personne =
+        trouverPersonneParId(
+            personneId
+        );
+
+
+    if (
+        organisation === undefined
+    ) {
+
+        console.log(
+            "Organisation introuvable."
+        );
+
+        return;
+    }
+
+
+    if (
+        personne === undefined
+    ) {
+
+        console.log(
+            "Personne introuvable."
+        );
+
+        return;
+    }
+
+
+    const peutPublier =
+        await aPermissionPostgreSQL(
+            personneId,
+            "PUBLIER_INFORMATION",
+            organisationId,
+            tenantCode
+        );
+
+
+    if (
+        peutPublier === false
+    ) {
+
+        console.log("");
+
+        console.log(
+            "Permission PostgreSQL refusée pour " +
+            personne.prenom +
+            " " +
+            personne.nom
+        );
+
+        return;
+    }
+
+
+    const nouvellePublication = {
+
+        id: publications.length + 1,
+
+        organisationId: organisationId,
+
+        titre: titre,
+
+        contenu: contenu,
+
+        audienceType: audienceType,
+
+        audienceValeur: audienceValeur,
+
+        categorie: categorie,
+
+        priorite: priorite,
+
+        medias: medias || [],
+
+        statut: "PUBLIEE",
+
+        publiePar: personneId,
+
+        datePublication: new Date(),
+
+        statutDiffusionDiaspora:
+            "NON_DEMANDEE",
+
+        dateSoumissionDiaspora: null,
+
+        dateDiffusionDiaspora: null
+    };
+
+
+    publications.push(
+        nouvellePublication
+    );
+
+
+    console.log("");
+
+    console.log(
+        "===== PUBLICATION POSTGRESQL ====="
+    );
+
+    console.log(
+        personne.prenom +
+        " " +
+        personne.nom +
+        " a publié une information pour " +
+        organisation.nom
+    );
+
+    console.log(
+        "Tenant : " +
+        tenantCode
+    );
+
+    console.log(
+        "Titre : " +
+        titre
+    );
+
+    console.log(
+        "Catégorie : " +
+        categorie
+    );
+
+    console.log(
+        "Priorité : " +
+        priorite
+    );
+
+    console.log(
+        "Audience : " +
+        audienceType
+    );
+
+
+    if (
+        audienceValeur !== null &&
+        audienceValeur !== undefined
+    ) {
+
+        console.log(
+            "Valeur audience : " +
+            audienceValeur
+        );
+    }
+
+
+    console.log(
+        "Diffusion Diaspora : " +
+        nouvellePublication
+            .statutDiffusionDiaspora
+    );
+
+
+    return nouvellePublication;
+}
 function soumettrePublicationADiaspora(
     publicationId,
     personneId
@@ -4166,6 +4341,7 @@ module.exports = {
     listerExperiencesPersonne,
     afficherMonConsulat,
     publierInformation,
+    publierInformationPostgreSQL,
     trouverPersonnesCiblees,
     trouverPersonnesParCompetence,
     afficherTableauBordDiaspora,
