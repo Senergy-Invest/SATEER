@@ -1,5 +1,5 @@
 const {
-    trouverOrganisationParIdDatabase
+    trouverOrganisationParIdEtTenantDatabase
 } = require(
     "./services-database"
 );
@@ -17,42 +17,73 @@ async function tester() {
 
         console.log("");
         console.log(
-            "===== TEST SERVICE DATABASE ====="
+            "===== TEST MULTI-TENANT ====="
         );
 
 
-        const organisation =
-            await trouverOrganisationParIdDatabase(
-                1
+        const organisationSenegal =
+            await trouverOrganisationParIdEtTenantDatabase(
+                1,
+                "SN"
             );
 
 
+        console.log("");
+        console.log(
+            "----- TEST TENANT SN -----"
+        );
+
+
         if (
-            organisation === undefined
+            organisationSenegal === undefined
         ) {
 
             console.log(
                 "Organisation introuvable."
             );
 
-            return;
+        } else {
+
+            console.log(
+                "Organisation trouvée : " +
+                organisationSenegal.nom
+            );
+
+            console.log(
+                "Tenant : " +
+                organisationSenegal.tenant_code
+            );
         }
 
 
+        const organisationMali =
+            await trouverOrganisationParIdEtTenantDatabase(
+                1,
+                "ML"
+            );
+
+
+        console.log("");
         console.log(
-            "ID : " +
-            organisation.id
+            "----- TEST TENANT ML -----"
         );
 
-        console.log(
-            "Nom : " +
-            organisation.nom
-        );
 
-        console.log(
-            "Type : " +
-            organisation.type
-        );
+        if (
+            organisationMali === undefined
+        ) {
+
+            console.log(
+                "Accès refusé / organisation introuvable pour le tenant ML."
+            );
+
+        } else {
+
+            console.log(
+                "ERREUR : organisation trouvée : " +
+                organisationMali.nom
+            );
+        }
 
 
     } catch (erreur) {
