@@ -499,6 +499,173 @@ async function enregistrerEvenementAnalyticsDatabase(
 
     return resultat.rows[0];
 }
+async function obtenirImpactPublicationDatabase(
+    publicationId,
+    organisationId,
+    tenantCode
+) {
+
+    const publicationResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.titre,
+                p.organisation_id,
+                t.code AS tenant_code
+            FROM publications p
+            INNER JOIN tenants t
+                ON t.id = p.tenant_id
+            WHERE
+                p.id = $1
+                AND p.organisation_id = $2
+                AND t.code = $3
+            `,
+            [
+                publicationId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        publicationResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    const statistiquesResultat =
+        await executerRequete(
+            `
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE event_type = 'VIEW'
+                ) AS vues_totales,
+
+                COUNT(
+                    DISTINCT personne_id
+                ) FILTER (
+                    WHERE event_type = 'VIEW'
+                ) AS vues_uniques,
+
+                COUNT(*) FILTER (
+                    WHERE event_type = 'CLICK'
+                ) AS clics,
+
+                COUNT(*) FILTER (
+                    WHERE event_type = 'INTEREST'
+                ) AS interets,
+
+                COUNT(*) FILTER (
+                    WHERE event_type = 'CONTACT_REQUEST'
+                ) AS demandes_contact,
+
+                COUNT(*) FILTER (
+                    WHERE event_type = 'REGISTRATION'
+                ) AS inscriptions,
+
+                COUNT(*) FILTER (
+                    WHERE event_type = 'CONVERSION'
+                ) AS conversions
+
+            FROM analytics_events
+
+            WHERE
+                publication_id = $1
+                AND organisation_id = $2
+                AND tenant_id = (
+                    SELECT id
+                    FROM tenants
+                    WHERE code = $3
+                )
+            `,
+            [
+                publicationId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    const paysResultat =
+        await executerRequete(
+            `
+            SELECT
+                c.nom AS pays,
+                COUNT(*) AS vues
+            FROM analytics_events ae
+            LEFT JOIN countries c
+                ON c.id = ae.country_id
+            WHERE
+                ae.publication_id = $1
+                AND ae.organisation_id = $2
+                AND ae.event_type = 'VIEW'
+                AND ae.tenant_id = (
+                    SELECT id
+                    FROM tenants
+                    WHERE code = $3
+                )
+            GROUP BY
+                c.nom
+            ORDER BY
+                vues DESC
+            `,
+            [
+                publicationId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    const territoiresResultat =
+        await executerRequete(
+            `
+            SELECT
+                tr.nom AS territoire,
+                COUNT(*) AS vues
+            FROM analytics_events ae
+            LEFT JOIN territories tr
+                ON tr.id = ae.territory_id
+            WHERE
+                ae.publication_id = $1
+                AND ae.organisation_id = $2
+                AND ae.event_type = 'VIEW'
+                AND ae.tenant_id = (
+                    SELECT id
+                    FROM tenants
+                    WHERE code = $3
+                )
+            GROUP BY
+                tr.nom
+            ORDER BY
+                vues DESC
+            `,
+            [
+                publicationId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+
+        publication:
+            publicationResultat.rows[0],
+
+        statistiques:
+            statistiquesResultat.rows[0],
+
+        pays:
+            paysResultat.rows,
+
+        territoires:
+            territoiresResultat.rows
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -508,5 +675,6 @@ module.exports = {
     aPermissionDatabase,
     creerPublicationDatabase,
     listerPublicationsParOrganisationEtTenantDatabase,
-    enregistrerEvenementAnalyticsDatabase
+    enregistrerEvenementAnalyticsDatabase,
+    obtenirImpactPublicationDatabase
 };
