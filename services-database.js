@@ -78,7 +78,46 @@ async function trouverOrganisationParIdEtTenantDatabase(
 }
 
 
+async function listerOrganisationsParTenantEtTypeDatabase(
+    tenantCode,
+    typeOrganisation
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id,
+                o.nom,
+                o.type,
+                t.code AS tenant_code,
+                c.code_iso2 AS country_code,
+                tr.nom AS territoire
+            FROM organisations o
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            LEFT JOIN countries c
+                ON c.id = o.country_id
+            LEFT JOIN territories tr
+                ON tr.id = o.territory_id
+            WHERE
+                t.code = $1
+                AND o.type = $2
+            ORDER BY o.nom
+            `,
+            [
+                tenantCode,
+                typeOrganisation
+            ]
+        );
+
+
+    return resultat.rows;
+}
+
+
 module.exports = {
     trouverOrganisationParIdDatabase,
-    trouverOrganisationParIdEtTenantDatabase
+    trouverOrganisationParIdEtTenantDatabase,
+    listerOrganisationsParTenantEtTypeDatabase
 };

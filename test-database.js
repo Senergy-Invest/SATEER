@@ -1,5 +1,5 @@
 const {
-    trouverOrganisationParIdEtTenantDatabase
+    listerOrganisationsParTenantEtTypeDatabase
 } = require(
     "./services-database"
 );
@@ -17,73 +17,104 @@ async function tester() {
 
         console.log("");
         console.log(
-            "===== TEST MULTI-TENANT ====="
+            "===== TEST LISTE ORGANISATIONS ====="
         );
 
 
-        const organisationSenegal =
-            await trouverOrganisationParIdEtTenantDatabase(
-                1,
-                "SN"
+        const consulats =
+            await listerOrganisationsParTenantEtTypeDatabase(
+                "SN",
+                "CONSULAT"
             );
 
 
         console.log("");
         console.log(
-            "----- TEST TENANT SN -----"
+            "----- CONSULATS DU TENANT SN -----"
         );
 
 
         if (
-            organisationSenegal === undefined
+            consulats.length === 0
         ) {
 
             console.log(
-                "Organisation introuvable."
+                "Aucun consulat trouvé."
             );
 
         } else {
 
-            console.log(
-                "Organisation trouvée : " +
-                organisationSenegal.nom
-            );
+            consulats.forEach(
+                organisation => {
 
-            console.log(
-                "Tenant : " +
-                organisationSenegal.tenant_code
+                    console.log(
+                        organisation.id +
+                        " | " +
+                        organisation.nom +
+                        " | " +
+                        organisation.territoire
+                    );
+
+                }
             );
         }
 
 
-        const organisationMali =
-            await trouverOrganisationParIdEtTenantDatabase(
-                1,
-                "ML"
+        const ambassades =
+            await listerOrganisationsParTenantEtTypeDatabase(
+                "SN",
+                "AMBASSADE"
             );
 
 
         console.log("");
         console.log(
-            "----- TEST TENANT ML -----"
+            "----- AMBASSADES DU TENANT SN -----"
         );
 
 
         if (
-            organisationMali === undefined
+            ambassades.length === 0
         ) {
 
             console.log(
-                "Accès refusé / organisation introuvable pour le tenant ML."
+                "Aucune ambassade trouvée."
             );
 
         } else {
 
-            console.log(
-                "ERREUR : organisation trouvée : " +
-                organisationMali.nom
+            ambassades.forEach(
+                organisation => {
+
+                    console.log(
+                        organisation.id +
+                        " | " +
+                        organisation.nom +
+                        " | " +
+                        organisation.territoire
+                    );
+
+                }
             );
         }
+
+
+        const consulatsMali =
+            await listerOrganisationsParTenantEtTypeDatabase(
+                "ML",
+                "CONSULAT"
+            );
+
+
+        console.log("");
+        console.log(
+            "----- CONSULATS DU TENANT ML -----"
+        );
+
+        console.log(
+            "Nombre trouvé : " +
+            consulatsMali.length
+        );
 
 
     } catch (erreur) {
