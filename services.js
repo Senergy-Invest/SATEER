@@ -18,6 +18,9 @@ const {
     evenements
 } = require("./data");
 
+const {
+    aPermissionDatabase
+} = require("./services-database");
 
 function trouverPersonneParId(personneId) {
     return personnes.find(
@@ -86,7 +89,24 @@ function aPermission(
         action
     );
 }
+async function aPermissionPostgreSQL(
+    personneId,
+    action,
+    organisationId,
+    tenantCode
+) {
 
+    const autorise =
+        await aPermissionDatabase(
+            personneId,
+            organisationId,
+            tenantCode,
+            action
+        );
+
+
+    return autorise;
+}
 function changerStatutDossier(dossierId, nouveauStatut, personneId) {
 
     const transitionsAutorisees = {
@@ -4136,6 +4156,7 @@ module.exports = {
     trouverOrganisationParId,
     trouverAgentsParOrganisation,
     aPermission,
+    aPermissionPostgreSQL,
     changerStatutDossier,
     demanderPiece,
     fournirPiece,
