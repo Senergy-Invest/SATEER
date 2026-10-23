@@ -3775,6 +3775,109 @@ async function obtenirMonSateerDatabase(
         }
     };
 }
+async function listerPublicationsAmbassadePourPersonneDatabase(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                pub.id,
+                pub.titre,
+                pub.contenu,
+                pub.categorie,
+                pub.priorite,
+                pub.audience_type,
+                pub.audience_valeur,
+                pub.medias,
+                pub.date_publication,
+
+                o.id AS organisation_id,
+                o.nom AS organisation,
+                o.type AS organisation_type
+
+            FROM publications pub
+
+            INNER JOIN tenants t
+                ON t.id = pub.tenant_id
+
+            INNER JOIN organisations o
+                ON o.id = pub.organisation_id
+
+            INNER JOIN personnes p
+                ON p.id = $1
+
+            LEFT JOIN territories tr
+                ON tr.id =
+                    p.residence_territory_id
+
+            WHERE
+                pub.organisation_id = $2
+
+                AND t.code = $3
+
+                AND o.type = 'AMBASSADE'
+
+                AND pub.statut = 'PUBLIEE'
+
+                AND (
+
+                    pub.audience_type = 'TOUS'
+
+                    OR
+
+                    (
+                        pub.audience_type = 'DEPARTEMENT'
+
+                        AND (
+                            pub.audience_valeur = tr.nom
+
+                            OR
+
+                            pub.audience_valeur = p.departement
+                        )
+                    )
+
+                    OR
+
+                    (
+                        pub.audience_type = 'PROFIL'
+
+                        AND pub.audience_valeur = p.profil
+                    )
+                )
+
+            ORDER BY
+
+                CASE pub.priorite
+
+                    WHEN 'URGENTE'
+                        THEN 1
+
+                    WHEN 'IMPORTANTE'
+                        THEN 2
+
+                    ELSE 3
+
+                END,
+
+                pub.date_publication DESC,
+
+                pub.id DESC
+            `,
+            [
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -3805,5 +3908,6 @@ module.exports = {
     approuverDiffusionDiasporaDatabase,
     rejeterDiffusionDiasporaDatabase,
     listerPublicationsDiasporaPourPersonneDatabase,
-    obtenirMonSateerDatabase
+    obtenirMonSateerDatabase,
+    listerPublicationsAmbassadePourPersonneDatabase
 };
