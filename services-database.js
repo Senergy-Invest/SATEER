@@ -1094,7 +1094,209 @@ async function creerDemandeContactPartenaireDatabase(
 
     return resultat.rows[0];
 }
+async function creerIntroductionPartenaireDatabase(
+    leadId,
+    agentSateerId,
+    tenantCode,
+    canal
+) {
 
+    const resultat =
+        await executerRequete(
+            `
+            WITH contexte AS (
+
+                SELECT
+                    l.id AS lead_id,
+                    l.tenant_id,
+                    l.personne_id,
+                    l.partner_organisation_id,
+                    l.consent_id,
+
+                    sateer.id
+                        AS sateer_organisation_id
+
+                FROM leads l
+
+                INNER JOIN tenants t
+                    ON t.id = l.tenant_id
+
+                INNER JOIN consents c
+                    ON c.id = l.consent_id
+                    AND c.statut = 'ACCORDE'
+
+                INNER JOIN organisations sateer
+                    ON sateer.id =
+                        l.source_organisation_id
+                    AND sateer.type = 'SATEER'
+
+                INNER JOIN relations_personne_organisation r
+                    ON r.personne_id = $2
+                    AND r.organisation_id = sateer.id
+                    AND r.type = 'AGENT_SATEER'
+
+                WHERE
+                    l.id = $1
+                    AND t.code = $3
+                    AND l.statut = 'NOUVEAU'
+
+                    AND EXISTS (
+                        SELECT 1
+                        FROM partner_agreements pa
+                        WHERE
+                            pa.tenant_id =
+                                l.tenant_id
+                            AND pa.sateer_organisation_id =
+                                sateer.id
+                            AND pa.partner_organisation_id =
+                                l.partner_organisation_id
+                            AND pa.statut = 'ACTIF'
+                    )
+
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM introductions i
+                        WHERE
+                            i.lead_id = l.id
+                    )
+            ),
+
+
+            nouvelle_introduction AS (
+
+                INSERT INTO introductions (
+                    tenant_id,
+                    lead_id,
+                    sateer_organisation_id,
+                    partner_organisation_id,
+                    statut,
+                    canal,
+                    date_introduction,
+                    metadata
+                )
+
+                SELECT
+                    tenant_id,
+                    lead_id,
+                    sateer_organisation_id,
+                    partner_organisation_id,
+                    'ENVOYEE',
+                    $4::text,
+                    CURRENT_TIMESTAMP,
+
+                    jsonb_build_object(
+                        'validated_by',
+                        $2::integer
+                    )
+
+                FROM contexte
+
+                RETURNING
+                    id,
+                    tenant_id,
+                    lead_id,
+                    sateer_organisation_id,
+                    partner_organisation_id,
+                    statut,
+                    canal,
+                    date_introduction
+            ),
+
+
+            lead_modifie AS (
+
+                UPDATE leads l
+
+                SET
+                    statut = 'INTRODUIT',
+                    date_modification =
+                        CURRENT_TIMESTAMP
+
+                FROM nouvelle_introduction i
+
+                WHERE
+                    l.id = i.lead_id
+
+                RETURNING
+                    l.id,
+                    l.statut
+            ),
+
+
+            nouveau_suivi AS (
+
+                INSERT INTO lead_followups (
+                    tenant_id,
+                    lead_id,
+                    personne_agent_id,
+                    statut,
+                    note,
+                    metadata
+                )
+
+                SELECT
+                    i.tenant_id,
+                    i.lead_id,
+                    $2,
+                    'INTRODUCTION_ENVOYEE',
+                    'Mise en relation validée et envoyée au partenaire.',
+                    jsonb_build_object(
+                        'introduction_id',
+                        i.id,
+                        'canal',
+                        i.canal
+                    )
+
+                FROM nouvelle_introduction i
+
+                RETURNING
+                    id,
+                    lead_id,
+                    statut
+            )
+
+
+            SELECT
+                i.id AS introduction_id,
+
+                i.lead_id,
+
+                i.partner_organisation_id,
+
+                i.statut AS introduction_statut,
+
+                i.canal,
+
+                l.statut AS lead_statut,
+
+                s.id AS followup_id
+
+            FROM nouvelle_introduction i
+
+            INNER JOIN lead_modifie l
+                ON l.id = i.lead_id
+
+            INNER JOIN nouveau_suivi s
+                ON s.lead_id = i.lead_id
+            `,
+            [
+                leadId,
+                agentSateerId,
+                tenantCode,
+                canal
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -1108,5 +1310,6 @@ module.exports = {
     obtenirImpactPublicationDatabase,
     enregistrerInteractionPublicationDatabase,
     trouverPersonneParIdDatabase,
-    creerDemandeContactPartenaireDatabase
+    creerDemandeContactPartenaireDatabase,
+    creerIntroductionPartenaireDatabase
 };
