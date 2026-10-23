@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>SATEER</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="app">
+
+        <!-- ============================================ -->
+        <!-- HEADER -->
+        <!-- ============================================ -->
+
+        <header class="header">
+
+            <div class="brand">
+                SATEER
+            </div>
+
+            <div class="header-actions">
+
+                <button
+                    class="icon-button"
+                    id="notificationButton"
+                >
+                    🔔
+                    <span
+                        id="notificationBadge"
+                        class="badge hidden"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <div class="avatar">
+                    F
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ============================================ -->
+        <!-- MAIN -->
+        <!-- ============================================ -->
+
+        <main class="main">
+
+            <section class="welcome">
+
+                <p class="eyebrow">
+                    MON ESPACE
+                </p>
+
+                <h1 id="welcomeTitle">
+                    Bonjour
+                </h1>
+
+                <p
+                    class="subtitle"
+                    id="welcomeSubtitle"
+                >
+                    Chargement de votre espace...
+                </p>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- EXPERIENCES -->
+            <!-- ======================================== -->
+
+            <section>
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            VOS SERVICES
+                        </p>
+
+                        <h2>
+                            Mes espaces
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="experiences-grid"
+                    id="experiencesContainer"
+                >
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- DEMANDES -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            SUIVI
+                        </p>
+
+                        <h2>
+                            Mes demandes
+                        </h2>
+
+                    </div>
+
+                    <button class="link-button">
+                        Voir tout
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="demandesContainer"
+                    class="list"
+                >
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- NOTIFICATIONS -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ACTUALITÉ
+                        </p>
+
+                        <h2>
+                            Notifications
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="notificationsContainer"
+                    class="list"
+                >
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <!-- ============================================ -->
+        <!-- NAVIGATION MOBILE -->
+        <!-- ============================================ -->
+
+        <nav class="bottom-nav">
+
+            <button class="nav-item active">
+
+                <span>
+                    ⌂
+                </span>
+
+                <small>
+                    Accueil
+                </small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>
+                    🌍
+                </span>
+
+                <small>
+                    Diaspora
+                </small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>
+                    ✦
+                </span>
+
+                <small>
+                    IA
+                </small>
+
+            </button>
+
+
+            <button class="nav-item">
+
+                <span>
+                    👤
+                </span>
+
+                <small>
+                    Profil
+                </small>
+
+            </button>
+
+        </nav>
+
+    </div>
+
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
