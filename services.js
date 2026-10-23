@@ -26,7 +26,8 @@ const {
     enregistrerEvenementAnalyticsDatabase,
     trouverPersonneParIdDatabase,
     listerPublicationsVisiblesPourPersonneDatabase,
-    enregistrerInteractionPublicationDatabase
+    enregistrerInteractionPublicationDatabase,
+    obtenirContexteIASecretariatDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -4533,6 +4534,217 @@ function afficherEspaceSateerCommunication(
         "=========================================="
     );
 }
+async function analyserDemandeAvecIASecretariat(
+    demandeId,
+    organisationId,
+    tenantCode
+) {
+
+    const contexte =
+        await obtenirContexteIASecretariatDatabase(
+            demandeId,
+            organisationId,
+            tenantCode
+        );
+
+
+    if (
+        contexte === undefined
+    ) {
+
+        return undefined;
+    }
+
+
+    const demande =
+        contexte.demande;
+
+
+    const configurationIA =
+        contexte.configurationIA;
+
+
+    const connaissances =
+        contexte.connaissances;
+
+
+    // =====================================================
+    // SÉCURITÉ
+    // =====================================================
+
+    if (
+        connaissances.length === 0
+    ) {
+
+        return {
+
+            demandeId:
+                demande.id,
+
+            statut:
+                "ESCALADE_HUMAINE",
+
+            resume:
+                demande.description,
+
+            categorieProposee:
+                demande.categorie,
+
+            prioriteProposee:
+                demande.priorite,
+
+            confiance:
+                "FAIBLE",
+
+            reponseProposee:
+                null,
+
+            validationHumaineObligatoire:
+                true,
+
+            raison:
+                "Aucune connaissance institutionnelle validée n'est disponible pour cette demande."
+        };
+    }
+
+
+    // =====================================================
+    // PREMIÈRE ANALYSE DU PILOTE
+    //
+    // Cette partie représente l'orchestration IA.
+    // Un vrai modèle génératif sera branché ensuite.
+    // =====================================================
+
+    let resume =
+        demande.prenom +
+        " souhaite obtenir des informations concernant " +
+        demande.objet.toLowerCase() +
+        ".";
+
+
+    let categorieProposee =
+        demande.categorie;
+
+
+    let prioriteProposee =
+        demande.priorite;
+
+
+    let confiance =
+        "MOYENNE";
+
+
+    let reponseProposee =
+        "Bonjour " +
+        demande.prenom +
+        ", votre demande a bien été reçue. " +
+        "Nous vous invitons à consulter la procédure officielle du Consulat " +
+        "afin d'obtenir les informations administratives validées correspondant à votre situation.";
+
+
+    // =====================================================
+    // CAS PASSEPORT DU PILOTE
+    // =====================================================
+
+    if (
+        demande.categorie ===
+        "PASSEPORT"
+    ) {
+
+        resume =
+            demande.prenom +
+            " souhaite connaître les informations nécessaires pour renouveler son passeport.";
+
+
+        categorieProposee =
+            "PASSEPORT";
+
+
+        prioriteProposee =
+            "NORMALE";
+
+
+        confiance =
+            "ELEVEE";
+
+
+        reponseProposee =
+            "Bonjour " +
+            demande.prenom +
+            ". Votre demande concerne le renouvellement de votre passeport. " +
+            "Nous vous invitons à consulter la procédure officielle du Consulat " +
+            "afin de vérifier les pièces, conditions, tarifs, délais et modalités de rendez-vous. " +
+            "Un agent pourra compléter cette réponse si nécessaire.";
+    }
+
+
+    return {
+
+        demandeId:
+            demande.id,
+
+        citoyen: {
+            id:
+                demande.personne_id,
+
+            prenom:
+                demande.prenom,
+
+            nom:
+                demande.nom
+        },
+
+        statut:
+            "PROPOSITION_IA",
+
+        resume:
+            resume,
+
+        categorieProposee:
+            categorieProposee,
+
+        prioriteProposee:
+            prioriteProposee,
+
+        confiance:
+            confiance,
+
+        reponseProposee:
+            reponseProposee,
+
+        connaissancesUtilisees:
+            connaissances.map(
+                article => ({
+                    id:
+                        article.id,
+
+                    code:
+                        article.code,
+
+                    titre:
+                        article.titre,
+
+                    source:
+                        article.source_nom,
+
+                    version:
+                        article.version
+                })
+            ),
+
+        configurationIA: {
+            code:
+                configurationIA.code,
+
+            useCase:
+                configurationIA.use_case
+        },
+
+        validationHumaineObligatoire:
+            configurationIA
+                .human_validation_required
+    };
+}
 module.exports = {
     trouverPersonneParId,
     trouverOrganisationParId,
@@ -4578,6 +4790,7 @@ module.exports = {
     rejeterDiffusionDiaspora,
     afficherEspaceSateerCommunication,
     modifierCiblageDiffusionDiaspora,
+    analyserDemandeAvecIASecretariat
     
     
 };
