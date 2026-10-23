@@ -2414,6 +2414,350 @@ async function listerNotificationsPersonneDatabase(
 
     return resultat.rows;
 }
+
+async function obtenirDashboardConsulatDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id,
+                o.nom,
+                o.type,
+                t.code AS tenant_code
+            FROM organisations o
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                o.id = $1
+                AND t.code = $2
+                AND o.type = 'CONSULAT'
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        organisationResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // DEMANDES
+    // =====================================================
+
+    const demandesResultat =
+        await executerRequete(
+            `
+            SELECT
+
+                COUNT(*) AS total,
+
+                COUNT(*) FILTER (
+                    WHERE statut = 'NOUVELLE'
+                ) AS nouvelles,
+
+                COUNT(*) FILTER (
+                    WHERE statut = 'EN_COURS'
+                ) AS en_cours,
+
+                COUNT(*) FILTER (
+                    WHERE statut = 'TRAITEE'
+                ) AS traitees,
+
+                COUNT(*) FILTER (
+                    WHERE priorite = 'URGENTE'
+                ) AS urgentes,
+
+                COUNT(*) FILTER (
+                    WHERE priorite = 'IMPORTANTE'
+                ) AS importantes
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            WHERE
+                d.organisation_id = $1
+                AND t.code = $2
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // PUBLICATIONS
+    // =====================================================
+
+    const publicationsResultat =
+        await executerRequete(
+            `
+            SELECT
+
+                COUNT(*) AS total,
+
+                COUNT(*) FILTER (
+                    WHERE statut = 'PUBLIEE'
+                ) AS publiees,
+
+                COUNT(*) FILTER (
+                    WHERE priorite = 'IMPORTANTE'
+                ) AS importantes,
+
+                COUNT(*) FILTER (
+                    WHERE priorite = 'URGENTE'
+                ) AS urgentes,
+
+                COUNT(*) FILTER (
+                    WHERE statut_diffusion_diaspora = 'SOUMISE'
+                ) AS soumises_diaspora,
+
+                COUNT(*) FILTER (
+                    WHERE statut_diffusion_diaspora = 'DIFFUSEE'
+                ) AS diffusees_diaspora
+
+            FROM publications p
+
+            INNER JOIN tenants t
+                ON t.id = p.tenant_id
+
+            WHERE
+                p.organisation_id = $1
+                AND t.code = $2
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // USAGERS / DIASPORA LIÉS AU CONSULAT
+    // =====================================================
+
+    const diasporaResultat =
+        await executerRequete(
+            `
+            SELECT
+
+                COUNT(
+                    DISTINCT r.personne_id
+                ) AS total_usagers,
+
+                COUNT(
+                    DISTINCT r.personne_id
+                ) FILTER (
+                    WHERE p.residence_country_id
+                        IS NOT NULL
+                ) AS avec_pays,
+
+                COUNT(
+                    DISTINCT r.personne_id
+                ) FILTER (
+                    WHERE p.residence_territory_id
+                        IS NOT NULL
+                ) AS avec_territoire
+
+            FROM relations_personne_organisation r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            INNER JOIN personnes p
+                ON p.id = r.personne_id
+
+            WHERE
+                r.organisation_id = $1
+                AND t.code = $2
+                AND r.type = 'USAGER'
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // RÉPARTITION TERRITORIALE
+    // =====================================================
+
+    const territoiresResultat =
+        await executerRequete(
+            `
+            SELECT
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                ) AS territoire,
+
+                COUNT(
+                    DISTINCT p.id
+                ) AS personnes
+
+            FROM relations_personne_organisation r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            INNER JOIN personnes p
+                ON p.id = r.personne_id
+
+            LEFT JOIN territories tr
+                ON tr.id =
+                    p.residence_territory_id
+
+            WHERE
+                r.organisation_id = $1
+                AND t.code = $2
+                AND r.type = 'USAGER'
+
+            GROUP BY
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                )
+
+            ORDER BY
+                personnes DESC,
+                territoire ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // DERNIÈRES DEMANDES
+    // =====================================================
+
+    const dernieresDemandesResultat =
+        await executerRequete(
+            `
+            SELECT
+                d.id,
+                d.objet,
+                d.categorie,
+                d.statut,
+                d.priorite,
+                d.date_creation,
+
+                p.prenom,
+                p.nom
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            INNER JOIN personnes p
+                ON p.id = d.personne_id
+
+            WHERE
+                d.organisation_id = $1
+                AND t.code = $2
+
+            ORDER BY
+                d.date_creation DESC,
+                d.id DESC
+
+            LIMIT 5
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // DERNIÈRES PUBLICATIONS
+    // =====================================================
+
+    const dernieresPublicationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.titre,
+                p.categorie,
+                p.priorite,
+                p.statut,
+                p.statut_diffusion_diaspora,
+                p.date_publication
+
+            FROM publications p
+
+            INNER JOIN tenants t
+                ON t.id = p.tenant_id
+
+            WHERE
+                p.organisation_id = $1
+                AND t.code = $2
+
+            ORDER BY
+                p.date_publication DESC,
+                p.id DESC
+
+            LIMIT 5
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+
+        organisation:
+            organisationResultat.rows[0],
+
+        demandes:
+            demandesResultat.rows[0],
+
+        publications:
+            publicationsResultat.rows[0],
+
+        diaspora:
+            diasporaResultat.rows[0],
+
+        territoires:
+            territoiresResultat.rows,
+
+        activiteRecente: {
+
+            demandes:
+                dernieresDemandesResultat.rows,
+
+            publications:
+                dernieresPublicationsResultat.rows
+        }
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -2437,5 +2781,6 @@ module.exports = {
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
     listerReponsesDemandeCitoyenDatabase,
-    listerNotificationsPersonneDatabase
+    listerNotificationsPersonneDatabase,
+    obtenirDashboardConsulatDatabase
 };
