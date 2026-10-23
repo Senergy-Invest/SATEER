@@ -3347,6 +3347,148 @@ async function rejeterDiffusionDiasporaDatabase(
 
     return resultat.rows[0];
 }
+
+async function listerPublicationsDiasporaPourPersonneDatabase(
+    personneId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                pub.id,
+                pub.titre,
+                pub.contenu,
+                pub.categorie,
+                pub.priorite,
+                pub.audience_type,
+                pub.audience_valeur,
+                pub.medias,
+                pub.date_publication,
+                pub.date_diffusion_diaspora,
+                pub.statut_diffusion_diaspora,
+
+                source.id AS organisation_id,
+                source.nom AS organisation,
+                source.type AS organisation_type
+
+            FROM publications pub
+
+            INNER JOIN tenants t
+                ON t.id = pub.tenant_id
+
+            INNER JOIN organisations source
+                ON source.id =
+                    pub.organisation_id
+
+            INNER JOIN personnes personne
+                ON personne.id = $1
+
+            LEFT JOIN territories territoire
+                ON territoire.id =
+                    personne.residence_territory_id
+
+            WHERE
+                t.code = $2
+
+                AND pub.statut =
+                    'PUBLIEE'
+
+                AND pub.statut_diffusion_diaspora =
+                    'DIFFUSEE'
+
+                AND (
+
+                    pub.audience_type = 'TOUS'
+
+                    OR
+
+                    (
+                        pub.audience_type =
+                            'DEPARTEMENT'
+
+                        AND (
+                            pub.audience_valeur =
+                                territoire.nom
+
+                            OR
+
+                            pub.audience_valeur =
+                                personne.departement
+                        )
+                    )
+
+                    OR
+
+                    (
+                        pub.audience_type =
+                            'PROFIL'
+
+                        AND pub.audience_valeur =
+                            personne.profil
+                    )
+
+                    OR
+
+                    (
+                        pub.audience_type =
+                            'ASSOCIATION'
+
+                        AND EXISTS (
+
+                            SELECT 1
+
+                            FROM relations_personne_organisation r
+
+                            INNER JOIN organisations association
+                                ON association.id =
+                                    r.organisation_id
+
+                            WHERE
+                                r.personne_id =
+                                    personne.id
+
+                                AND (
+                                    pub.audience_valeur =
+                                        association.nom
+
+                                    OR
+
+                                    pub.audience_valeur =
+                                        association.id::text
+                                )
+                        )
+                    )
+                )
+
+            ORDER BY
+
+                CASE pub.priorite
+
+                    WHEN 'URGENTE'
+                        THEN 1
+
+                    WHEN 'IMPORTANTE'
+                        THEN 2
+
+                    ELSE 3
+
+                END,
+
+                pub.date_diffusion_diaspora DESC,
+
+                pub.id DESC
+            `,
+            [
+                personneId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -3375,5 +3517,6 @@ module.exports = {
     soumettrePublicationADiasporaDatabase,
     listerSoumissionsDiasporaDatabase,
     approuverDiffusionDiasporaDatabase,
-    rejeterDiffusionDiasporaDatabase
+    rejeterDiffusionDiasporaDatabase,
+    listerPublicationsDiasporaPourPersonneDatabase
 };
