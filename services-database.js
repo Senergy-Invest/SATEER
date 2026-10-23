@@ -2045,6 +2045,265 @@ async function prendreEnChargeDemandeDatabase(
 
     return resultat.rows[0];
 }
+async function repondreDemandeDatabase(
+    demandeId,
+    agentPersonneId,
+    organisationId,
+    tenantCode,
+    contenu
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            WITH contexte AS (
+
+                SELECT
+                    d.id AS demande_id,
+                    d.tenant_id,
+                    d.organisation_id,
+                    d.personne_id,
+                    d.statut AS ancien_statut,
+
+                    agent.id AS agent_id
+
+                FROM demandes d
+
+                INNER JOIN tenants t
+                    ON t.id = d.tenant_id
+
+                INNER JOIN organisations o
+                    ON o.id = d.organisation_id
+                    AND o.tenant_id = t.id
+
+                INNER JOIN personnes agent
+                    ON agent.id = $2
+
+                INNER JOIN relations_personne_organisation r
+                    ON r.personne_id = agent.id
+                    AND r.organisation_id = o.id
+                    AND r.type IN (
+                        'AGENT',
+                        'RESPONSABLE'
+                    )
+
+                WHERE
+                    d.id = $1
+
+                    AND d.organisation_id = $3
+
+                    AND t.code = $4
+
+                    AND d.statut IN (
+                        'EN_COURS',
+                        'NOUVELLE'
+                    )
+            ),
+
+
+            nouvelle_reponse AS (
+
+                INSERT INTO demande_reponses (
+                    tenant_id,
+                    demande_id,
+                    auteur_personne_id,
+                    contenu,
+                    type,
+                    visible_citoyen
+                )
+
+                SELECT
+                    tenant_id,
+                    demande_id,
+                    agent_id,
+                    $5::text,
+                    'REPONSE',
+                    TRUE
+
+                FROM contexte
+
+                RETURNING
+                    id,
+                    tenant_id,
+                    demande_id,
+                    auteur_personne_id,
+                    contenu,
+                    date_creation
+            ),
+
+
+            demande_modifiee AS (
+
+                UPDATE demandes d
+
+                SET
+                    statut = 'TRAITEE',
+
+                    assignee_a =
+                        contexte.agent_id,
+
+                    date_modification =
+                        CURRENT_TIMESTAMP,
+
+                    date_cloture =
+                        CURRENT_TIMESTAMP
+
+                FROM contexte
+
+                WHERE
+                    d.id =
+                        contexte.demande_id
+
+                RETURNING
+                    d.id,
+                    d.statut,
+                    d.assignee_a,
+                    d.date_modification,
+                    d.date_cloture
+            ),
+
+
+            nouvel_historique AS (
+
+                INSERT INTO demande_history (
+                    tenant_id,
+                    demande_id,
+                    auteur_personne_id,
+                    ancien_statut,
+                    nouveau_statut,
+                    action,
+                    commentaire
+                )
+
+                SELECT
+                    contexte.tenant_id,
+
+                    contexte.demande_id,
+
+                    contexte.agent_id,
+
+                    contexte.ancien_statut,
+
+                    'TRAITEE',
+
+                    'REPONSE_ENVOYEE',
+
+                    'Une réponse a été envoyée au citoyen.'
+
+                FROM contexte
+
+                RETURNING
+                    id,
+                    demande_id
+            )
+
+
+            SELECT
+                r.id AS reponse_id,
+
+                r.demande_id,
+
+                r.auteur_personne_id,
+
+                r.contenu,
+
+                r.date_creation,
+
+                d.statut AS demande_statut,
+
+                d.assignee_a,
+
+                d.date_cloture,
+
+                h.id AS history_id
+
+            FROM nouvelle_reponse r
+
+            INNER JOIN demande_modifiee d
+                ON d.id = r.demande_id
+
+            INNER JOIN nouvel_historique h
+                ON h.demande_id = r.demande_id
+            `,
+            [
+                demandeId,
+                agentPersonneId,
+                organisationId,
+                tenantCode,
+                contenu
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
+async function listerReponsesDemandeCitoyenDatabase(
+    demandeId,
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id,
+                r.demande_id,
+                r.contenu,
+                r.type,
+                r.date_creation,
+
+                agent.prenom AS auteur_prenom,
+                agent.nom AS auteur_nom,
+
+                d.statut AS demande_statut
+
+            FROM demande_reponses r
+
+            INNER JOIN demandes d
+                ON d.id = r.demande_id
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            INNER JOIN personnes agent
+                ON agent.id =
+                    r.auteur_personne_id
+
+            WHERE
+                r.demande_id = $1
+
+                AND d.personne_id = $2
+
+                AND d.organisation_id = $3
+
+                AND t.code = $4
+
+                AND r.visible_citoyen = TRUE
+
+            ORDER BY
+                r.date_creation ASC,
+                r.id ASC
+            `,
+            [
+                demandeId,
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -2065,5 +2324,7 @@ module.exports = {
     creerDemandeDatabase,
     listerDemandesPersonneDatabase,
     listerDemandesOrganisationDatabase,
-    prendreEnChargeDemandeDatabase
+    prendreEnChargeDemandeDatabase,
+    repondreDemandeDatabase,
+    listerReponsesDemandeCitoyenDatabase
 };
