@@ -1,5 +1,5 @@
 const {
-    listerPersonnesParOrganisationEtRelationDatabase
+    aPermissionDatabase
 } = require(
     "./services-database"
 );
@@ -11,45 +11,51 @@ const {
 );
 
 
-async function afficherPersonnes(
+async function testerPermission(
     titre,
-    personnes
+    personneId,
+    organisationId,
+    tenantCode,
+    permission
 ) {
+
+    const autorise =
+        await aPermissionDatabase(
+            personneId,
+            organisationId,
+            tenantCode,
+            permission
+        );
+
 
     console.log("");
     console.log(
         "----- " + titre + " -----"
     );
 
+    console.log(
+        "Personne : " +
+        personneId
+    );
 
-    if (
-        personnes.length === 0
-    ) {
+    console.log(
+        "Organisation : " +
+        organisationId
+    );
 
-        console.log(
-            "Aucune personne trouvée."
-        );
+    console.log(
+        "Tenant : " +
+        tenantCode
+    );
 
-        return;
-    }
+    console.log(
+        "Permission : " +
+        permission
+    );
 
-
-    personnes.forEach(
-        personne => {
-
-            console.log(
-                personne.id +
-                " | " +
-                personne.prenom +
-                " " +
-                personne.nom +
-                " | " +
-                personne.relation_type +
-                " | tenant " +
-                personne.tenant_code
-            );
-
-        }
+    console.log(
+        "Autorisé : " +
+        autorise
     );
 }
 
@@ -60,63 +66,43 @@ async function tester() {
 
         console.log("");
         console.log(
-            "===== TEST PERSONNES / ORGANISATION ====="
+            "===== TEST PERMISSIONS DATABASE ====="
         );
 
 
-        const usagers =
-            await listerPersonnesParOrganisationEtRelationDatabase(
-                1,
-                "SN",
-                "USAGER"
-            );
-
-
-        await afficherPersonnes(
-            "USAGERS DU CONSULAT",
-            usagers
+        await testerPermission(
+            "AWA / PUBLIER INFORMATION",
+            3,
+            1,
+            "SN",
+            "PUBLIER_INFORMATION"
         );
 
 
-        const agents =
-            await listerPersonnesParOrganisationEtRelationDatabase(
-                1,
-                "SN",
-                "AGENT"
-            );
-
-
-        await afficherPersonnes(
-            "AGENTS DU CONSULAT",
-            agents
+        await testerPermission(
+            "FATOU / PUBLIER INFORMATION",
+            1,
+            1,
+            "SN",
+            "PUBLIER_INFORMATION"
         );
 
 
-        const responsables =
-            await listerPersonnesParOrganisationEtRelationDatabase(
-                1,
-                "SN",
-                "RESPONSABLE"
-            );
-
-
-        await afficherPersonnes(
-            "RESPONSABLES DU CONSULAT",
-            responsables
+        await testerPermission(
+            "AMINATA / GERER AGENTS",
+            5,
+            1,
+            "SN",
+            "GERER_AGENTS"
         );
 
 
-        const testMauvaisTenant =
-            await listerPersonnesParOrganisationEtRelationDatabase(
-                1,
-                "ML",
-                "USAGER"
-            );
-
-
-        await afficherPersonnes(
-            "TEST TENANT ML",
-            testMauvaisTenant
+        await testerPermission(
+            "AWA / MAUVAIS TENANT",
+            3,
+            1,
+            "ML",
+            "PUBLIER_INFORMATION"
         );
 
 

@@ -3,6 +3,34 @@ const {
 } = require("./database");
 
 
+const permissionsParRole = {
+
+    USAGER: [
+        "CREER_DOSSIER",
+        "VOIR_SES_DOSSIERS",
+        "SOUMETTRE_DOSSIER"
+    ],
+
+    AGENT: [
+        "VOIR_DOSSIERS_ORGANISATION",
+        "TRAITER_DOSSIER",
+        "PUBLIER_INFORMATION"
+    ],
+
+    RESPONSABLE: [
+        "VOIR_DOSSIERS_ORGANISATION",
+        "TRAITER_DOSSIER",
+        "GERER_AGENTS",
+        "PUBLIER_INFORMATION"
+    ],
+
+    AGENT_SATEER: [
+        "GERER_DIFFUSION_DIASPORA"
+    ]
+
+};
+
+
 async function trouverOrganisationParIdDatabase(
     organisationId
 ) {
@@ -163,9 +191,97 @@ async function listerPersonnesParOrganisationEtRelationDatabase(
 }
 
 
+async function trouverRelationPersonneOrganisationDatabase(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id,
+                r.personne_id,
+                r.organisation_id,
+                r.type AS relation_type,
+                t.code AS tenant_code
+            FROM relations_personne_organisation r
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                r.personne_id = $1
+                AND r.organisation_id = $2
+                AND t.code = $3
+            LIMIT 1
+            `,
+            [
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
+
+
+async function aPermissionDatabase(
+    personneId,
+    organisationId,
+    tenantCode,
+    permission
+) {
+
+    const relation =
+        await trouverRelationPersonneOrganisationDatabase(
+            personneId,
+            organisationId,
+            tenantCode
+        );
+
+
+    if (
+        relation === undefined
+    ) {
+        return false;
+    }
+
+
+    const permissions =
+        permissionsParRole[
+            relation.relation_type
+        ];
+
+
+    if (
+        permissions === undefined
+    ) {
+        return false;
+    }
+
+
+    return permissions.includes(
+        permission
+    );
+}
+
+
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
     listerOrganisationsParTenantEtTypeDatabase,
-    listerPersonnesParOrganisationEtRelationDatabase
+    listerPersonnesParOrganisationEtRelationDatabase,
+    trouverRelationPersonneOrganisationDatabase,
+    aPermissionDatabase
 };
