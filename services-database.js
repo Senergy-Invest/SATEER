@@ -3489,6 +3489,292 @@ async function listerPublicationsDiasporaPourPersonneDatabase(
 
     return resultat.rows;
 }
+async function obtenirMonSateerDatabase(
+    personneId,
+    tenantCode
+) {
+
+    // =====================================================
+    // PERSONNE
+    // =====================================================
+
+    const personneResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.prenom,
+                p.nom,
+                p.profil,
+
+                c.nom AS pays,
+
+                tr.nom AS territoire
+
+            FROM personnes p
+
+            LEFT JOIN countries c
+                ON c.id =
+                    p.residence_country_id
+
+            LEFT JOIN territories tr
+                ON tr.id =
+                    p.residence_territory_id
+
+            WHERE
+                p.id = $1
+            `,
+            [
+                personneId
+            ]
+        );
+
+
+    if (
+        personneResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // TENANT
+    // =====================================================
+
+    const tenantResultat =
+        await executerRequete(
+            `
+            SELECT
+                id,
+                code,
+                nom
+            FROM tenants
+            WHERE code = $1
+            `,
+            [
+                tenantCode
+            ]
+        );
+
+
+    if (
+        tenantResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // EXPÉRIENCES ACTIVES
+    // =====================================================
+
+    const experiencesResultat =
+        await executerRequete(
+            `
+            SELECT
+                e.id,
+                e.code,
+                e.nom,
+                e.description,
+                e.type,
+                e.ordre
+
+            FROM experience_activations ea
+
+            INNER JOIN tenants t
+                ON t.id =
+                    ea.tenant_id
+
+            INNER JOIN experiences e
+                ON e.id =
+                    ea.experience_id
+
+            WHERE
+                ea.personne_id = $1
+
+                AND t.code = $2
+
+                AND ea.statut =
+                    'ACTIVE'
+
+                AND e.actif =
+                    TRUE
+
+            ORDER BY
+                e.ordre ASC,
+                e.nom ASC
+            `,
+            [
+                personneId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // DEMANDES RÉCENTES
+    // =====================================================
+
+    const demandesResultat =
+        await executerRequete(
+            `
+            SELECT
+                d.id,
+                d.objet,
+                d.categorie,
+                d.statut,
+                d.priorite,
+                d.date_creation,
+                d.date_modification,
+
+                o.nom AS organisation,
+                o.type AS organisation_type
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id =
+                    d.tenant_id
+
+            INNER JOIN organisations o
+                ON o.id =
+                    d.organisation_id
+
+            WHERE
+                d.personne_id = $1
+
+                AND t.code = $2
+
+            ORDER BY
+                d.date_modification DESC,
+                d.id DESC
+
+            LIMIT 5
+            `,
+            [
+                personneId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // NOTIFICATIONS
+    // =====================================================
+
+    const notificationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                n.id,
+                n.type,
+                n.titre,
+                n.message,
+                n.reference_type,
+                n.reference_id,
+                n.statut,
+                n.date_creation,
+
+                o.nom AS organisation
+
+            FROM notifications n
+
+            INNER JOIN tenants t
+                ON t.id =
+                    n.tenant_id
+
+            LEFT JOIN organisations o
+                ON o.id =
+                    n.organisation_id
+
+            WHERE
+                n.personne_id = $1
+
+                AND t.code = $2
+
+            ORDER BY
+                CASE n.statut
+                    WHEN 'NON_LUE'
+                        THEN 1
+                    ELSE 2
+                END,
+
+                n.date_creation DESC,
+
+                n.id DESC
+
+            LIMIT 10
+            `,
+            [
+                personneId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // COMPTEUR NOTIFICATIONS NON LUES
+    // =====================================================
+
+    const compteurNotificationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                COUNT(*) AS non_lues
+
+            FROM notifications n
+
+            INNER JOIN tenants t
+                ON t.id =
+                    n.tenant_id
+
+            WHERE
+                n.personne_id = $1
+
+                AND t.code = $2
+
+                AND n.statut =
+                    'NON_LUE'
+            `,
+            [
+                personneId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+
+        personne:
+            personneResultat.rows[0],
+
+        tenant:
+            tenantResultat.rows[0],
+
+        experiences:
+            experiencesResultat.rows,
+
+        demandes:
+            demandesResultat.rows,
+
+        notifications:
+            notificationsResultat.rows,
+
+        compteurs: {
+
+            experiences:
+                experiencesResultat.rows.length,
+
+            demandes:
+                demandesResultat.rows.length,
+
+            notificationsNonLues:
+                compteurNotificationsResultat
+                    .rows[0]
+                    .non_lues
+        }
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -3518,5 +3804,6 @@ module.exports = {
     listerSoumissionsDiasporaDatabase,
     approuverDiffusionDiasporaDatabase,
     rejeterDiffusionDiasporaDatabase,
-    listerPublicationsDiasporaPourPersonneDatabase
+    listerPublicationsDiasporaPourPersonneDatabase,
+    obtenirMonSateerDatabase
 };
