@@ -3017,6 +3017,336 @@ async function obtenirDashboardConsulatDatabase(
         }
     };
 }
+async function soumettrePublicationADiasporaDatabase(
+    publicationId,
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE publications pub
+
+            SET
+                statut_diffusion_diaspora =
+                    'SOUMISE',
+
+                date_soumission_diaspora =
+                    CURRENT_TIMESTAMP,
+
+                validee_par_sateer =
+                    NULL,
+
+                rejetee_par_sateer =
+                    NULL,
+
+                motif_rejet_diaspora =
+                    NULL,
+
+                date_rejet_diaspora =
+                    NULL
+
+            FROM tenants t
+
+            WHERE
+                pub.id = $1
+
+                AND pub.organisation_id = $3
+
+                AND pub.tenant_id = t.id
+
+                AND t.code = $4
+
+                AND pub.statut = 'PUBLIEE'
+
+                AND pub.statut_diffusion_diaspora
+                    IN (
+                        'NON_DEMANDEE',
+                        'REJETEE'
+                    )
+
+                AND EXISTS (
+
+                    SELECT 1
+
+                    FROM relations_personne_organisation r
+
+                    WHERE
+                        r.personne_id = $2
+
+                        AND r.organisation_id = $3
+
+                        AND r.type IN (
+                            'AGENT',
+                            'RESPONSABLE'
+                        )
+                )
+
+            RETURNING
+                pub.id,
+                pub.organisation_id,
+                pub.titre,
+                pub.categorie,
+                pub.priorite,
+                pub.audience_type,
+                pub.audience_valeur,
+                pub.statut,
+                pub.statut_diffusion_diaspora,
+                pub.date_soumission_diaspora
+            `,
+            [
+                publicationId,
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
+async function listerSoumissionsDiasporaDatabase(
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                pub.id,
+                pub.titre,
+                pub.contenu,
+                pub.categorie,
+                pub.priorite,
+                pub.audience_type,
+                pub.audience_valeur,
+                pub.statut_diffusion_diaspora,
+                pub.date_soumission_diaspora,
+
+                o.id AS organisation_id,
+                o.nom AS organisation,
+                o.type AS organisation_type
+
+            FROM publications pub
+
+            INNER JOIN tenants t
+                ON t.id = pub.tenant_id
+
+            INNER JOIN organisations o
+                ON o.id = pub.organisation_id
+
+            WHERE
+                t.code = $1
+
+                AND pub.statut =
+                    'PUBLIEE'
+
+                AND pub.statut_diffusion_diaspora =
+                    'SOUMISE'
+
+            ORDER BY
+                pub.date_soumission_diaspora ASC,
+                pub.id ASC
+            `,
+            [
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
+async function approuverDiffusionDiasporaDatabase(
+    publicationId,
+    agentSateerId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE publications pub
+
+            SET
+                statut_diffusion_diaspora =
+                    'DIFFUSEE',
+
+                date_diffusion_diaspora =
+                    CURRENT_TIMESTAMP,
+
+                validee_par_sateer =
+                    $2,
+
+                rejetee_par_sateer =
+                    NULL,
+
+                motif_rejet_diaspora =
+                    NULL,
+
+                date_rejet_diaspora =
+                    NULL
+
+            FROM tenants t
+
+            WHERE
+                pub.id = $1
+
+                AND pub.tenant_id = t.id
+
+                AND t.code = $3
+
+                AND pub.statut_diffusion_diaspora =
+                    'SOUMISE'
+
+                AND EXISTS (
+
+                    SELECT 1
+
+                    FROM relations_personne_organisation r
+
+                    INNER JOIN organisations o
+                        ON o.id =
+                            r.organisation_id
+
+                    WHERE
+                        r.personne_id = $2
+
+                        AND r.type =
+                            'AGENT_SATEER'
+
+                        AND o.type =
+                            'SATEER'
+
+                        AND o.tenant_id =
+                            t.id
+                )
+
+            RETURNING
+                pub.id,
+                pub.organisation_id,
+                pub.titre,
+                pub.statut_diffusion_diaspora,
+                pub.date_diffusion_diaspora,
+                pub.validee_par_sateer
+            `,
+            [
+                publicationId,
+                agentSateerId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
+async function rejeterDiffusionDiasporaDatabase(
+    publicationId,
+    agentSateerId,
+    tenantCode,
+    motif
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE publications pub
+
+            SET
+                statut_diffusion_diaspora =
+                    'REJETEE',
+
+                rejetee_par_sateer =
+                    $2,
+
+                validee_par_sateer =
+                    NULL,
+
+                motif_rejet_diaspora =
+                    $4::text,
+
+                date_rejet_diaspora =
+                    CURRENT_TIMESTAMP,
+
+                date_diffusion_diaspora =
+                    NULL
+
+            FROM tenants t
+
+            WHERE
+                pub.id = $1
+
+                AND pub.tenant_id = t.id
+
+                AND t.code = $3
+
+                AND pub.statut_diffusion_diaspora =
+                    'SOUMISE'
+
+                AND EXISTS (
+
+                    SELECT 1
+
+                    FROM relations_personne_organisation r
+
+                    INNER JOIN organisations o
+                        ON o.id =
+                            r.organisation_id
+
+                    WHERE
+                        r.personne_id = $2
+
+                        AND r.type =
+                            'AGENT_SATEER'
+
+                        AND o.type =
+                            'SATEER'
+
+                        AND o.tenant_id =
+                            t.id
+                )
+
+            RETURNING
+                pub.id,
+                pub.titre,
+                pub.statut_diffusion_diaspora,
+                pub.motif_rejet_diaspora,
+                pub.rejetee_par_sateer,
+                pub.date_rejet_diaspora
+            `,
+            [
+                publicationId,
+                agentSateerId,
+                tenantCode,
+                motif
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -3041,5 +3371,9 @@ module.exports = {
     repondreDemandeDatabase,
     listerReponsesDemandeCitoyenDatabase,
     listerNotificationsPersonneDatabase,
-    obtenirDashboardConsulatDatabase
+    obtenirDashboardConsulatDatabase,
+    soumettrePublicationADiasporaDatabase,
+    listerSoumissionsDiasporaDatabase,
+    approuverDiffusionDiasporaDatabase,
+    rejeterDiffusionDiasporaDatabase
 };
