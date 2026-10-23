@@ -22,7 +22,8 @@ const {
     aPermissionDatabase,
     creerPublicationDatabase,
     trouverOrganisationParIdEtTenantDatabase,
-    listerPublicationsParOrganisationEtTenantDatabase
+    listerPublicationsParOrganisationEtTenantDatabase,
+    enregistrerEvenementAnalyticsDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -926,7 +927,14 @@ async function afficherMonConsulatPostgreSQL(
             const information
             of informations
         ) {
-
+            await enregistrerEvenementAnalyticsDatabase(
+                tenantCode,
+                organisationId,
+                information.id,
+                personneId,
+                "VIEW",
+                "MON_CONSULAT"
+    );
             console.log("");
 
             console.log(
@@ -4578,6 +4586,7 @@ module.exports = {
     approuverDiffusionDiaspora,
     rejeterDiffusionDiaspora,
     afficherEspaceSateerCommunication,
-    modifierCiblageDiffusionDiaspora
+    modifierCiblageDiffusionDiaspora,
+    
     
 };

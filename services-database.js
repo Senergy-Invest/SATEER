@@ -431,6 +431,74 @@ async function listerPublicationsParOrganisationEtTenantDatabase(
 
     return resultat.rows;
 }
+async function enregistrerEvenementAnalyticsDatabase(
+    tenantCode,
+    organisationId,
+    publicationId,
+    personneId,
+    eventType,
+    channel
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO analytics_events (
+                tenant_id,
+                organisation_id,
+                publication_id,
+                personne_id,
+                event_type,
+                country_id,
+                territory_id,
+                channel
+            )
+            SELECT
+                t.id,
+                $2,
+                $3,
+                p.id,
+                $5,
+                p.residence_country_id,
+                p.residence_territory_id,
+                $6
+            FROM tenants t
+            INNER JOIN personnes p
+                ON p.id = $4
+            WHERE
+                t.code = $1
+            RETURNING
+                id,
+                tenant_id,
+                organisation_id,
+                publication_id,
+                personne_id,
+                event_type,
+                country_id,
+                territory_id,
+                channel,
+                date_evenement
+            `,
+            [
+                tenantCode,
+                organisationId,
+                publicationId,
+                personneId,
+                eventType,
+                channel
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -439,5 +507,6 @@ module.exports = {
     trouverRelationPersonneOrganisationDatabase,
     aPermissionDatabase,
     creerPublicationDatabase,
-    listerPublicationsParOrganisationEtTenantDatabase
+    listerPublicationsParOrganisationEtTenantDatabase,
+    enregistrerEvenementAnalyticsDatabase
 };
