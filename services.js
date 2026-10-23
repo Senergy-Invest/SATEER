@@ -20,7 +20,9 @@ const {
 
 const {
     aPermissionDatabase,
-    creerPublicationDatabase
+    creerPublicationDatabase,
+    trouverOrganisationParIdEtTenantDatabase,
+    listerPublicationsParOrganisationEtTenantDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -760,6 +762,224 @@ function afficherMonConsulat(personneId) {
     }
 
     console.log("");
+    console.log(
+        "Services disponibles :"
+    );
+
+    console.log(
+        "- Contacter le Consulat"
+    );
+
+    console.log(
+        "- Mes demandes"
+    );
+
+    console.log(
+        "- Services officiels"
+    );
+}
+async function afficherMonConsulatPostgreSQL(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const personne =
+        trouverPersonneParId(
+            personneId
+        );
+
+
+    if (
+        personne === undefined
+    ) {
+
+        console.log("");
+        console.log(
+            "Personne introuvable."
+        );
+
+        return;
+    }
+
+
+    const consulat =
+        await trouverOrganisationParIdEtTenantDatabase(
+            organisationId,
+            tenantCode
+        );
+
+
+    if (
+        consulat === undefined
+    ) {
+
+        console.log("");
+        console.log(
+            "Consulat introuvable pour le tenant " +
+            tenantCode +
+            "."
+        );
+
+        return;
+    }
+
+
+    if (
+        consulat.type !== "CONSULAT"
+    ) {
+
+        console.log("");
+        console.log(
+            "L'organisation demandée n'est pas un consulat."
+        );
+
+        return;
+    }
+
+
+    const publicationsDatabase =
+        await listerPublicationsParOrganisationEtTenantDatabase(
+            organisationId,
+            tenantCode
+        );
+
+
+    const informations =
+        publicationsDatabase.filter(
+            publication => {
+
+                const estPubliee =
+                    publication.statut ===
+                    "PUBLIEE";
+
+
+                if (
+                    estPubliee === false
+                ) {
+                    return false;
+                }
+
+
+                const personnesCiblees =
+                    trouverPersonnesCiblees(
+                        publication.audience_type,
+                        publication.audience_valeur
+                    );
+
+
+                const personneEstCiblee =
+                    personnesCiblees.some(
+                        personneCiblee =>
+                            personneCiblee.id ===
+                            personneId
+                    );
+
+
+                return personneEstCiblee;
+            }
+        );
+
+
+    console.log("");
+    console.log(
+        "===== MON CONSULAT POSTGRESQL ====="
+    );
+
+
+    console.log(
+        personne.prenom +
+        " " +
+        personne.nom
+    );
+
+
+    console.log(
+        "Consulat : " +
+        consulat.nom
+    );
+
+
+    console.log(
+        "Tenant : " +
+        tenantCode
+    );
+
+
+    console.log("");
+    console.log(
+        "Informations officielles :"
+    );
+
+
+    if (
+        informations.length === 0
+    ) {
+
+        console.log(
+            "Aucune information correspondant à votre profil."
+        );
+
+    } else {
+
+        for (
+            const information
+            of informations
+        ) {
+
+            console.log("");
+
+            console.log(
+                information.titre
+            );
+
+            console.log(
+                information.contenu
+            );
+
+            console.log(
+                "Catégorie : " +
+                information.categorie
+            );
+
+            console.log(
+                "Priorité : " +
+                information.priorite
+            );
+
+
+            if (
+                information.medias !== undefined &&
+                information.medias !== null &&
+                information.medias.length > 0
+            ) {
+
+                console.log(
+                    "Médias :"
+                );
+
+
+                for (
+                    const media
+                    of information.medias
+                ) {
+
+                    console.log(
+                        "- " +
+                        media.type +
+                        " | " +
+                        media.nom +
+                        " | " +
+                        media.url
+                    );
+                }
+            }
+        }
+    }
+
+
+    console.log("");
+
     console.log(
         "Services disponibles :"
     );
@@ -4328,6 +4548,7 @@ module.exports = {
     creerDossier,
     listerExperiencesPersonne,
     afficherMonConsulat,
+    afficherMonConsulatPostgreSQL,
     publierInformation,
     publierInformationPostgreSQL,
     trouverPersonnesCiblees,
