@@ -275,7 +275,109 @@ async function aPermissionDatabase(
         permission
     );
 }
+async function creerPublicationDatabase(
+    tenantCode,
+    organisationId,
+    personneId,
+    titre,
+    contenu,
+    audienceType,
+    audienceValeur,
+    categorie,
+    priorite,
+    medias = []
+) {
 
+    const resultatTenant =
+        await executerRequete(
+            `
+            SELECT id
+            FROM tenants
+            WHERE code = $1
+            `,
+            [
+                tenantCode
+            ]
+        );
+
+
+    if (
+        resultatTenant.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    const tenantId =
+        resultatTenant.rows[0].id;
+
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO publications (
+                tenant_id,
+                organisation_id,
+                publie_par,
+                titre,
+                contenu,
+                categorie,
+                priorite,
+                audience_type,
+                audience_valeur,
+                medias,
+                statut,
+                statut_diffusion_diaspora
+            )
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8,
+                $9,
+                $10::jsonb,
+                'PUBLIEE',
+                'NON_DEMANDEE'
+            )
+            RETURNING
+                id,
+                tenant_id,
+                organisation_id,
+                publie_par,
+                titre,
+                contenu,
+                categorie,
+                priorite,
+                audience_type,
+                audience_valeur,
+                medias,
+                statut,
+                statut_diffusion_diaspora,
+                date_publication
+            `,
+            [
+                tenantId,
+                organisationId,
+                personneId,
+                titre,
+                contenu,
+                categorie,
+                priorite,
+                audienceType,
+                audienceValeur,
+                JSON.stringify(
+                    medias || []
+                )
+            ]
+        );
+
+
+    return resultat.rows[0];
+}
 
 module.exports = {
     trouverOrganisationParIdDatabase,
@@ -283,5 +385,6 @@ module.exports = {
     listerOrganisationsParTenantEtTypeDatabase,
     listerPersonnesParOrganisationEtRelationDatabase,
     trouverRelationPersonneOrganisationDatabase,
-    aPermissionDatabase
+    aPermissionDatabase,
+    creerPublicationDatabase
 };

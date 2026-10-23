@@ -19,7 +19,8 @@ const {
 } = require("./data");
 
 const {
-    aPermissionDatabase
+    aPermissionDatabase,
+    creerPublicationDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -985,44 +986,31 @@ async function publierInformationPostgreSQL(
     }
 
 
-    const nouvellePublication = {
-
-        id: publications.length + 1,
-
-        organisationId: organisationId,
-
-        titre: titre,
-
-        contenu: contenu,
-
-        audienceType: audienceType,
-
-        audienceValeur: audienceValeur,
-
-        categorie: categorie,
-
-        priorite: priorite,
-
-        medias: medias || [],
-
-        statut: "PUBLIEE",
-
-        publiePar: personneId,
-
-        datePublication: new Date(),
-
-        statutDiffusionDiaspora:
-            "NON_DEMANDEE",
-
-        dateSoumissionDiaspora: null,
-
-        dateDiffusionDiaspora: null
-    };
-
-
-    publications.push(
-        nouvellePublication
+    const nouvellePublication =
+    await creerPublicationDatabase(
+        tenantCode,
+        organisationId,
+        personneId,
+        titre,
+        contenu,
+        audienceType,
+        audienceValeur,
+        categorie,
+        priorite,
+        medias || []
     );
+
+
+if (
+    nouvellePublication === undefined
+) {
+
+    console.log(
+        "Impossible de créer la publication dans PostgreSQL."
+    );
+
+    return;
+}
 
 
     console.log("");
@@ -1080,7 +1068,7 @@ async function publierInformationPostgreSQL(
     console.log(
         "Diffusion Diaspora : " +
         nouvellePublication
-            .statutDiffusionDiaspora
+        .statut_diffusion_diaspora
     );
 
 
