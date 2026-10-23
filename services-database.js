@@ -3878,6 +3878,220 @@ async function listerPublicationsAmbassadePourPersonneDatabase(
 
     return resultat.rows;
 }
+async function obtenirContexteIASecretariatDatabase(
+    demandeId,
+    organisationId,
+    tenantCode
+) {
+
+    // =====================================================
+    // DEMANDE
+    // =====================================================
+
+    const demandeResultat =
+        await executerRequete(
+            `
+            SELECT
+                d.id,
+                d.categorie,
+                d.objet,
+                d.description,
+                d.statut,
+                d.priorite,
+                d.date_creation,
+
+                citoyen.id AS personne_id,
+                citoyen.prenom,
+                citoyen.nom,
+                citoyen.profil,
+
+                territoire.nom AS territoire,
+
+                o.id AS organisation_id,
+                o.nom AS organisation
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            INNER JOIN organisations o
+                ON o.id = d.organisation_id
+                AND o.tenant_id = t.id
+
+            INNER JOIN personnes citoyen
+                ON citoyen.id = d.personne_id
+
+            LEFT JOIN territories territoire
+                ON territoire.id =
+                    citoyen.residence_territory_id
+
+            WHERE
+                d.id = $1
+
+                AND d.organisation_id = $2
+
+                AND t.code = $3
+            `,
+            [
+                demandeId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        demandeResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    const demande =
+        demandeResultat.rows[0];
+
+
+    // =====================================================
+    // CONFIGURATION IA
+    // =====================================================
+
+    const configurationResultat =
+        await executerRequete(
+            `
+            SELECT
+                ai.id,
+                ai.code,
+                ai.nom,
+                ai.use_case,
+                ai.actif,
+                ai.human_validation_required,
+                ai.configuration
+
+            FROM ai_configurations ai
+
+            INNER JOIN tenants t
+                ON t.id = ai.tenant_id
+
+            WHERE
+                ai.organisation_id = $1
+
+                AND t.code = $2
+
+                AND ai.use_case = 'SECRETARIAT'
+
+                AND ai.actif = TRUE
+
+            ORDER BY
+                ai.id ASC
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        configurationResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // CONNAISSANCES VALIDÉES
+    // =====================================================
+
+    const connaissancesResultat =
+        await executerRequete(
+            `
+            SELECT
+                ka.id,
+                ka.code,
+                ka.titre,
+                ka.contenu,
+                ka.langue,
+                ka.version,
+                ka.statut,
+
+                ks.code AS source_code,
+                ks.nom AS source_nom,
+                ks.type AS source_type
+
+            FROM knowledge_articles ka
+
+            INNER JOIN knowledge_sources ks
+                ON ks.id =
+                    ka.knowledge_source_id
+
+            INNER JOIN tenants t
+                ON t.id =
+                    ks.tenant_id
+
+            WHERE
+                ks.organisation_id = $1
+
+                AND t.code = $2
+
+                AND ks.actif = TRUE
+
+                AND ka.statut = 'VALIDE'
+
+                AND (
+                    ka.date_debut_validite IS NULL
+
+                    OR
+
+                    ka.date_debut_validite <=
+                        CURRENT_TIMESTAMP
+                )
+
+                AND (
+                    ka.date_fin_validite IS NULL
+
+                    OR
+
+                    ka.date_fin_validite >
+                        CURRENT_TIMESTAMP
+                )
+
+                AND (
+                    ka.code ILIKE
+                        $3::text || '%'
+
+                    OR
+
+                    ka.titre ILIKE
+                        '%' || $3::text || '%'
+                )
+
+            ORDER BY
+                ka.version DESC,
+                ka.id DESC
+            `,
+            [
+                organisationId,
+                tenantCode,
+                demande.categorie
+            ]
+        );
+
+
+    return {
+
+        demande:
+            demande,
+
+        configurationIA:
+            configurationResultat.rows[0],
+
+        connaissances:
+            connaissancesResultat.rows
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -3909,5 +4123,6 @@ module.exports = {
     rejeterDiffusionDiasporaDatabase,
     listerPublicationsDiasporaPourPersonneDatabase,
     obtenirMonSateerDatabase,
-    listerPublicationsAmbassadePourPersonneDatabase
+    listerPublicationsAmbassadePourPersonneDatabase,
+    obtenirContexteIASecretariatDatabase
 };
