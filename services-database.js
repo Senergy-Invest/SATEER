@@ -4275,6 +4275,291 @@ async function obtenirContexteIACitoyenDatabase(
             connaissancesResultat.rows
     };
 }
+async function obtenirAnalyticsConsulatDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    // =====================================================
+    // VÉRIFIER LE CONSULAT
+    // =====================================================
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id,
+                o.nom,
+                o.type,
+                t.id AS tenant_id,
+                t.code AS tenant_code
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                o.id = $1
+                AND t.code = $2
+                AND o.type = 'CONSULAT'
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        organisationResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // INDICATEURS GLOBAUX
+    // =====================================================
+
+    const globalResultat =
+        await executerRequete(
+            `
+            SELECT
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS vues_totales,
+
+                COUNT(
+                    DISTINCT ae.personne_id
+                ) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS personnes_uniques,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'CLICK'
+                ) AS clics,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'INTEREST'
+                ) AS interets,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'CONTACT_REQUEST'
+                ) AS demandes_contact,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'REGISTRATION'
+                ) AS inscriptions,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'CONVERSION'
+                ) AS conversions
+
+            FROM analytics_events ae
+
+            INNER JOIN tenants t
+                ON t.id = ae.tenant_id
+
+            WHERE
+                ae.organisation_id = $1
+                AND t.code = $2
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // ANALYTICS PAR PUBLICATION
+    // =====================================================
+
+    const publicationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.titre,
+                p.categorie,
+                p.priorite,
+                p.statut_diffusion_diaspora,
+
+                COUNT(ae.id) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS vues,
+
+                COUNT(
+                    DISTINCT ae.personne_id
+                ) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS vues_uniques,
+
+                COUNT(ae.id) FILTER (
+                    WHERE ae.event_type = 'CLICK'
+                ) AS clics,
+
+                COUNT(ae.id) FILTER (
+                    WHERE ae.event_type = 'INTEREST'
+                ) AS interets,
+
+                COUNT(ae.id) FILTER (
+                    WHERE ae.event_type = 'CONTACT_REQUEST'
+                ) AS demandes_contact
+
+            FROM publications p
+
+            INNER JOIN tenants t
+                ON t.id = p.tenant_id
+
+            LEFT JOIN analytics_events ae
+                ON ae.publication_id = p.id
+                AND ae.organisation_id = p.organisation_id
+                AND ae.tenant_id = p.tenant_id
+
+            WHERE
+                p.organisation_id = $1
+                AND t.code = $2
+
+            GROUP BY
+                p.id,
+                p.titre,
+                p.categorie,
+                p.priorite,
+                p.statut_diffusion_diaspora
+
+            ORDER BY
+                vues DESC,
+                p.id DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // PAR CANAL
+    // =====================================================
+
+    const canauxResultat =
+        await executerRequete(
+            `
+            SELECT
+                COALESCE(
+                    ae.channel,
+                    'NON_RENSEIGNE'
+                ) AS channel,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS vues,
+
+                COUNT(
+                    DISTINCT ae.personne_id
+                ) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS vues_uniques
+
+            FROM analytics_events ae
+
+            INNER JOIN tenants t
+                ON t.id = ae.tenant_id
+
+            WHERE
+                ae.organisation_id = $1
+                AND t.code = $2
+
+            GROUP BY
+                COALESCE(
+                    ae.channel,
+                    'NON_RENSEIGNE'
+                )
+
+            ORDER BY
+                vues DESC,
+                channel ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // PAR TERRITOIRE
+    // =====================================================
+
+    const territoiresResultat =
+        await executerRequete(
+            `
+            SELECT
+                COALESCE(
+                    tr.nom,
+                    'Non renseigné'
+                ) AS territoire,
+
+                COUNT(*) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS vues,
+
+                COUNT(
+                    DISTINCT ae.personne_id
+                ) FILTER (
+                    WHERE ae.event_type = 'VIEW'
+                ) AS personnes_uniques
+
+            FROM analytics_events ae
+
+            INNER JOIN tenants t
+                ON t.id = ae.tenant_id
+
+            LEFT JOIN territories tr
+                ON tr.id = ae.territory_id
+
+            WHERE
+                ae.organisation_id = $1
+                AND t.code = $2
+
+            GROUP BY
+                COALESCE(
+                    tr.nom,
+                    'Non renseigné'
+                )
+
+            ORDER BY
+                vues DESC,
+                territoire ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+
+        organisation:
+            organisationResultat.rows[0],
+
+        global:
+            globalResultat.rows[0],
+
+        publications:
+            publicationsResultat.rows,
+
+        canaux:
+            canauxResultat.rows,
+
+        territoires:
+            territoiresResultat.rows
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -4308,5 +4593,6 @@ module.exports = {
     obtenirMonSateerDatabase,
     listerPublicationsAmbassadePourPersonneDatabase,
     obtenirContexteIASecretariatDatabase,
-    obtenirContexteIACitoyenDatabase
+    obtenirContexteIACitoyenDatabase,
+    obtenirAnalyticsConsulatDatabase
 };
