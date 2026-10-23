@@ -1598,6 +1598,205 @@ async function listerPublicationsVisiblesPourPersonneDatabase(
 
     return resultat.rows;
 }
+async function creerDemandeDatabase(
+    personneId,
+    organisationId,
+    tenantCode,
+    categorie,
+    objet,
+    description,
+    priorite = "NORMALE",
+    canal = "MON_CONSULAT"
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            WITH contexte AS (
+
+                SELECT
+                    t.id AS tenant_id,
+
+                    o.id AS organisation_id,
+
+                    p.id AS personne_id
+
+                FROM tenants t
+
+                INNER JOIN organisations o
+                    ON o.tenant_id = t.id
+                    AND o.id = $2
+
+                INNER JOIN personnes p
+                    ON p.id = $1
+
+                WHERE
+                    t.code = $3
+            ),
+
+
+            nouvelle_demande AS (
+
+                INSERT INTO demandes (
+                    tenant_id,
+                    organisation_id,
+                    personne_id,
+                    categorie,
+                    objet,
+                    description,
+                    statut,
+                    priorite,
+                    canal
+                )
+
+                SELECT
+                    tenant_id,
+                    organisation_id,
+                    personne_id,
+                    $4::text,
+                    $5::text,
+                    $6::text,
+                    'NOUVELLE',
+                    $7::text,
+                    $8::text
+
+                FROM contexte
+
+                RETURNING
+                    id,
+                    tenant_id,
+                    organisation_id,
+                    personne_id,
+                    categorie,
+                    objet,
+                    description,
+                    statut,
+                    priorite,
+                    canal,
+                    date_creation
+            ),
+
+
+            nouvel_historique AS (
+
+                INSERT INTO demande_history (
+                    tenant_id,
+                    demande_id,
+                    auteur_personne_id,
+                    ancien_statut,
+                    nouveau_statut,
+                    action,
+                    commentaire
+                )
+
+                SELECT
+                    tenant_id,
+                    id,
+                    personne_id,
+                    NULL,
+                    'NOUVELLE',
+                    'CREATION',
+                    'Demande créée par le citoyen.'
+
+                FROM nouvelle_demande
+
+                RETURNING
+                    id,
+                    demande_id
+            )
+
+
+            SELECT
+                d.id,
+                d.tenant_id,
+                d.organisation_id,
+                d.personne_id,
+                d.categorie,
+                d.objet,
+                d.description,
+                d.statut,
+                d.priorite,
+                d.canal,
+                d.date_creation,
+
+                h.id AS history_id
+
+            FROM nouvelle_demande d
+
+            INNER JOIN nouvel_historique h
+                ON h.demande_id = d.id
+            `,
+            [
+                personneId,
+                organisationId,
+                tenantCode,
+                categorie,
+                objet,
+                description,
+                priorite,
+                canal
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
+async function listerDemandesPersonneDatabase(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                d.id,
+                d.categorie,
+                d.objet,
+                d.description,
+                d.statut,
+                d.priorite,
+                d.canal,
+                d.date_creation,
+                d.date_modification,
+
+                o.nom AS organisation
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            INNER JOIN organisations o
+                ON o.id = d.organisation_id
+
+            WHERE
+                d.personne_id = $1
+                AND d.organisation_id = $2
+                AND t.code = $3
+
+            ORDER BY
+                d.date_creation DESC,
+                d.id DESC
+            `,
+            [
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -1614,5 +1813,7 @@ module.exports = {
     creerDemandeContactPartenaireDatabase,
     creerIntroductionPartenaireDatabase,
     obtenirEspacePartenaireDatabase,
-    listerPublicationsVisiblesPourPersonneDatabase
+    listerPublicationsVisiblesPourPersonneDatabase,
+    creerDemandeDatabase,
+    listerDemandesPersonneDatabase
 };
