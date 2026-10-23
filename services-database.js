@@ -116,8 +116,56 @@ async function listerOrganisationsParTenantEtTypeDatabase(
 }
 
 
+async function listerPersonnesParOrganisationEtRelationDatabase(
+    organisationId,
+    tenantCode,
+    typeRelation
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.prenom,
+                p.nom,
+                p.pays_residence,
+                p.departement,
+                p.profil,
+                r.type AS relation_type,
+                o.id AS organisation_id,
+                o.nom AS organisation_nom,
+                t.code AS tenant_code
+            FROM relations_personne_organisation r
+            INNER JOIN personnes p
+                ON p.id = r.personne_id
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                o.id = $1
+                AND t.code = $2
+                AND r.type = $3
+            ORDER BY
+                p.nom,
+                p.prenom
+            `,
+            [
+                organisationId,
+                tenantCode,
+                typeRelation
+            ]
+        );
+
+
+    return resultat.rows;
+}
+
+
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
-    listerOrganisationsParTenantEtTypeDatabase
+    listerOrganisationsParTenantEtTypeDatabase,
+    listerPersonnesParOrganisationEtRelationDatabase
 };

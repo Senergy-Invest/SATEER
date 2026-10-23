@@ -1,5 +1,5 @@
 const {
-    listerOrganisationsParTenantEtTypeDatabase
+    listerPersonnesParOrganisationEtRelationDatabase
 } = require(
     "./services-database"
 );
@@ -11,109 +11,112 @@ const {
 );
 
 
+async function afficherPersonnes(
+    titre,
+    personnes
+) {
+
+    console.log("");
+    console.log(
+        "----- " + titre + " -----"
+    );
+
+
+    if (
+        personnes.length === 0
+    ) {
+
+        console.log(
+            "Aucune personne trouvée."
+        );
+
+        return;
+    }
+
+
+    personnes.forEach(
+        personne => {
+
+            console.log(
+                personne.id +
+                " | " +
+                personne.prenom +
+                " " +
+                personne.nom +
+                " | " +
+                personne.relation_type +
+                " | tenant " +
+                personne.tenant_code
+            );
+
+        }
+    );
+}
+
+
 async function tester() {
 
     try {
 
         console.log("");
         console.log(
-            "===== TEST LISTE ORGANISATIONS ====="
+            "===== TEST PERSONNES / ORGANISATION ====="
         );
 
 
-        const consulats =
-            await listerOrganisationsParTenantEtTypeDatabase(
+        const usagers =
+            await listerPersonnesParOrganisationEtRelationDatabase(
+                1,
                 "SN",
-                "CONSULAT"
+                "USAGER"
             );
 
 
-        console.log("");
-        console.log(
-            "----- CONSULATS DU TENANT SN -----"
+        await afficherPersonnes(
+            "USAGERS DU CONSULAT",
+            usagers
         );
 
 
-        if (
-            consulats.length === 0
-        ) {
-
-            console.log(
-                "Aucun consulat trouvé."
-            );
-
-        } else {
-
-            consulats.forEach(
-                organisation => {
-
-                    console.log(
-                        organisation.id +
-                        " | " +
-                        organisation.nom +
-                        " | " +
-                        organisation.territoire
-                    );
-
-                }
-            );
-        }
-
-
-        const ambassades =
-            await listerOrganisationsParTenantEtTypeDatabase(
+        const agents =
+            await listerPersonnesParOrganisationEtRelationDatabase(
+                1,
                 "SN",
-                "AMBASSADE"
+                "AGENT"
             );
 
 
-        console.log("");
-        console.log(
-            "----- AMBASSADES DU TENANT SN -----"
+        await afficherPersonnes(
+            "AGENTS DU CONSULAT",
+            agents
         );
 
 
-        if (
-            ambassades.length === 0
-        ) {
-
-            console.log(
-                "Aucune ambassade trouvée."
+        const responsables =
+            await listerPersonnesParOrganisationEtRelationDatabase(
+                1,
+                "SN",
+                "RESPONSABLE"
             );
 
-        } else {
 
-            ambassades.forEach(
-                organisation => {
-
-                    console.log(
-                        organisation.id +
-                        " | " +
-                        organisation.nom +
-                        " | " +
-                        organisation.territoire
-                    );
-
-                }
-            );
-        }
+        await afficherPersonnes(
+            "RESPONSABLES DU CONSULAT",
+            responsables
+        );
 
 
-        const consulatsMali =
-            await listerOrganisationsParTenantEtTypeDatabase(
+        const testMauvaisTenant =
+            await listerPersonnesParOrganisationEtRelationDatabase(
+                1,
                 "ML",
-                "CONSULAT"
+                "USAGER"
             );
 
 
-        console.log("");
-        console.log(
-            "----- CONSULATS DU TENANT ML -----"
-        );
-
-        console.log(
-            "Nombre trouvé : " +
-            consulatsMali.length
+        await afficherPersonnes(
+            "TEST TENANT ML",
+            testMauvaisTenant
         );
 
 
