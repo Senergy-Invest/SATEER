@@ -27,7 +27,8 @@ const {
     trouverPersonneParIdDatabase,
     listerPublicationsVisiblesPourPersonneDatabase,
     enregistrerInteractionPublicationDatabase,
-    obtenirContexteIASecretariatDatabase
+    obtenirContexteIASecretariatDatabase,
+    repondreDemandeDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -4745,6 +4746,129 @@ async function analyserDemandeAvecIASecretariat(
                 .human_validation_required
     };
 }
+async function validerEtEnvoyerPropositionIASecretariat(
+    demandeId,
+    agentPersonneId,
+    organisationId,
+    tenantCode
+) {
+
+    // =====================================================
+    // 1. GÉNÉRER / RÉCUPÉRER LA PROPOSITION IA
+    // =====================================================
+
+    const analyse =
+        await analyserDemandeAvecIASecretariat(
+            demandeId,
+            organisationId,
+            tenantCode
+        );
+
+
+    if (
+        analyse === undefined
+    ) {
+
+        return {
+            succes: false,
+            raison: "ANALYSE_IA_INDISPONIBLE"
+        };
+    }
+
+
+    // =====================================================
+    // 2. REFUSER L'ENVOI AUTOMATIQUE EN CAS D'ESCALADE
+    // =====================================================
+
+    if (
+        analyse.statut ===
+        "ESCALADE_HUMAINE"
+    ) {
+
+        return {
+            succes: false,
+            raison: "ESCALADE_HUMAINE",
+            analyse
+        };
+    }
+
+
+    if (
+        !analyse.reponseProposee
+    ) {
+
+        return {
+            succes: false,
+            raison: "AUCUNE_REPONSE_PROPOSEE",
+            analyse
+        };
+    }
+
+
+    // =====================================================
+    // 3. VALIDATION HUMAINE
+    //
+    // L'appel de cette fonction représente ici
+    // l'action explicite "VALIDER ET ENVOYER"
+    // effectuée par l'agent.
+    // =====================================================
+
+    const reponse =
+        await repondreDemandeDatabase(
+            demandeId,
+            agentPersonneId,
+            organisationId,
+            tenantCode,
+            analyse.reponseProposee
+        );
+
+
+    if (
+        reponse === undefined
+    ) {
+
+        return {
+            succes: false,
+            raison: "ENVOI_IMPOSSIBLE",
+            analyse
+        };
+    }
+
+
+    return {
+
+        succes: true,
+
+        action:
+            "PROPOSITION_IA_VALIDEE_ET_ENVOYEE",
+
+        demandeId:
+            demandeId,
+
+        agentPersonneId:
+            agentPersonneId,
+
+        analyseIA:
+            analyse,
+
+        reponse: {
+            id:
+                reponse.reponse_id,
+
+            contenu:
+                reponse.contenu,
+
+            statutDemande:
+                reponse.demande_statut,
+
+            notificationId:
+                reponse.notification_id,
+
+            notificationStatut:
+                reponse.notification_statut
+        }
+    };
+}
 module.exports = {
     trouverPersonneParId,
     trouverOrganisationParId,
@@ -4790,7 +4914,8 @@ module.exports = {
     rejeterDiffusionDiaspora,
     afficherEspaceSateerCommunication,
     modifierCiblageDiffusionDiaspora,
-    analyserDemandeAvecIASecretariat
-    
-    
+    analyserDemandeAvecIASecretariat,
+    validerEtEnvoyerPropositionIASecretariat
 };
+    
+
