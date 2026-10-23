@@ -28,7 +28,8 @@ const {
     listerPublicationsVisiblesPourPersonneDatabase,
     enregistrerInteractionPublicationDatabase,
     obtenirContexteIASecretariatDatabase,
-    repondreDemandeDatabase
+    repondreDemandeDatabase,
+    obtenirContexteIACitoyenDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -4869,6 +4870,181 @@ async function validerEtEnvoyerPropositionIASecretariat(
         }
     };
 }
+async function repondreAvecIACitoyen(
+    personneId,
+    organisationId,
+    tenantCode,
+    question
+) {
+
+    const contexte =
+        await obtenirContexteIACitoyenDatabase(
+            personneId,
+            organisationId,
+            tenantCode
+        );
+
+
+    if (
+        contexte === undefined
+    ) {
+
+        return {
+            statut: "INDISPONIBLE",
+            reponse: null,
+            raison:
+                "Configuration IA Citoyen indisponible."
+        };
+    }
+
+
+    const texteQuestion =
+        String(
+            question || ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        texteQuestion.length === 0
+    ) {
+
+        return {
+            statut: "QUESTION_INVALIDE",
+            reponse: null
+        };
+    }
+
+
+    const connaissances =
+        contexte.connaissances;
+
+
+    // =====================================================
+    // AUCUNE CONNAISSANCE VALIDÉE
+    // =====================================================
+
+    if (
+        connaissances.length === 0
+    ) {
+
+        return {
+
+            statut:
+                "ESCALADE_HUMAINE",
+
+            reponse:
+                "Je ne dispose pas actuellement d'une source institutionnelle validée permettant de répondre à cette question. Je vous recommande de contacter le Consulat.",
+
+            confiance:
+                "FAIBLE",
+
+            sources:
+                []
+        };
+    }
+
+
+    // =====================================================
+    // PILOTE : DÉTECTION PASSEPORT
+    //
+    // Ceci simule pour l'instant l'orchestration IA.
+    // Un vrai modèle sera branché ensuite.
+    // =====================================================
+
+    const questionPasseport =
+        texteQuestion.includes(
+            "passeport"
+        );
+
+
+    const questionRenouvellement =
+        texteQuestion.includes(
+            "renouvel"
+        );
+
+
+    const connaissancePasseport =
+        connaissances.find(
+            article =>
+                article.code.includes(
+                    "PASSEPORT"
+                )
+        );
+
+
+    if (
+        questionPasseport &&
+        questionRenouvellement &&
+        connaissancePasseport
+    ) {
+
+        return {
+
+            statut:
+                "REPONSE_AUTORISEE",
+
+            confiance:
+                "ELEVEE",
+
+            categorie:
+                "PASSEPORT",
+
+            reponse:
+                "Bonjour " +
+                contexte.contexte.prenom +
+                ". Pour le renouvellement de votre passeport, je peux vous orienter vers la procédure officielle du Consulat. " +
+                "Je ne peux pas confirmer une liste de pièces, un tarif, un délai ou une modalité qui ne figure pas dans une source institutionnelle validée. " +
+                "Consultez la procédure officielle du Consulat ou contactez un agent si vous avez besoin d'une confirmation supplémentaire.",
+
+            sources: [
+                {
+                    id:
+                        connaissancePasseport.id,
+
+                    titre:
+                        connaissancePasseport.titre,
+
+                    source:
+                        connaissancePasseport.source_nom,
+
+                    version:
+                        connaissancePasseport.version
+                }
+            ],
+
+            escaladeHumaine:
+                false
+        };
+    }
+
+
+    // =====================================================
+    // QUESTION NON COUVERTE
+    // =====================================================
+
+    return {
+
+        statut:
+            "ESCALADE_HUMAINE",
+
+        confiance:
+            "FAIBLE",
+
+        categorie:
+            null,
+
+        reponse:
+            "Je ne dispose pas d'une information institutionnelle suffisamment précise pour répondre avec certitude à cette question. Je vous recommande de contacter le Consulat afin qu'un agent puisse vous répondre.",
+
+        sources:
+            [],
+
+        escaladeHumaine:
+            true
+    };
+}
 module.exports = {
     trouverPersonneParId,
     trouverOrganisationParId,
@@ -4915,7 +5091,8 @@ module.exports = {
     afficherEspaceSateerCommunication,
     modifierCiblageDiffusionDiaspora,
     analyserDemandeAvecIASecretariat,
-    validerEtEnvoyerPropositionIASecretariat
+    validerEtEnvoyerPropositionIASecretariat,
+    repondreAvecIACitoyen
 };
     
 

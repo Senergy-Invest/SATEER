@@ -4092,6 +4092,189 @@ async function obtenirContexteIASecretariatDatabase(
             connaissancesResultat.rows
     };
 }
+async function obtenirContexteIACitoyenDatabase(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    // =====================================================
+    // PERSONNE + ORGANISATION
+    // =====================================================
+
+    const contexteResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id AS personne_id,
+                p.prenom,
+                p.nom,
+
+                o.id AS organisation_id,
+                o.nom AS organisation,
+
+                t.id AS tenant_id,
+                t.code AS tenant_code
+
+            FROM personnes p
+
+            CROSS JOIN organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                p.id = $1
+
+                AND o.id = $2
+
+                AND t.code = $3
+            `,
+            [
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        contexteResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // CONFIGURATION IA CITOYEN
+    // =====================================================
+
+    const configurationResultat =
+        await executerRequete(
+            `
+            SELECT
+                ai.id,
+                ai.code,
+                ai.nom,
+                ai.use_case,
+                ai.actif,
+                ai.human_validation_required,
+                ai.configuration
+
+            FROM ai_configurations ai
+
+            INNER JOIN tenants t
+                ON t.id = ai.tenant_id
+
+            WHERE
+                ai.organisation_id = $1
+
+                AND t.code = $2
+
+                AND ai.use_case =
+                    'CITIZEN_ASSISTANT'
+
+                AND ai.actif = TRUE
+
+            ORDER BY
+                ai.id ASC
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        configurationResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    // =====================================================
+    // CONNAISSANCES VALIDÉES DE L'INSTITUTION
+    // =====================================================
+
+    const connaissancesResultat =
+        await executerRequete(
+            `
+            SELECT
+                ka.id,
+                ka.code,
+                ka.titre,
+                ka.contenu,
+                ka.langue,
+                ka.version,
+                ka.statut,
+
+                ks.code AS source_code,
+                ks.nom AS source_nom,
+                ks.type AS source_type
+
+            FROM knowledge_articles ka
+
+            INNER JOIN knowledge_sources ks
+                ON ks.id =
+                    ka.knowledge_source_id
+
+            INNER JOIN tenants t
+                ON t.id =
+                    ks.tenant_id
+
+            WHERE
+                ks.organisation_id = $1
+
+                AND t.code = $2
+
+                AND ks.actif = TRUE
+
+                AND ka.statut = 'VALIDE'
+
+                AND (
+                    ka.date_debut_validite IS NULL
+
+                    OR
+
+                    ka.date_debut_validite <=
+                        CURRENT_TIMESTAMP
+                )
+
+                AND (
+                    ka.date_fin_validite IS NULL
+
+                    OR
+
+                    ka.date_fin_validite >
+                        CURRENT_TIMESTAMP
+                )
+
+            ORDER BY
+                ka.version DESC,
+                ka.id DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+
+        contexte:
+            contexteResultat.rows[0],
+
+        configurationIA:
+            configurationResultat.rows[0],
+
+        connaissances:
+            connaissancesResultat.rows
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -4124,5 +4307,6 @@ module.exports = {
     listerPublicationsDiasporaPourPersonneDatabase,
     obtenirMonSateerDatabase,
     listerPublicationsAmbassadePourPersonneDatabase,
-    obtenirContexteIASecretariatDatabase
+    obtenirContexteIASecretariatDatabase,
+    obtenirContexteIACitoyenDatabase
 };
