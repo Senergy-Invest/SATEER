@@ -666,6 +666,155 @@ async function obtenirImpactPublicationDatabase(
             territoiresResultat.rows
     };
 }
+async function enregistrerInteractionPublicationDatabase(
+    publicationId,
+    personneId,
+    tenantCode,
+    eventType,
+    channel,
+    metadata = {}
+) {
+
+    const typesAutorises = [
+        "VIEW",
+        "CLICK",
+        "INTEREST",
+        "CONTACT_REQUEST",
+        "REGISTRATION",
+        "CONVERSION"
+    ];
+
+
+    if (
+        typesAutorises.includes(
+            eventType
+        ) === false
+    ) {
+
+        throw new Error(
+            "Type d'interaction analytics non autorisé : " +
+            eventType
+        );
+    }
+
+
+    const publicationResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.organisation_id,
+                p.tenant_id
+            FROM publications p
+            INNER JOIN tenants t
+                ON t.id = p.tenant_id
+            WHERE
+                p.id = $1
+                AND t.code = $2
+            `,
+            [
+                publicationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        publicationResultat.rows.length === 0
+    ) {
+
+        return undefined;
+    }
+
+
+    const publication =
+        publicationResultat.rows[0];
+
+
+    const personneResultat =
+        await executerRequete(
+            `
+            SELECT
+                id,
+                residence_country_id,
+                residence_territory_id
+            FROM personnes
+            WHERE id = $1
+            `,
+            [
+                personneId
+            ]
+        );
+
+
+    if (
+        personneResultat.rows.length === 0
+    ) {
+
+        return undefined;
+    }
+
+
+    const personne =
+        personneResultat.rows[0];
+
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO analytics_events (
+                tenant_id,
+                organisation_id,
+                publication_id,
+                personne_id,
+                event_type,
+                country_id,
+                territory_id,
+                channel,
+                metadata
+            )
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8,
+                $9::jsonb
+            )
+            RETURNING
+                id,
+                tenant_id,
+                organisation_id,
+                publication_id,
+                personne_id,
+                event_type,
+                country_id,
+                territory_id,
+                channel,
+                metadata,
+                date_evenement
+            `,
+            [
+                publication.tenant_id,
+                publication.organisation_id,
+                publicationId,
+                personneId,
+                eventType,
+                personne.residence_country_id,
+                personne.residence_territory_id,
+                channel,
+                JSON.stringify(
+                    metadata || {}
+                )
+            ]
+        );
+
+
+    return resultat.rows[0];
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -676,5 +825,6 @@ module.exports = {
     creerPublicationDatabase,
     listerPublicationsParOrganisationEtTenantDatabase,
     enregistrerEvenementAnalyticsDatabase,
-    obtenirImpactPublicationDatabase
+    obtenirImpactPublicationDatabase,
+    enregistrerInteractionPublicationDatabase
 };
