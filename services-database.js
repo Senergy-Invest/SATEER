@@ -849,6 +849,252 @@ async function trouverPersonneParIdDatabase(
 
     return resultat.rows[0];
 }
+async function creerDemandeContactPartenaireDatabase(
+    publicationId,
+    personneId,
+    tenantCode,
+    texteConsentement,
+    besoin,
+    channel
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            WITH contexte AS (
+
+                SELECT
+                    t.id AS tenant_id,
+
+                    p.id AS publication_id,
+
+                    p.organisation_id
+                        AS partner_organisation_id,
+
+                    personne.id AS personne_id,
+
+                    personne.residence_country_id,
+
+                    personne.residence_territory_id,
+
+                    sateer.id
+                        AS sateer_organisation_id
+
+                FROM publications p
+
+                INNER JOIN tenants t
+                    ON t.id = p.tenant_id
+
+                INNER JOIN personnes personne
+                    ON personne.id = $2
+
+                INNER JOIN organisations sateer
+                    ON sateer.tenant_id = t.id
+                    AND sateer.type = 'SATEER'
+
+                WHERE
+                    p.id = $1
+                    AND t.code = $3
+
+                    AND EXISTS (
+                        SELECT 1
+                        FROM partner_agreements pa
+                        WHERE
+                            pa.tenant_id = t.id
+                            AND pa.sateer_organisation_id =
+                                sateer.id
+                            AND pa.partner_organisation_id =
+                                p.organisation_id
+                            AND pa.statut = 'ACTIF'
+                    )
+            ),
+
+
+            nouveau_consentement AS (
+
+                INSERT INTO consents (
+                    tenant_id,
+                    personne_id,
+                    organisation_id,
+                    publication_id,
+                    consent_type,
+                    statut,
+                    texte_consentement,
+                    metadata
+                )
+
+                SELECT
+                    tenant_id,
+                    personne_id,
+                    partner_organisation_id,
+                    publication_id,
+                    'PARTAGE_COORDONNEES',
+                    'ACCORDE',
+                    $4,
+                    jsonb_build_object(
+                        'channel',
+                        $6::text
+                    )
+
+                FROM contexte
+
+                RETURNING
+                    id,
+                    tenant_id,
+                    personne_id,
+                    organisation_id,
+                    publication_id
+            ),
+
+
+            nouveau_lead AS (
+
+                INSERT INTO leads (
+                    tenant_id,
+                    personne_id,
+                    source_organisation_id,
+                    publication_id,
+                    partner_organisation_id,
+                    consent_id,
+                    type,
+                    statut,
+                    besoin,
+                    metadata
+                )
+
+                SELECT
+                    c.tenant_id,
+                    c.personne_id,
+
+                    contexte.sateer_organisation_id,
+
+                    c.publication_id,
+
+                    c.organisation_id,
+
+                    c.id,
+
+                    'CONTACT_REQUEST',
+
+                    'NOUVEAU',
+
+                    $5,
+
+                    jsonb_build_object(
+                        'channel',
+                        $6::text,
+                        'origine',
+                        'PUBLICATION'
+                    )
+
+                FROM nouveau_consentement c
+
+                INNER JOIN contexte
+                    ON contexte.publication_id =
+                        c.publication_id
+
+                RETURNING
+                    id,
+                    tenant_id,
+                    personne_id,
+                    partner_organisation_id,
+                    consent_id,
+                    publication_id,
+                    statut
+            ),
+
+
+            nouvel_evenement AS (
+
+                INSERT INTO analytics_events (
+                    tenant_id,
+                    organisation_id,
+                    publication_id,
+                    personne_id,
+                    event_type,
+                    country_id,
+                    territory_id,
+                    channel,
+                    metadata
+                )
+
+                SELECT
+                    contexte.tenant_id,
+
+                    contexte.partner_organisation_id,
+
+                    contexte.publication_id,
+
+                    contexte.personne_id,
+
+                    'CONTACT_REQUEST',
+
+                    contexte.residence_country_id,
+
+                    contexte.residence_territory_id,
+
+                    $6::text,
+
+                    jsonb_build_object(
+                        'lead_id',
+                        nouveau_lead.id,
+                        'consent_id',
+                        nouveau_lead.consent_id
+                    )
+
+                FROM contexte
+
+                INNER JOIN nouveau_lead
+                    ON nouveau_lead.publication_id =
+                        contexte.publication_id
+
+                RETURNING
+                    id
+            )
+
+
+            SELECT
+                nouveau_lead.id AS lead_id,
+
+                nouveau_lead.consent_id,
+
+                nouveau_lead.publication_id,
+
+                nouveau_lead.personne_id,
+
+                nouveau_lead.partner_organisation_id,
+
+                nouveau_lead.statut,
+
+                nouvel_evenement.id
+                    AS analytics_event_id
+
+            FROM nouveau_lead
+
+            INNER JOIN nouvel_evenement
+                ON TRUE
+            `,
+            [
+                publicationId,
+                personneId,
+                tenantCode,
+                texteConsentement,
+                besoin,
+                channel
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
+
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -861,5 +1107,6 @@ module.exports = {
     enregistrerEvenementAnalyticsDatabase,
     obtenirImpactPublicationDatabase,
     enregistrerInteractionPublicationDatabase,
-    trouverPersonneParIdDatabase
+    trouverPersonneParIdDatabase,
+    creerDemandeContactPartenaireDatabase
 };
