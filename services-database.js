@@ -1446,6 +1446,158 @@ async function obtenirEspacePartenaireDatabase(
             suivisResultat.rows
     };
 }
+async function listerPublicationsVisiblesPourPersonneDatabase(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                pub.id,
+                pub.tenant_id,
+                pub.organisation_id,
+                pub.publie_par,
+                pub.titre,
+                pub.contenu,
+                pub.categorie,
+                pub.priorite,
+                pub.audience_type,
+                pub.audience_valeur,
+                pub.medias,
+                pub.statut,
+                pub.statut_diffusion_diaspora,
+                pub.date_publication,
+
+                p.prenom,
+                p.nom,
+                p.profil,
+
+                p.pays_residence,
+                p.departement,
+
+                c.nom AS pays_structure,
+
+                tr.nom AS territoire_structure
+
+            FROM publications pub
+
+            INNER JOIN tenants t
+                ON t.id = pub.tenant_id
+
+            INNER JOIN personnes p
+                ON p.id = $1
+
+            LEFT JOIN countries c
+                ON c.id =
+                    p.residence_country_id
+
+            LEFT JOIN territories tr
+                ON tr.id =
+                    p.residence_territory_id
+
+            WHERE
+                pub.organisation_id = $2
+
+                AND t.code = $3
+
+                AND pub.statut = 'PUBLIEE'
+
+                AND (
+
+                    pub.audience_type = 'TOUS'
+
+                    OR
+
+                    (
+                        pub.audience_type =
+                            'DEPARTEMENT'
+
+                        AND (
+                            pub.audience_valeur =
+                                tr.nom
+
+                            OR
+
+                            pub.audience_valeur =
+                                p.departement
+                        )
+                    )
+
+                    OR
+
+                    (
+                        pub.audience_type =
+                            'PROFIL'
+
+                        AND pub.audience_valeur =
+                            p.profil
+                    )
+
+                    OR
+
+                    (
+                        pub.audience_type =
+                            'ASSOCIATION'
+
+                        AND EXISTS (
+
+                            SELECT 1
+
+                            FROM
+                                relations_personne_organisation r
+
+                            INNER JOIN organisations o
+                                ON o.id =
+                                    r.organisation_id
+
+                            WHERE
+                                r.personne_id =
+                                    p.id
+
+                                AND (
+                                    pub.audience_valeur =
+                                        o.nom
+
+                                    OR
+
+                                    pub.audience_valeur =
+                                        o.id::text
+                                )
+                        )
+                    )
+                )
+
+            ORDER BY
+
+                CASE pub.priorite
+
+                    WHEN 'URGENTE'
+                        THEN 1
+
+                    WHEN 'IMPORTANTE'
+                        THEN 2
+
+                    ELSE 3
+
+                END,
+
+                pub.date_publication DESC,
+
+                pub.id DESC
+            `,
+            [
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -1461,5 +1613,6 @@ module.exports = {
     trouverPersonneParIdDatabase,
     creerDemandeContactPartenaireDatabase,
     creerIntroductionPartenaireDatabase,
-    obtenirEspacePartenaireDatabase
+    obtenirEspacePartenaireDatabase,
+    listerPublicationsVisiblesPourPersonneDatabase
 };

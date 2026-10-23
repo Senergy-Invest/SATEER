@@ -24,7 +24,9 @@ const {
     trouverOrganisationParIdEtTenantDatabase,
     listerPublicationsParOrganisationEtTenantDatabase,
     enregistrerEvenementAnalyticsDatabase,
-    trouverPersonneParIdDatabase
+    trouverPersonneParIdDatabase,
+    listerPublicationsVisiblesPourPersonneDatabase,
+    enregistrerInteractionPublicationDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -787,7 +789,7 @@ async function afficherMonConsulatPostgreSQL(
 ) {
 
     const personne =
-        trouverPersonneParId(
+        await trouverPersonneParIdDatabase(
             personneId
         );
 
@@ -796,7 +798,6 @@ async function afficherMonConsulatPostgreSQL(
         personne === undefined
     ) {
 
-        console.log("");
         console.log(
             "Personne introuvable."
         );
@@ -805,7 +806,7 @@ async function afficherMonConsulatPostgreSQL(
     }
 
 
-    const consulat =
+    const organisation =
         await trouverOrganisationParIdEtTenantDatabase(
             organisationId,
             tenantCode
@@ -813,10 +814,9 @@ async function afficherMonConsulatPostgreSQL(
 
 
     if (
-        consulat === undefined
+        organisation === undefined
     ) {
 
-        console.log("");
         console.log(
             "Consulat introuvable pour le tenant " +
             tenantCode +
@@ -828,62 +828,28 @@ async function afficherMonConsulatPostgreSQL(
 
 
     if (
-        consulat.type !== "CONSULAT"
+        organisation.type !==
+        "CONSULAT"
     ) {
 
-        console.log("");
         console.log(
-            "L'organisation demandée n'est pas un consulat."
+            "Cette organisation n'est pas un consulat."
         );
 
         return;
     }
 
 
-    const publicationsDatabase =
-        await listerPublicationsParOrganisationEtTenantDatabase(
+    const informations =
+        await listerPublicationsVisiblesPourPersonneDatabase(
+            personneId,
             organisationId,
             tenantCode
         );
 
 
-    const informations =
-        publicationsDatabase.filter(
-            publication => {
-
-                const estPubliee =
-                    publication.statut ===
-                    "PUBLIEE";
-
-
-                if (
-                    estPubliee === false
-                ) {
-                    return false;
-                }
-
-
-                const personnesCiblees =
-                    trouverPersonnesCiblees(
-                        publication.audience_type,
-                        publication.audience_valeur
-                    );
-
-
-                const personneEstCiblee =
-                    personnesCiblees.some(
-                        personneCiblee =>
-                            personneCiblee.id ===
-                            personneId
-                    );
-
-
-                return personneEstCiblee;
-            }
-        );
-
-
     console.log("");
+
     console.log(
         "===== MON CONSULAT POSTGRESQL ====="
     );
@@ -898,7 +864,7 @@ async function afficherMonConsulatPostgreSQL(
 
     console.log(
         "Consulat : " +
-        consulat.nom
+        organisation.nom
     );
 
 
@@ -909,6 +875,7 @@ async function afficherMonConsulatPostgreSQL(
 
 
     console.log("");
+
     console.log(
         "Informations officielles :"
     );
@@ -928,28 +895,33 @@ async function afficherMonConsulatPostgreSQL(
             const information
             of informations
         ) {
-            await enregistrerEvenementAnalyticsDatabase(
-                tenantCode,
-                organisationId,
+
+            await enregistrerInteractionPublicationDatabase(
                 information.id,
                 personneId,
+                tenantCode,
                 "VIEW",
                 "MON_CONSULAT"
-    );
+            );
+
+
             console.log("");
 
             console.log(
                 information.titre
             );
 
+
             console.log(
                 information.contenu
             );
+
 
             console.log(
                 "Catégorie : " +
                 information.categorie
             );
+
 
             console.log(
                 "Priorité : " +
@@ -958,8 +930,10 @@ async function afficherMonConsulatPostgreSQL(
 
 
             if (
-                information.medias !== undefined &&
-                information.medias !== null &&
+                information.medias &&
+                Array.isArray(
+                    information.medias
+                ) &&
                 information.medias.length > 0
             ) {
 
@@ -975,12 +949,23 @@ async function afficherMonConsulatPostgreSQL(
 
                     console.log(
                         "- " +
-                        media.type +
-                        " | " +
-                        media.nom +
-                        " | " +
-                        media.url
+                        (
+                            media.nom ||
+                            media.type ||
+                            "Média"
+                        )
                     );
+
+
+                    if (
+                        media.url
+                    ) {
+
+                        console.log(
+                            "  " +
+                            media.url
+                        );
+                    }
                 }
             }
         }
@@ -993,13 +978,16 @@ async function afficherMonConsulatPostgreSQL(
         "Services disponibles :"
     );
 
+
     console.log(
         "- Contacter le Consulat"
     );
 
+
     console.log(
         "- Mes demandes"
     );
+
 
     console.log(
         "- Services officiels"
