@@ -1297,6 +1297,155 @@ async function creerIntroductionPartenaireDatabase(
 
     return resultat.rows[0];
 }
+async function obtenirEspacePartenaireDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id,
+                o.nom,
+                o.type,
+                t.code AS tenant_code
+            FROM organisations o
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                o.id = $1
+                AND t.code = $2
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        organisationResultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    const introductionsResultat =
+        await executerRequete(
+            `
+            SELECT
+                i.id AS introduction_id,
+
+                i.statut AS introduction_statut,
+
+                i.canal,
+
+                i.date_introduction,
+
+                l.id AS lead_id,
+
+                l.statut AS lead_statut,
+
+                l.besoin,
+
+                l.publication_id,
+
+                p.id AS personne_id,
+
+                p.prenom,
+
+                p.nom,
+
+                c.id AS consent_id,
+
+                c.consent_type,
+
+                c.statut AS consent_statut,
+
+                c.date_consentement
+
+            FROM introductions i
+
+            INNER JOIN leads l
+                ON l.id = i.lead_id
+                AND l.tenant_id = i.tenant_id
+                AND l.partner_organisation_id =
+                    i.partner_organisation_id
+
+            INNER JOIN personnes p
+                ON p.id = l.personne_id
+
+            INNER JOIN consents c
+                ON c.id = l.consent_id
+                AND c.personne_id = l.personne_id
+
+            INNER JOIN tenants t
+                ON t.id = i.tenant_id
+
+            WHERE
+                i.partner_organisation_id = $1
+                AND t.code = $2
+
+            ORDER BY
+                i.date_introduction DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    const suivisResultat =
+        await executerRequete(
+            `
+            SELECT
+                f.id,
+                f.lead_id,
+                f.statut,
+                f.note,
+                f.date_suivi,
+
+                p.prenom AS agent_prenom,
+                p.nom AS agent_nom
+
+            FROM lead_followups f
+
+            INNER JOIN leads l
+                ON l.id = f.lead_id
+
+            INNER JOIN tenants t
+                ON t.id = f.tenant_id
+
+            LEFT JOIN personnes p
+                ON p.id = f.personne_agent_id
+
+            WHERE
+                l.partner_organisation_id = $1
+                AND t.code = $2
+
+            ORDER BY
+                f.date_suivi DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+        organisation:
+            organisationResultat.rows[0],
+
+        introductions:
+            introductionsResultat.rows,
+
+        suivis:
+            suivisResultat.rows
+    };
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -1311,5 +1460,6 @@ module.exports = {
     enregistrerInteractionPublicationDatabase,
     trouverPersonneParIdDatabase,
     creerDemandeContactPartenaireDatabase,
-    creerIntroductionPartenaireDatabase
+    creerIntroductionPartenaireDatabase,
+    obtenirEspacePartenaireDatabase
 };
