@@ -23,7 +23,8 @@ const {
     creerPublicationDatabase,
     trouverOrganisationParIdEtTenantDatabase,
     listerPublicationsParOrganisationEtTenantDatabase,
-    enregistrerEvenementAnalyticsDatabase
+    enregistrerEvenementAnalyticsDatabase,
+    trouverPersonneParIdDatabase
 } = require("./services-database");
 
 function trouverPersonneParId(personneId) {
@@ -1154,14 +1155,16 @@ async function publierInformationPostgreSQL(
 ) {
 
     const organisation =
-        trouverOrganisationParId(
-            organisationId
-        );
+    await trouverOrganisationParIdEtTenantDatabase(
+        organisationId,
+        tenantCode
+    );
 
-    const personne =
-        trouverPersonneParId(
-            personneId
-        );
+
+const personne =
+    await trouverPersonneParIdDatabase(
+        personneId
+    );
 
 
     if (

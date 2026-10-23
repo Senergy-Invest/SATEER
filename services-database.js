@@ -815,6 +815,40 @@ async function enregistrerInteractionPublicationDatabase(
 
     return resultat.rows[0];
 }
+async function trouverPersonneParIdDatabase(
+    personneId
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.prenom,
+                p.nom,
+                p.pays_residence,
+                p.departement,
+                p.profil,
+                p.residence_country_id,
+                p.residence_territory_id
+            FROM personnes p
+            WHERE p.id = $1
+            `,
+            [
+                personneId
+            ]
+        );
+
+
+    if (
+        resultat.rows.length === 0
+    ) {
+        return undefined;
+    }
+
+
+    return resultat.rows[0];
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -826,5 +860,6 @@ module.exports = {
     listerPublicationsParOrganisationEtTenantDatabase,
     enregistrerEvenementAnalyticsDatabase,
     obtenirImpactPublicationDatabase,
-    enregistrerInteractionPublicationDatabase
+    enregistrerInteractionPublicationDatabase,
+    trouverPersonneParIdDatabase
 };
