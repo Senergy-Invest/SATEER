@@ -2498,6 +2498,250 @@ async function obtenirDashboardConsulatDatabase(
 
 
     // =====================================================
+    // DÉLAI MOYEN DE TRAITEMENT
+    // =====================================================
+
+    const delaiResultat =
+    await executerRequete(
+        `
+        SELECT
+
+            ROUND(
+                AVG(
+                    EXTRACT(
+                        EPOCH FROM (
+                            d.date_cloture -
+                            d.date_creation
+                        )
+                    ) / 3600
+                )::numeric,
+                2
+            ) AS heures_moyennes,
+
+            COUNT(*) AS demandes_mesurees
+
+        FROM demandes d
+
+        INNER JOIN tenants t
+            ON t.id = d.tenant_id
+
+        WHERE
+            d.organisation_id = $1
+            AND t.code = $2
+            AND d.statut = 'TRAITEE'
+            AND d.date_cloture IS NOT NULL
+        `,
+        [
+            organisationId,
+            tenantCode
+        ]
+    );
+
+
+    // =====================================================
+    // DEMANDES PAR CATÉGORIE
+    // =====================================================
+
+    const categoriesResultat =
+        await executerRequete(
+            `
+            SELECT
+                d.categorie,
+
+                COUNT(*) AS total,
+
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'NOUVELLE'
+                ) AS nouvelles,
+
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'EN_COURS'
+                ) AS en_cours,
+
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'TRAITEE'
+                ) AS traitees
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            WHERE
+                d.organisation_id = $1
+                AND t.code = $2
+
+            GROUP BY
+                d.categorie
+
+            ORDER BY
+                total DESC,
+                d.categorie ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // DEMANDES PAR TERRITOIRE
+    // =====================================================
+
+    const demandesTerritoiresResultat =
+        await executerRequete(
+            `
+            SELECT
+
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                ) AS territoire,
+
+                COUNT(*) AS total,
+
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'NOUVELLE'
+                ) AS nouvelles,
+
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'EN_COURS'
+                ) AS en_cours,
+
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'TRAITEE'
+                ) AS traitees
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            INNER JOIN personnes p
+                ON p.id = d.personne_id
+
+            LEFT JOIN territories tr
+                ON tr.id =
+                    p.residence_territory_id
+
+            WHERE
+                d.organisation_id = $1
+                AND t.code = $2
+
+            GROUP BY
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                )
+
+            ORDER BY
+                total DESC,
+                territoire ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // DEMANDES À SURVEILLER
+    //
+    // Pour le pilote :
+    // - urgente
+    // - importante
+    // - ou ouverte depuis plus de 3 jours
+    // =====================================================
+
+    const surveillanceResultat =
+        await executerRequete(
+            `
+            SELECT
+                d.id,
+                d.objet,
+                d.categorie,
+                d.statut,
+                d.priorite,
+                d.date_creation,
+
+                p.prenom,
+                p.nom,
+
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                ) AS territoire,
+
+                ROUND(
+                    EXTRACT(
+                        EPOCH FROM (
+                            CURRENT_TIMESTAMP -
+                            d.date_creation
+                        )
+                    ) / 86400,
+                    1
+                ) AS age_jours
+
+            FROM demandes d
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            INNER JOIN personnes p
+                ON p.id = d.personne_id
+
+            LEFT JOIN territories tr
+                ON tr.id =
+                    p.residence_territory_id
+
+            WHERE
+                d.organisation_id = $1
+                AND t.code = $2
+
+                AND d.statut <> 'TRAITEE'
+
+                AND (
+                    d.priorite IN (
+                        'URGENTE',
+                        'IMPORTANTE'
+                    )
+
+                    OR
+
+                    d.date_creation <
+                        CURRENT_TIMESTAMP -
+                        INTERVAL '3 days'
+                )
+
+            ORDER BY
+
+                CASE d.priorite
+
+                    WHEN 'URGENTE'
+                        THEN 1
+
+                    WHEN 'IMPORTANTE'
+                        THEN 2
+
+                    ELSE 3
+
+                END,
+
+                d.date_creation ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
     // PUBLICATIONS
     // =====================================================
 
@@ -2521,11 +2765,13 @@ async function obtenirDashboardConsulatDatabase(
                 ) AS urgentes,
 
                 COUNT(*) FILTER (
-                    WHERE statut_diffusion_diaspora = 'SOUMISE'
+                    WHERE statut_diffusion_diaspora =
+                        'SOUMISE'
                 ) AS soumises_diaspora,
 
                 COUNT(*) FILTER (
-                    WHERE statut_diffusion_diaspora = 'DIFFUSEE'
+                    WHERE statut_diffusion_diaspora =
+                        'DIFFUSEE'
                 ) AS diffusees_diaspora
 
             FROM publications p
@@ -2595,13 +2841,14 @@ async function obtenirDashboardConsulatDatabase(
 
 
     // =====================================================
-    // RÉPARTITION TERRITORIALE
+    // RÉPARTITION TERRITORIALE DES USAGERS
     // =====================================================
 
     const territoiresResultat =
         await executerRequete(
             `
             SELECT
+
                 COALESCE(
                     tr.nom,
                     p.departement,
@@ -2738,6 +2985,18 @@ async function obtenirDashboardConsulatDatabase(
 
         demandes:
             demandesResultat.rows[0],
+
+        delaiTraitement:
+            delaiResultat.rows[0],
+
+        demandesParCategorie:
+            categoriesResultat.rows,
+
+        demandesParTerritoire:
+            demandesTerritoiresResultat.rows,
+
+        demandesASurveiller:
+            surveillanceResultat.rows,
 
         publications:
             publicationsResultat.rows[0],

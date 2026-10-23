@@ -101,6 +101,166 @@ async function tester() {
 
 
         // =================================================
+        // PERFORMANCE
+        // =================================================
+
+        console.log("");
+        console.log(
+            "===== PERFORMANCE ====="
+        );
+
+
+        console.log(
+            "Demandes mesurées : " +
+            dashboard.delaiTraitement.demandes_mesurees
+        );
+
+
+        console.log(
+            "Délai moyen de traitement : " +
+            (
+                dashboard.delaiTraitement.heures_moyennes ||
+                0
+            ) +
+            " heure(s)"
+        );
+
+
+        // =================================================
+        // CATÉGORIES
+        // =================================================
+
+        console.log("");
+        console.log(
+            "===== DEMANDES PAR CATÉGORIE ====="
+        );
+
+
+        if (
+            dashboard.demandesParCategorie.length === 0
+        ) {
+
+            console.log(
+                "Aucune demande."
+            );
+
+        } else {
+
+            for (
+                const categorie
+                of dashboard.demandesParCategorie
+            ) {
+
+                console.log(
+                    "- " +
+                    categorie.categorie +
+                    " : " +
+                    categorie.total
+                );
+            }
+        }
+
+
+        // =================================================
+        // TERRITOIRES DES DEMANDES
+        // =================================================
+
+        console.log("");
+        console.log(
+            "===== DEMANDES PAR TERRITOIRE ====="
+        );
+
+
+        if (
+            dashboard.demandesParTerritoire.length === 0
+        ) {
+
+            console.log(
+                "Aucune donnée."
+            );
+
+        } else {
+
+            for (
+                const territoire
+                of dashboard.demandesParTerritoire
+            ) {
+
+                console.log(
+                    "- " +
+                    territoire.territoire +
+                    " : " +
+                    territoire.total
+                );
+            }
+        }
+
+
+        // =================================================
+        // À SURVEILLER
+        // =================================================
+
+        console.log("");
+        console.log(
+            "===== DEMANDES À SURVEILLER ====="
+        );
+
+
+        if (
+            dashboard.demandesASurveiller.length === 0
+        ) {
+
+            console.log(
+                "Aucune demande nécessitant une attention particulière."
+            );
+
+        } else {
+
+            for (
+                const demande
+                of dashboard.demandesASurveiller
+            ) {
+
+                console.log("");
+
+                console.log(
+                    "#" +
+                    demande.id +
+                    " - " +
+                    demande.prenom +
+                    " " +
+                    demande.nom
+                );
+
+
+                console.log(
+                    demande.objet
+                );
+
+
+                console.log(
+                    demande.priorite +
+                    " / " +
+                    demande.statut
+                );
+
+
+                console.log(
+                    "Territoire : " +
+                    demande.territoire
+                );
+
+
+                console.log(
+                    "Âge : " +
+                    demande.age_jours +
+                    " jour(s)"
+                );
+            }
+        }
+
+
+        // =================================================
         // PUBLICATIONS
         // =================================================
 
@@ -147,7 +307,7 @@ async function tester() {
 
 
         // =================================================
-        // DIASPORA / USAGERS
+        // DIASPORA
         // =================================================
 
         console.log("");
@@ -169,6 +329,7 @@ async function tester() {
 
 
         console.log("");
+
         console.log(
             "Répartition territoriale :"
         );
@@ -189,7 +350,7 @@ async function tester() {
 
 
         // =================================================
-        // ACTIVITÉ RÉCENTE
+        // ACTIVITÉ
         // =================================================
 
         console.log("");
