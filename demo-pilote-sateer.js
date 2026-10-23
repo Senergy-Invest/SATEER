@@ -167,54 +167,94 @@ async function demo() {
 
 
         // =================================================
-        // ÉTAPE 2
-        // MON AMBASSADE
-        // =================================================
+// ÉTAPE 2
+// MON AMBASSADE
+// =================================================
 
-        titre(
-            "2. FATOU CONSULTE MON AMBASSADE"
-        );
-
-
-        const publicationsAmbassade =
-            await listerPublicationsAmbassadePourPersonneDatabase(
-                FATOU_ID,
-                AMBASSADE_ID,
-                TENANT
-            );
+titre(
+    "2. FATOU CONSULTE MON AMBASSADE"
+);
 
 
-        if (
-            publicationsAmbassade.length === 0
-        ) {
+// =================================================
+// L'AMBASSADE PUBLIE UNE INFORMATION OFFICIELLE
+// =================================================
 
-            console.log(
-                "Aucune information Ambassade disponible."
-            );
+const publicationAmbassadeCreee =
+    await publierInformationPostgreSQL(
+        AMBASSADE_ID,
 
-        } else {
+        "Information officielle de l'Ambassade",
 
-            const publicationAmbassade =
-                publicationsAmbassade[0];
+        "L'Ambassade du Sénégal en France informe la communauté sénégalaise d'une information officielle destinée aux Sénégalais résidant en France.",
+
+        "TOUS",
+
+        null,
+
+        "COMMUNIQUE",
+
+        "IMPORTANTE",
+
+        4,
+
+        TENANT,
+
+        []
+    );
 
 
-            valeur(
-                "Information",
-                publicationAmbassade.titre
-            );
+if (!publicationAmbassadeCreee) {
+
+    throw new Error(
+        "Publication Ambassade impossible."
+    );
+}
 
 
-            valeur(
-                "Catégorie",
-                publicationAmbassade.categorie
-            );
+// =================================================
+// FATOU CONSULTE MON AMBASSADE
+// =================================================
+
+const publicationsAmbassade =
+    await listerPublicationsAmbassadePourPersonneDatabase(
+        FATOU_ID,
+        AMBASSADE_ID,
+        TENANT
+    );
 
 
-            valeur(
-                "Priorité",
-                publicationAmbassade.priorite
-            );
-        }
+if (
+    publicationsAmbassade.length === 0
+) {
+
+    console.log(
+        "Aucune information Ambassade disponible."
+    );
+
+} else {
+
+    const publicationAmbassade =
+        publicationsAmbassade[0];
+
+
+    valeur(
+        "Information",
+        publicationAmbassade.titre
+    );
+
+
+    valeur(
+        "Catégorie",
+        publicationAmbassade.categorie
+    );
+
+
+    valeur(
+        "Priorité",
+        publicationAmbassade.priorite
+    );
+}
 
 
         // =================================================
