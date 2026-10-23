@@ -378,7 +378,59 @@ async function creerPublicationDatabase(
 
     return resultat.rows[0];
 }
+async function listerPublicationsParOrganisationEtTenantDatabase(
+    organisationId,
+    tenantCode
+) {
 
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.tenant_id,
+                p.organisation_id,
+                p.publie_par,
+                p.titre,
+                p.contenu,
+                p.categorie,
+                p.priorite,
+                p.audience_type,
+                p.audience_valeur,
+                p.medias,
+                p.statut,
+                p.statut_diffusion_diaspora,
+                p.date_publication,
+
+                o.nom AS organisation_nom,
+
+                t.code AS tenant_code
+
+            FROM publications p
+
+            INNER JOIN organisations o
+                ON o.id = p.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = p.tenant_id
+
+            WHERE
+                p.organisation_id = $1
+                AND t.code = $2
+
+            ORDER BY
+                p.date_publication DESC,
+                p.id DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -386,5 +438,6 @@ module.exports = {
     listerPersonnesParOrganisationEtRelationDatabase,
     trouverRelationPersonneOrganisationDatabase,
     aPermissionDatabase,
-    creerPublicationDatabase
+    creerPublicationDatabase,
+    listerPublicationsParOrganisationEtTenantDatabase
 };
