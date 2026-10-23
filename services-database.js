@@ -2063,6 +2063,7 @@ async function repondreDemandeDatabase(
                     d.tenant_id,
                     d.organisation_id,
                     d.personne_id,
+                    d.objet,
                     d.statut AS ancien_statut,
 
                     agent.id AS agent_id
@@ -2195,6 +2196,52 @@ async function repondreDemandeDatabase(
                 RETURNING
                     id,
                     demande_id
+            ),
+
+
+            nouvelle_notification AS (
+
+                INSERT INTO notifications (
+                    tenant_id,
+                    personne_id,
+                    organisation_id,
+                    type,
+                    titre,
+                    message,
+                    reference_type,
+                    reference_id,
+                    canal,
+                    statut
+                )
+
+                SELECT
+                    contexte.tenant_id,
+
+                    contexte.personne_id,
+
+                    contexte.organisation_id,
+
+                    'REPONSE_DEMANDE',
+
+                    'Votre demande a reçu une réponse',
+
+                    'Une réponse est disponible pour votre demande : '
+                        || contexte.objet,
+
+                    'DEMANDE',
+
+                    contexte.demande_id,
+
+                    'MON_SATEER',
+
+                    'NON_LUE'
+
+                FROM contexte
+
+                RETURNING
+                    id,
+                    personne_id,
+                    statut
             )
 
 
@@ -2215,7 +2262,11 @@ async function repondreDemandeDatabase(
 
                 d.date_cloture,
 
-                h.id AS history_id
+                h.id AS history_id,
+
+                n.id AS notification_id,
+
+                n.statut AS notification_statut
 
             FROM nouvelle_reponse r
 
@@ -2224,6 +2275,9 @@ async function repondreDemandeDatabase(
 
             INNER JOIN nouvel_historique h
                 ON h.demande_id = r.demande_id
+
+            INNER JOIN nouvelle_notification n
+                ON TRUE
             `,
             [
                 demandeId,
@@ -2304,6 +2358,62 @@ async function listerReponsesDemandeCitoyenDatabase(
 
     return resultat.rows;
 }
+
+async function listerNotificationsPersonneDatabase(
+    personneId,
+    tenantCode,
+    statut = null
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                n.id,
+                n.type,
+                n.titre,
+                n.message,
+                n.reference_type,
+                n.reference_id,
+                n.canal,
+                n.statut,
+                n.date_creation,
+                n.date_lecture,
+
+                o.nom AS organisation
+
+            FROM notifications n
+
+            INNER JOIN tenants t
+                ON t.id = n.tenant_id
+
+            LEFT JOIN organisations o
+                ON o.id = n.organisation_id
+
+            WHERE
+                n.personne_id = $1
+
+                AND t.code = $2
+
+                AND (
+                    $3::text IS NULL
+                    OR n.statut = $3::text
+                )
+
+            ORDER BY
+                n.date_creation DESC,
+                n.id DESC
+            `,
+            [
+                personneId,
+                tenantCode,
+                statut
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -2326,5 +2436,6 @@ module.exports = {
     listerDemandesOrganisationDatabase,
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
-    listerReponsesDemandeCitoyenDatabase
+    listerReponsesDemandeCitoyenDatabase,
+    listerNotificationsPersonneDatabase
 };
