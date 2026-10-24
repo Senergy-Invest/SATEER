@@ -9,7 +9,10 @@ const {
     listerNotificationsPersonneDatabase,
     creerDemandeDatabase,
     listerReponsesDemandeCitoyenDatabase,
-    listerHistoriqueDemandeCitoyenDatabase
+    listerHistoriqueDemandeCitoyenDatabase,
+    listerDemandesOrganisationDatabase,
+    prendreEnChargeDemandeDatabase,
+    repondreDemandeDatabase
 } = require("./services-database");
 
 const {
@@ -700,6 +703,397 @@ app.get(
 
                     erreur:
                         "Impossible de charger cette demande."
+                });
+        }
+    }
+);
+// =========================================================
+// API - ESPACE AGENT - LISTE DES DEMANDES
+// =========================================================
+
+app.get(
+    "/api/agent/demandes",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(
+                    req.query.organisationId
+                );
+
+
+            const tenantCode =
+                req.query.tenant;
+
+
+            const statut =
+                req.query.statut ||
+                null;
+
+
+            if (
+                !organisationId ||
+                !tenantCode
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Organisation ou tenant manquant."
+                    });
+            }
+
+
+            const demandes =
+                await listerDemandesOrganisationDatabase(
+
+                    organisationId,
+
+                    tenantCode,
+
+                    statut
+                );
+
+
+            return res.json({
+
+                statut:
+                    "DEMANDES_CHARGEES",
+
+                demandes:
+                    demandes || []
+            });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur chargement demandes agent :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_DEMANDES_AGENT",
+
+                    erreur:
+                        "Impossible de charger les demandes."
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// API - ESPACE AGENT - PRISE EN CHARGE
+// =========================================================
+
+app.post(
+    "/api/agent/demandes/:demandeId/prise-en-charge",
+    async (req, res) => {
+
+        try {
+
+            const demandeId =
+                Number(
+                    req.params.demandeId
+                );
+
+
+            const {
+                agentPersonneId,
+                organisationId,
+                tenantCode
+            } = req.body;
+
+
+            if (
+                !demandeId ||
+                !agentPersonneId ||
+                !organisationId ||
+                !tenantCode
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Paramètres de prise en charge manquants."
+                    });
+            }
+
+
+            const resultat =
+                await prendreEnChargeDemandeDatabase(
+
+                    demandeId,
+
+                    Number(
+                        agentPersonneId
+                    ),
+
+                    Number(
+                        organisationId
+                    ),
+
+                    tenantCode
+                );
+
+
+            if (
+                !resultat
+            ) {
+
+                return res
+                    .status(409)
+                    .json({
+
+                        statut:
+                            "PRISE_EN_CHARGE_IMPOSSIBLE",
+
+                        erreur:
+                            "Cette demande ne peut pas être prise en charge."
+                    });
+            }
+
+
+            return res.json({
+
+                statut:
+                    "DEMANDE_PRISE_EN_CHARGE",
+
+                message:
+                    "La demande est maintenant prise en charge.",
+
+                demande:
+                    resultat
+            });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur prise en charge demande :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_PRISE_EN_CHARGE",
+
+                    erreur:
+                        "Impossible de prendre en charge cette demande."
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// API - ESPACE AGENT - RÉPONSE AU CITOYEN
+// =========================================================
+
+// =========================================================
+// API - ESPACE AGENT - RÉPONSE AU CITOYEN
+// =========================================================
+
+app.post(
+    "/api/agent/demandes/:demandeId/reponse",
+    async (req, res) => {
+
+        try {
+
+            const demandeId =
+                Number(
+                    req.params.demandeId
+                );
+
+
+            const {
+                agentPersonneId,
+                organisationId,
+                tenantCode,
+                contenu
+            } = req.body;
+
+
+            // =================================================
+            // VALIDATION
+            // =================================================
+
+            if (
+                !demandeId ||
+                !agentPersonneId ||
+                !organisationId ||
+                !tenantCode ||
+                !contenu ||
+                !String(contenu).trim()
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Paramètres de réponse manquants."
+                    });
+            }
+
+
+            // =================================================
+            // VÉRIFICATION DU WORKFLOW
+            // =================================================
+
+            const demandes =
+                await listerDemandesOrganisationDatabase(
+
+                    Number(
+                        organisationId
+                    ),
+
+                    tenantCode,
+
+                    null
+                );
+
+
+            const demande =
+                demandes.find(
+                    item =>
+                        Number(
+                            item.id
+                        ) === demandeId
+                );
+
+
+            if (
+                !demande
+            ) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        statut:
+                            "DEMANDE_INTROUVABLE",
+
+                        erreur:
+                            "Demande introuvable."
+                    });
+            }
+
+
+            if (
+                demande.statut !==
+                "EN_COURS"
+            ) {
+
+                return res
+                    .status(409)
+                    .json({
+
+                        statut:
+                            "WORKFLOW_INVALIDE",
+
+                        erreur:
+                            "La demande doit être prise en charge avant qu'une réponse puisse être envoyée."
+                    });
+            }
+
+
+            // =================================================
+            // ENVOI DE LA RÉPONSE
+            // =================================================
+
+            const resultat =
+                await repondreDemandeDatabase(
+
+                    demandeId,
+
+                    Number(
+                        agentPersonneId
+                    ),
+
+                    Number(
+                        organisationId
+                    ),
+
+                    tenantCode,
+
+                    String(
+                        contenu
+                    ).trim()
+                );
+
+
+            if (
+                !resultat
+            ) {
+
+                return res
+                    .status(409)
+                    .json({
+
+                        statut:
+                            "REPONSE_IMPOSSIBLE",
+
+                        erreur:
+                            "Cette demande ne peut pas recevoir cette réponse."
+                    });
+            }
+
+
+            return res.json({
+
+                statut:
+                    "REPONSE_ENVOYEE",
+
+                message:
+                    "La réponse a été envoyée au citoyen.",
+
+                resultat:
+                    resultat
+            });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur réponse demande citoyen :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_REPONSE_DEMANDE",
+
+                    erreur:
+                        "Impossible d'envoyer la réponse."
                 });
         }
     }

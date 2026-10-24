@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Demandes citoyens - SATEER</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="app">
+
+        <!-- ============================================ -->
+        <!-- HEADER -->
+        <!-- ============================================ -->
+
+        <header class="header">
+
+            <button
+                class="back-button"
+                id="backButton"
+            >
+                ←
+            </button>
+
+
+            <div class="brand">
+                SATEER
+            </div>
+
+
+            <div class="avatar">
+                A
+            </div>
+
+        </header>
+
+
+        <!-- ============================================ -->
+        <!-- MAIN -->
+        <!-- ============================================ -->
+
+        <main class="main">
+
+            <!-- ======================================== -->
+            <!-- HERO -->
+            <!-- ======================================== -->
+
+            <section class="consulat-hero">
+
+                <div class="consulat-flag">
+                    🏛️
+                </div>
+
+
+                <div>
+
+                    <p
+                        class="eyebrow"
+                        id="agentContextLabel"
+                    >
+                        ESPACE AGENT
+                    </p>
+
+
+                    <h1>
+                        Demandes citoyens
+                    </h1>
+
+
+                    <p class="subtitle">
+                        Consultez, prenez en charge et traitez
+                        les demandes reçues.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- FILE DE TRAITEMENT -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            FILE DE TRAITEMENT
+                        </p>
+
+                        <h2>
+                            Demandes reçues
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- FILTRES -->
+                <!-- ==================================== -->
+
+                <div class="agent-filters">
+
+                    <button
+                        class="agent-filter active"
+                        data-statut=""
+                    >
+                        Toutes
+                    </button>
+
+
+                    <button
+                        class="agent-filter"
+                        data-statut="NOUVELLE"
+                    >
+                        Nouvelles
+                    </button>
+
+
+                    <button
+                        class="agent-filter"
+                        data-statut="EN_COURS"
+                    >
+                        En cours
+                    </button>
+
+
+                    <button
+                        class="agent-filter"
+                        data-statut="TRAITEE"
+                    >
+                        Traitées
+                    </button>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- LISTE -->
+                <!-- ==================================== -->
+
+                <div
+                    id="agentDemandesContainer"
+                    class="agent-demandes-list"
+                >
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- DÉTAIL DE LA DEMANDE -->
+            <!-- ======================================== -->
+
+            <section
+                class="panel"
+                id="agentDetailPanel"
+                hidden
+            >
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            DEMANDE SÉLECTIONNÉE
+                        </p>
+
+                        <h2 id="agentDetailObjet">
+                            —
+                        </h2>
+
+                    </div>
+
+
+                    <span
+                        id="agentDetailStatut"
+                        class="status"
+                    >
+                    </span>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- INFORMATIONS -->
+                <!-- ==================================== -->
+
+                <div class="demande-detail-grid">
+
+                    <div class="detail-field">
+
+                        <span class="detail-label">
+                            Citoyen
+                        </span>
+
+                        <strong id="agentDetailCitoyen">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-field">
+
+                        <span class="detail-label">
+                            Catégorie
+                        </span>
+
+                        <strong id="agentDetailCategorie">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-field">
+
+                        <span class="detail-label">
+                            Territoire
+                        </span>
+
+                        <strong id="agentDetailTerritoire">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-field">
+
+                        <span class="detail-label">
+                            Agent assigné
+                        </span>
+
+                        <strong id="agentDetailAssignee">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-field">
+
+                        <span class="detail-label">
+                            Priorité
+                        </span>
+
+                        <strong id="agentDetailPriorite">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="detail-field">
+
+                        <span class="detail-label">
+                            Date de création
+                        </span>
+
+                        <strong id="agentDetailDate">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- MESSAGE CITOYEN -->
+                <!-- ==================================== -->
+
+                <div class="demande-message-block">
+
+                    <span class="detail-label">
+                        Message du citoyen
+                    </span>
+
+
+                    <p id="agentDetailDescription">
+                    </p>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- ÉTAPE 1 : PRISE EN CHARGE -->
+                <!-- ==================================== -->
+
+                <div
+                    class="agent-workflow-block"
+                    id="priseEnChargeBlock"
+                    hidden
+                >
+
+                    <div class="agent-workflow-info">
+
+                        <strong>
+                            Étape 1 — Prendre en charge la demande
+                        </strong>
+
+                        <p>
+                            La réponse au citoyen sera disponible
+                            après la prise en charge.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="primary-button"
+                        id="prendreEnChargeButton"
+                    >
+                        Prendre en charge
+                    </button>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- ÉTAPE 2 : RÉPONSE -->
+                <!-- ==================================== -->
+
+                <div
+                    class="agent-response-block"
+                    id="reponseBlock"
+                    hidden
+                >
+
+                    <div class="agent-workflow-info">
+
+                        <strong>
+                            Étape 2 — Répondre au citoyen
+                        </strong>
+
+                        <p>
+                            La demande est prise en charge.
+                            Vous pouvez maintenant envoyer une réponse.
+                        </p>
+
+                    </div>
+
+
+                    <label for="agentReponseInput">
+                        Réponse au citoyen
+                    </label>
+
+
+                    <textarea
+                        id="agentReponseInput"
+                        rows="6"
+                        placeholder="Rédigez la réponse destinée au citoyen..."
+                    ></textarea>
+
+
+                    <button
+                        class="primary-button"
+                        id="envoyerReponseButton"
+                    >
+                        Envoyer la réponse
+                    </button>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- DEMANDE TERMINÉE -->
+                <!-- ==================================== -->
+
+                <div
+                    class="agent-workflow-complete"
+                    id="demandeTermineeBlock"
+                    hidden
+                >
+
+                    <strong>
+                        ✓ Demande traitée
+                    </strong>
+
+                    <p>
+                        Une réponse a déjà été envoyée au citoyen.
+                    </p>
+
+                </div>
+
+
+                <!-- ==================================== -->
+                <!-- MESSAGE ACTION -->
+                <!-- ==================================== -->
+
+                <div
+                    id="agentActionMessage"
+                    class="form-message"
+                    hidden
+                >
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <script src="agent-demandes.js"></script>
+
+</body>
+
+</html>

@@ -1662,3 +1662,270 @@ h2 {
             1fr;
     }
 }
+/* =========================================================
+   ESPACE AGENT - DEMANDES
+   ========================================================= */
+
+.agent-filters {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-bottom: 22px;
+}
+
+
+.agent-filter {
+    padding: 9px 14px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        999px;
+
+    background:
+        white;
+
+    color:
+        var(--muted);
+
+    font:
+        inherit;
+
+    font-weight:
+        700;
+
+    cursor:
+        pointer;
+}
+
+
+.agent-filter.active {
+    background:
+        var(--primary);
+
+    border-color:
+        var(--primary);
+
+    color:
+        white;
+}
+
+
+.agent-demandes-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+
+.agent-demande-card {
+    width: 100%;
+
+    padding: 17px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        16px;
+
+    background:
+        white;
+
+    font:
+        inherit;
+
+    text-align:
+        left;
+
+    cursor:
+        pointer;
+}
+
+
+.agent-demande-card:hover {
+    transform:
+        translateY(-1px);
+}
+
+
+.agent-demande-card-top {
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    gap: 15px;
+}
+
+
+.agent-demande-meta {
+    margin-top: 8px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        13px;
+}
+
+
+/* =========================================================
+   WORKFLOW AGENT
+   ========================================================= */
+
+.agent-workflow-block {
+    margin-top: 24px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        16px;
+
+    background:
+        white;
+}
+
+
+.agent-workflow-info {
+    margin-bottom: 16px;
+}
+
+
+.agent-workflow-info strong {
+    display: block;
+
+    font-size: 15px;
+}
+
+
+.agent-workflow-info p {
+    margin:
+        6px 0 0;
+
+    color:
+        var(--muted);
+
+    line-height:
+        1.5;
+}
+
+
+.agent-response-block {
+    margin-top: 24px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        16px;
+
+    background:
+        white;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        10px;
+}
+
+
+.agent-response-block label {
+    font-weight:
+        800;
+}
+
+
+.agent-response-block textarea {
+    width: 100%;
+
+    min-height:
+        150px;
+
+    padding:
+        14px 16px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    background:
+        white;
+
+    font:
+        inherit;
+
+    resize:
+        vertical;
+
+    outline:
+        none;
+}
+
+
+.agent-response-block textarea:focus {
+    border-color:
+        var(--primary);
+}
+
+
+.agent-workflow-complete {
+    margin-top: 24px;
+
+    padding: 20px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        16px;
+
+    background:
+        rgba(20, 130, 80, 0.06);
+}
+
+
+.agent-workflow-complete strong {
+    display: block;
+
+    margin-bottom: 6px;
+}
+
+
+.agent-workflow-complete p {
+    margin: 0;
+
+    color:
+        var(--muted);
+}
+
+
+/* =========================================================
+   IMPORTANT :
+   UN ÉLÉMENT hidden DOIT TOUJOURS DISPARAÎTRE
+   ========================================================= */
+
+.agent-workflow-block[hidden],
+.agent-response-block[hidden],
+.agent-workflow-complete[hidden],
+#agentDetailPanel[hidden] {
+    display: none !important;
+}
