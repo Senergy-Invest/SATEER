@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Mon Consulat - SATEER</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="app">
+
+        <!-- ============================================ -->
+        <!-- HEADER -->
+        <!-- ============================================ -->
+
+        <header class="header">
+
+            <button
+                class="back-button"
+                id="backButton"
+            >
+                ←
+            </button>
+
+
+            <div class="brand">
+                SATEER
+            </div>
+
+
+            <div class="avatar">
+                F
+            </div>
+
+        </header>
+
+
+        <!-- ============================================ -->
+        <!-- MAIN -->
+        <!-- ============================================ -->
+
+        <main class="main">
+
+            <!-- ======================================== -->
+            <!-- HERO CONSULAT -->
+            <!-- ======================================== -->
+
+            <section class="consulat-hero">
+
+                <div class="consulat-flag">
+                    🇸🇳
+                </div>
+
+                <div>
+
+                    <p class="eyebrow">
+                        MON CONSULAT
+                    </p>
+
+                    <h1 id="consulatName">
+                        Chargement...
+                    </h1>
+
+                    <p class="subtitle">
+                        Informations, démarches et échanges
+                        avec votre Consulat.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- ACTIONS -->
+            <!-- ======================================== -->
+
+            <section>
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            SERVICES
+                        </p>
+
+                        <h2>
+                            Que souhaitez-vous faire ?
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="services-grid">
+
+                    <!-- ================================= -->
+                    <!-- ASSISTANT CITOYEN -->
+                    <!-- ================================= -->
+
+                    <button
+                        class="service-card"
+                        id="assistantCitoyenButton"
+                    >
+
+                        <span class="service-icon">
+                            ✦
+                        </span>
+
+                        <strong>
+                            Assistant citoyen
+                        </strong>
+
+                        <small>
+                            Poser une question
+                        </small>
+
+                    </button>
+
+
+                    <!-- ================================= -->
+                    <!-- NOUVELLE DEMANDE -->
+                    <!-- ================================= -->
+
+                    <button class="service-card">
+
+                        <span class="service-icon">
+                            ＋
+                        </span>
+
+                        <strong>
+                            Nouvelle demande
+                        </strong>
+
+                        <small>
+                            Contacter le Consulat
+                        </small>
+
+                    </button>
+
+
+                    <!-- ================================= -->
+                    <!-- MES DEMARCHES -->
+                    <!-- ================================= -->
+
+                    <button class="service-card">
+
+                        <span class="service-icon">
+                            📄
+                        </span>
+
+                        <strong>
+                            Mes démarches
+                        </strong>
+
+                        <small>
+                            Suivre mes demandes
+                        </small>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- PANNEAU ASSISTANT CITOYEN -->
+            <!-- ======================================== -->
+
+            <section
+                class="assistant-panel hidden"
+                id="assistantPanel"
+            >
+
+                <div class="assistant-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            ASSISTANT CITOYEN
+                        </p>
+
+                        <h2>
+                            Comment puis-je vous aider ?
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        class="assistant-close"
+                        id="assistantCloseButton"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <div
+                    class="assistant-conversation"
+                    id="assistantConversation"
+                >
+
+                    <div class="message message-ai">
+
+                        Bonjour Fatou 👋
+
+                        Posez-moi une question concernant
+                        vos démarches consulaires.
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    class="assistant-form"
+                    id="assistantForm"
+                >
+
+                    <input
+                        type="text"
+                        id="assistantInput"
+                        placeholder="Ex. Comment renouveler mon passeport ?"
+                        autocomplete="off"
+                    >
+
+
+                    <button
+                        type="submit"
+                        class="assistant-send"
+                    >
+                        Envoyer
+                    </button>
+
+                </form>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- INFORMATIONS OFFICIELLES -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            INFORMATIONS OFFICIELLES
+                        </p>
+
+                        <h2>
+                            Actualités du Consulat
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="publicationsContainer"
+                    class="list"
+                >
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- DEMANDES -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            MES DÉMARCHES
+                        </p>
+
+                        <h2>
+                            Mes demandes
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="demandesConsulatContainer"
+                    class="list"
+                >
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- NOTIFICATIONS -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            MESSAGES
+                        </p>
+
+                        <h2>
+                            Notifications du Consulat
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="notificationsConsulatContainer"
+                    class="list"
+                >
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <script src="consulat.js"></script>
+
+</body>
+
+</html>

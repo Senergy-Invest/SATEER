@@ -92,7 +92,20 @@ function afficherExperiences(
             </p>
         `;
 
+if (
+    experience.code ===
+    "MON_CONSULAT"
+) {
 
+    card.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "/consulat.html";
+        }
+    );
+}
         container.appendChild(
             card
         );

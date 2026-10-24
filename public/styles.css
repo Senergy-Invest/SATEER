@@ -746,3 +746,344 @@ h2 {
     }
 
 }
+/* =========================================================
+   MON CONSULAT
+   ========================================================= */
+
+
+.back-button {
+    width: 42px;
+    height: 42px;
+
+    border: 0;
+
+    border-radius: 50%;
+
+    background:
+        #f0f4f2;
+
+    color:
+        var(--text);
+
+    font-size:
+        21px;
+
+    cursor:
+        pointer;
+}
+
+
+.consulat-hero {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        20px;
+
+    padding:
+        26px;
+
+    margin-bottom:
+        34px;
+
+    border-radius:
+        var(--radius);
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #ecf8f1
+        );
+
+    border:
+        1px solid var(--border);
+
+    box-shadow:
+        var(--shadow);
+}
+
+
+.consulat-flag {
+    flex:
+        0 0 auto;
+
+    width:
+        74px;
+
+    height:
+        74px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        22px;
+
+    background:
+        white;
+
+    font-size:
+        38px;
+
+    box-shadow:
+        0 8px 25px rgba(20, 40, 30, 0.08);
+}
+
+
+.services-grid {
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap:
+        14px;
+
+    margin-bottom:
+        30px;
+}
+
+
+.service-card {
+    min-height:
+        135px;
+
+    padding:
+        18px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        flex-start;
+
+    justify-content:
+        space-between;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        19px;
+
+    background:
+        var(--surface);
+
+    color:
+        var(--text);
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        var(--shadow);
+
+    text-align:
+        left;
+
+    transition:
+        transform 0.18s ease;
+}
+
+
+.service-card:hover {
+    transform:
+        translateY(-3px);
+}
+
+
+.service-icon {
+    width:
+        40px;
+
+    height:
+        40px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        13px;
+
+    background:
+        var(--primary-soft);
+
+    color:
+        var(--primary);
+
+    font-size:
+        20px;
+}
+
+
+.service-card strong {
+    margin-top:
+        14px;
+
+    font-size:
+        15px;
+}
+
+
+.service-card small {
+    margin-top:
+        4px;
+
+    color:
+        var(--muted);
+}
+
+
+.publication-card {
+    padding:
+        20px 0;
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+
+.publication-card:last-child {
+    border-bottom:
+        0;
+}
+
+
+.publication-top {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        10px;
+
+    margin-bottom:
+        13px;
+}
+
+
+.publication-category {
+    padding:
+        6px 10px;
+
+    border-radius:
+        999px;
+
+    background:
+        var(--primary-soft);
+
+    color:
+        var(--primary);
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+}
+
+
+.publication-priority {
+    color:
+        var(--warning);
+
+    font-size:
+        11px;
+
+    font-weight:
+        800;
+}
+
+
+.publication-card h3 {
+    margin:
+        0 0 9px;
+
+    font-size:
+        18px;
+}
+
+
+.publication-card p {
+    margin:
+        0;
+
+    color:
+        var(--muted);
+
+    line-height:
+        1.6;
+
+    font-size:
+        14px;
+}
+
+
+.publication-footer {
+    margin-top:
+        15px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        12px;
+
+    font-weight:
+        650;
+}
+
+
+@media (
+    max-width: 760px
+) {
+
+    .services-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .consulat-hero {
+        align-items:
+            flex-start;
+    }
+
+
+    .consulat-flag {
+        width:
+            58px;
+
+        height:
+            58px;
+
+        font-size:
+            29px;
+    }
+
+}
