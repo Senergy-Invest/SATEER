@@ -13,6 +13,10 @@ const {
     repondreAvecIACitoyen
 } = require("./services");
 
+const {
+    controlerQuestionAssistant
+} = require("./assistant-guard");
+
 
 const app = express();
 
@@ -269,6 +273,10 @@ app.post(
 // API - ASSISTANT GÉNÉRIQUE
 // =========================================================
 
+// =========================================================
+// API - ASSISTANT GÉNÉRIQUE
+// =========================================================
+
 app.post(
     "/api/assistant/message",
     async (req, res) => {
@@ -285,7 +293,7 @@ app.post(
 
 
             // =================================================
-            // VALIDATION PARAMÈTRES
+            // VALIDATION TECHNIQUE
             // =================================================
 
             if (
@@ -299,6 +307,10 @@ app.post(
                 return res
                     .status(400)
                     .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
                         erreur:
                             "Paramètres assistant manquants."
                     });
@@ -306,7 +318,27 @@ app.post(
 
 
             // =================================================
-            // ASSISTANT CITOYEN
+            // CONTRÔLE GÉNÉRIQUE SATEER
+            // =================================================
+
+            const controle =
+                controlerQuestionAssistant(
+                    question
+                );
+
+
+            if (
+                !controle.autoriserMoteur
+            ) {
+
+                return res.json(
+                    controle.reponse
+                );
+            }
+
+
+            // =================================================
+            // ROUTAGE PAR USE CASE
             // =================================================
 
             if (
@@ -316,8 +348,12 @@ app.post(
 
                 const resultat =
                     await repondreAvecIACitoyen(
-                        Number(personneId),
-                        Number(organisationId),
+                        Number(
+                            personneId
+                        ),
+                        Number(
+                            organisationId
+                        ),
                         tenantCode,
                         question
                     );
@@ -330,12 +366,13 @@ app.post(
 
 
             // =================================================
-            // USE CASE NON SUPPORTÉ POUR LE MOMENT
+            // USE CASE INCONNU
             // =================================================
 
             return res
                 .status(400)
                 .json({
+
                     statut:
                         "USE_CASE_NON_SUPPORTE",
 
@@ -347,13 +384,18 @@ app.post(
         } catch (erreur) {
 
             console.error(
+                "Erreur Assistant SATEER :",
                 erreur
             );
 
 
-            res
+            return res
                 .status(500)
                 .json({
+
+                    statut:
+                        "ERREUR_ASSISTANT",
+
                     erreur:
                         "Erreur assistant SATEER."
                 });
