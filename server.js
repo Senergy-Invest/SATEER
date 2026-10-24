@@ -6,7 +6,8 @@ const {
     trouverOrganisationParIdEtTenantDatabase,
     listerPublicationsVisiblesPourPersonneDatabase,
     listerDemandesPersonneDatabase,
-    listerNotificationsPersonneDatabase
+    listerNotificationsPersonneDatabase,
+    creerDemandeDatabase
 } = require("./services-database");
 
 const {
@@ -398,6 +399,125 @@ app.post(
 
                     erreur:
                         "Erreur assistant SATEER."
+                });
+        }
+    }
+);
+// =========================================================
+// API - CRÉER UNE DEMANDE
+// =========================================================
+
+app.post(
+    "/api/demandes",
+    async (req, res) => {
+
+        try {
+
+            const {
+                personneId,
+                organisationId,
+                tenantCode,
+                categorie,
+                objet,
+                message,
+                priorite,
+                canal
+            } = req.body;
+
+
+            // =================================================
+            // VALIDATION
+            // =================================================
+
+            if (
+                !personneId ||
+                !organisationId ||
+                !tenantCode ||
+                !categorie ||
+                !objet ||
+                !message
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Veuillez compléter tous les champs obligatoires."
+                    });
+            }
+
+
+            // =================================================
+            // CRÉATION POSTGRESQL
+            // =================================================
+
+            const demande =
+                await creerDemandeDatabase(
+
+                    Number(
+                        personneId
+                    ),
+
+                    Number(
+                        organisationId
+                    ),
+
+                    tenantCode,
+
+                    categorie,
+
+                    objet,
+
+                    message,
+
+                    priorite ||
+                        "NORMALE",
+
+                    canal ||
+                        "MON_CONSULAT"
+                );
+
+
+            // =================================================
+            // RÉPONSE
+            // =================================================
+
+            return res
+                .status(201)
+                .json({
+
+                    statut:
+                        "DEMANDE_CREEE",
+
+                    message:
+                        "Votre demande a bien été envoyée.",
+
+                    demande:
+                        demande
+                });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur création demande SATEER :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_CREATION_DEMANDE",
+
+                    erreur:
+                        "Impossible d'enregistrer la demande pour le moment."
                 });
         }
     }

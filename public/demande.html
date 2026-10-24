@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nouvelle demande - SATEER</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="app">
+
+        <!-- ============================================ -->
+        <!-- HEADER -->
+        <!-- ============================================ -->
+
+        <header class="header">
+
+            <button
+                class="back-button"
+                id="backButton"
+            >
+                ←
+            </button>
+
+
+            <div class="brand">
+                SATEER
+            </div>
+
+
+            <div class="avatar">
+                F
+            </div>
+
+        </header>
+
+
+        <!-- ============================================ -->
+        <!-- MAIN -->
+        <!-- ============================================ -->
+
+        <main class="main">
+
+            <section class="consulat-hero">
+
+                <div class="consulat-flag">
+                    ✉️
+                </div>
+
+
+                <div>
+
+                    <p
+                        class="eyebrow"
+                        id="demandeContextLabel"
+                    >
+                        SATEER
+                    </p>
+
+
+                    <h1>
+                        Nouvelle demande
+                    </h1>
+
+
+                    <p class="subtitle">
+                        Envoyez votre demande à l'institution concernée.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- ======================================== -->
+            <!-- FORMULAIRE -->
+            <!-- ======================================== -->
+
+            <section class="panel">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            VOTRE DEMANDE
+                        </p>
+
+                        <h2>
+                            Comment pouvons-nous vous aider ?
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    id="demandeForm"
+                    class="demande-form"
+                >
+
+                    <!-- ================================= -->
+                    <!-- CATÉGORIE -->
+                    <!-- ================================= -->
+
+                    <div class="form-group">
+
+                        <label for="categorie">
+                            Catégorie
+                        </label>
+
+
+                        <select
+                            id="categorie"
+                            required
+                        >
+
+                            <option value="">
+                                Choisir une catégorie
+                            </option>
+
+                            <option value="PASSEPORT">
+                                Passeport
+                            </option>
+
+                            <option value="CARTE_CONSULAIRE">
+                                Carte consulaire
+                            </option>
+
+                            <option value="ETAT_CIVIL">
+                                État civil
+                            </option>
+
+                            <option value="RENDEZ_VOUS">
+                                Rendez-vous
+                            </option>
+
+                            <option value="INFORMATION">
+                                Demande d'information
+                            </option>
+
+                            <option value="AUTRE">
+                                Autre
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ================================= -->
+                    <!-- OBJET -->
+                    <!-- ================================= -->
+
+                    <div class="form-group">
+
+                        <label for="objet">
+                            Objet
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="objet"
+                            placeholder="Ex. Renouvellement de mon passeport"
+                            maxlength="160"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- ================================= -->
+                    <!-- MESSAGE -->
+                    <!-- ================================= -->
+
+                    <div class="form-group">
+
+                        <label for="message">
+                            Votre message
+                        </label>
+
+
+                        <textarea
+                            id="message"
+                            rows="7"
+                            placeholder="Expliquez votre demande..."
+                            required
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- ================================= -->
+                    <!-- INFORMATION -->
+                    <!-- ================================= -->
+
+                    <div class="form-information">
+
+                        <span>
+                            🔒
+                        </span>
+
+                        <p>
+                            Votre demande est transmise uniquement
+                            à l'institution concernée et sera traitée
+                            selon vos droits d'accès.
+                        </p>
+
+                    </div>
+
+
+                    <!-- ================================= -->
+                    <!-- ERREUR -->
+                    <!-- ================================= -->
+
+                    <div
+                        id="demandeErreur"
+                        class="form-message form-message-error"
+                        hidden
+                    >
+                    </div>
+
+
+                    <!-- ================================= -->
+                    <!-- SUCCÈS -->
+                    <!-- ================================= -->
+
+                    <div
+                        id="demandeSucces"
+                        class="form-message form-message-success"
+                        hidden
+                    >
+                    </div>
+
+
+                    <!-- ================================= -->
+                    <!-- BOUTON -->
+                    <!-- ================================= -->
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                        id="envoyerDemandeButton"
+                    >
+                        Envoyer ma demande
+                    </button>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <script src="demande.js"></script>
+
+</body>
+
+</html>

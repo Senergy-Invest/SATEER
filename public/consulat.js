@@ -288,22 +288,23 @@ const nouvelleDemandeButton =
     );
 
 
-if (nouvelleDemandeButton) {
+if (
+    nouvelleDemandeButton
+) {
 
     nouvelleDemandeButton.addEventListener(
         "click",
         () => {
 
-            console.log(
-                "Nouvelle demande : bientôt disponible"
-            );
+            window.location.href =
+                "/demande.html?organisation=1&source=MON_CONSULAT";
         }
     );
 }
 
 
 // =========================================================
-// BOUTON MES DEMARCHES
+// BOUTON MES DÉMARCHES
 // =========================================================
 
 const mesDemarchesButton =
@@ -312,7 +313,9 @@ const mesDemarchesButton =
     );
 
 
-if (mesDemarchesButton) {
+if (
+    mesDemarchesButton
+) {
 
     mesDemarchesButton.addEventListener(
         "click",
@@ -324,7 +327,9 @@ if (mesDemarchesButton) {
                 );
 
 
-            if (sectionDemandes) {
+            if (
+                sectionDemandes
+            ) {
 
                 sectionDemandes.scrollIntoView({
                     behavior: "smooth",
@@ -350,7 +355,9 @@ async function chargerMonConsulat() {
             );
 
 
-        if (!reponse.ok) {
+        if (
+            !reponse.ok
+        ) {
 
             throw new Error(
                 "Impossible de charger Mon Consulat."
