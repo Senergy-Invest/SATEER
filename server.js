@@ -8,7 +8,8 @@ const {
     listerDemandesPersonneDatabase,
     listerNotificationsPersonneDatabase,
     creerDemandeDatabase,
-    listerReponsesDemandeCitoyenDatabase
+    listerReponsesDemandeCitoyenDatabase,
+    listerHistoriqueDemandeCitoyenDatabase
 } = require("./services-database");
 
 const {
@@ -527,6 +528,10 @@ app.post(
 // API - DÉTAIL D'UNE DEMANDE CITOYEN
 // =========================================================
 
+// =========================================================
+// API - DÉTAIL D'UNE DEMANDE CITOYEN
+// =========================================================
+
 app.get(
     "/api/demandes/:demandeId",
     async (req, res) => {
@@ -580,7 +585,7 @@ app.get(
 
 
             // =================================================
-            // DEMANDES ACCESSIBLES PAR LE CITOYEN
+            // DEMANDES ACCESSIBLES
             // =================================================
 
             const demandes =
@@ -595,7 +600,7 @@ app.get(
 
 
             // =================================================
-            // RECHERCHE DE LA DEMANDE
+            // DEMANDE CIBLÉE
             // =================================================
 
             const demande =
@@ -642,6 +647,23 @@ app.get(
 
 
             // =================================================
+            // HISTORIQUE
+            // =================================================
+
+            const historique =
+                await listerHistoriqueDemandeCitoyenDatabase(
+
+                    demandeId,
+
+                    personneId,
+
+                    organisationId,
+
+                    tenantCode
+                );
+
+
+            // =================================================
             // RÉPONSE API
             // =================================================
 
@@ -654,7 +676,10 @@ app.get(
                     demande,
 
                 reponses:
-                    reponses || []
+                    reponses || [],
+
+                historique:
+                    historique || []
             });
 
 

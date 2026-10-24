@@ -4560,6 +4560,66 @@ async function obtenirAnalyticsConsulatDatabase(
             territoiresResultat.rows
     };
 }
+// =========================================================
+// HISTORIQUE D'UNE DEMANDE CITOYEN
+// =========================================================
+
+async function listerHistoriqueDemandeCitoyenDatabase(
+    demandeId,
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                h.id,
+                h.demande_id,
+                h.ancien_statut,
+                h.nouveau_statut,
+                h.action,
+                h.commentaire,
+                h.metadata,
+                h.date_action,
+
+                auteur.id AS auteur_id,
+                auteur.prenom AS auteur_prenom,
+                auteur.nom AS auteur_nom
+
+            FROM demande_history h
+
+            INNER JOIN demandes d
+                ON d.id = h.demande_id
+
+            INNER JOIN tenants t
+                ON t.id = d.tenant_id
+
+            LEFT JOIN personnes auteur
+                ON auteur.id = h.auteur_personne_id
+
+            WHERE
+                h.demande_id = $1
+                AND d.personne_id = $2
+                AND d.organisation_id = $3
+                AND t.code = $4
+
+            ORDER BY
+                h.date_action ASC,
+                h.id ASC
+            `,
+            [
+                demandeId,
+                personneId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return resultat.rows;
+}
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -4583,6 +4643,7 @@ module.exports = {
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
     listerReponsesDemandeCitoyenDatabase,
+    listerHistoriqueDemandeCitoyenDatabase,
     listerNotificationsPersonneDatabase,
     obtenirDashboardConsulatDatabase,
     soumettrePublicationADiasporaDatabase,

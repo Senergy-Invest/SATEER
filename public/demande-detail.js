@@ -104,6 +104,12 @@ const demandeDescription =
     );
 
 
+const historiqueContainer =
+    document.getElementById(
+        "historiqueContainer"
+    );
+
+
 const reponsesContainer =
     document.getElementById(
         "reponsesContainer"
@@ -219,7 +225,7 @@ function formaterDate(
 
 
 // =========================================================
-// CLASSE STATUT
+// STATUT
 // =========================================================
 
 function classeStatut(
@@ -237,7 +243,7 @@ function classeStatut(
 
 
 // =========================================================
-// AFFICHAGE DEMANDE
+// DEMANDE
 // =========================================================
 
 function afficherDemande(
@@ -293,7 +299,258 @@ function afficherDemande(
 
 
 // =========================================================
-// AFFICHAGE RÉPONSES
+// LIBELLÉ ACTION
+// =========================================================
+
+function libelleAction(
+    action
+) {
+
+    switch (
+        action
+    ) {
+
+        case "CREATION":
+
+            return "Demande créée";
+
+
+        case "PRISE_EN_CHARGE":
+
+            return "Prise en charge";
+
+
+        case "REPONSE_ENVOYEE":
+
+            return "Réponse envoyée";
+
+
+        default:
+
+            return action ||
+                "Mise à jour";
+    }
+}
+
+
+// =========================================================
+// HISTORIQUE
+// =========================================================
+
+function afficherHistorique(
+    historique
+) {
+
+    historiqueContainer.innerHTML =
+        "";
+
+
+    if (
+        !historique ||
+        historique.length === 0
+    ) {
+
+        historiqueContainer.innerHTML = `
+            <div class="empty">
+                Aucun historique disponible.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    for (
+        const evenement
+        of historique
+    ) {
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+
+        item.className =
+            "timeline-item";
+
+
+        const marqueur =
+            document.createElement(
+                "div"
+            );
+
+
+        marqueur.className =
+            "timeline-marker";
+
+
+        const contenu =
+            document.createElement(
+                "div"
+            );
+
+
+        contenu.className =
+            "timeline-content";
+
+
+        const titre =
+            document.createElement(
+                "strong"
+            );
+
+
+        titre.className =
+            "timeline-title";
+
+
+        titre.textContent =
+            libelleAction(
+                evenement.action
+            );
+
+
+        const date =
+            document.createElement(
+                "div"
+            );
+
+
+        date.className =
+            "timeline-date";
+
+
+        date.textContent =
+            formaterDate(
+                evenement.date_action
+            );
+
+
+        contenu.appendChild(
+            titre
+        );
+
+
+        contenu.appendChild(
+            date
+        );
+
+
+        if (
+            evenement.commentaire
+        ) {
+
+            const commentaire =
+                document.createElement(
+                    "p"
+                );
+
+
+            commentaire.className =
+                "timeline-comment";
+
+
+            commentaire.textContent =
+                evenement.commentaire;
+
+
+            contenu.appendChild(
+                commentaire
+            );
+        }
+
+
+        if (
+            evenement.ancien_statut ||
+            evenement.nouveau_statut
+        ) {
+
+            const transition =
+                document.createElement(
+                    "div"
+                );
+
+
+            transition.className =
+                "timeline-transition";
+
+
+            if (
+                evenement.ancien_statut
+            ) {
+
+                transition.textContent =
+                    evenement.ancien_statut +
+                    " → " +
+                    evenement.nouveau_statut;
+
+            } else {
+
+                transition.textContent =
+                    "Statut : " +
+                    evenement.nouveau_statut;
+            }
+
+
+            contenu.appendChild(
+                transition
+            );
+        }
+
+
+        const auteur =
+            [
+                evenement.auteur_prenom,
+                evenement.auteur_nom
+            ]
+                .filter(Boolean)
+                .join(" ");
+
+
+        if (
+            auteur
+        ) {
+
+            const auteurElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            auteurElement.className =
+                "timeline-author";
+
+
+            auteurElement.textContent =
+                auteur;
+
+
+            contenu.appendChild(
+                auteurElement
+            );
+        }
+
+
+        item.appendChild(
+            marqueur
+        );
+
+
+        item.appendChild(
+            contenu
+        );
+
+
+        historiqueContainer.appendChild(
+            item
+        );
+    }
+}
+
+
+// =========================================================
+// RÉPONSES
 // =========================================================
 
 function afficherReponses(
@@ -443,6 +700,11 @@ async function chargerDetailDemande() {
 
         afficherDemande(
             resultat.demande
+        );
+
+
+        afficherHistorique(
+            resultat.historique || []
         );
 
 
