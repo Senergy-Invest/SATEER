@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Assistant SATEER</title>
+
+    <link
+        rel="stylesheet"
+        href="styles.css"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="assistant-page">
+
+        <header class="assistant-page-header">
+
+            <button
+                class="back-button"
+                id="backButton"
+            >
+                ←
+            </button>
+
+
+            <div>
+
+                <p
+                    class="eyebrow"
+                    id="assistantContextLabel"
+                >
+                    SATEER
+                </p>
+
+                <h2
+                    id="assistantTitle"
+                >
+                    Assistant
+                </h2>
+
+            </div>
+
+
+            <div class="avatar">
+                F
+            </div>
+
+        </header>
+
+
+        <div class="assistant-toolbar">
+
+            <div>
+
+                <strong
+                    id="assistantName"
+                >
+                    Assistant SATEER
+                </strong>
+
+                <p
+                    id="assistantDescription"
+                >
+                    Réponses basées sur les informations
+                    autorisées dans votre contexte.
+                </p>
+
+            </div>
+
+
+            <button
+                class="new-conversation-button"
+                id="newConversationButton"
+            >
+                ＋ Nouvelle conversation
+            </button>
+
+        </div>
+
+
+        <main
+            class="assistant-page-conversation"
+            id="assistantConversation"
+        >
+        </main>
+
+
+        <div class="assistant-page-footer">
+
+            <form
+                class="assistant-page-form"
+                id="assistantForm"
+            >
+
+                <input
+                    type="text"
+                    id="assistantInput"
+                    placeholder="Posez votre question..."
+                    autocomplete="off"
+                >
+
+
+                <button
+                    type="submit"
+                    class="assistant-send"
+                >
+                    Envoyer
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <script src="assistant.js"></script>
+
+</body>
+
+</html>

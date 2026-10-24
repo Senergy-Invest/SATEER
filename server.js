@@ -266,6 +266,101 @@ app.post(
     }
 );
 // =========================================================
+// API - ASSISTANT GÉNÉRIQUE
+// =========================================================
+
+app.post(
+    "/api/assistant/message",
+    async (req, res) => {
+
+        try {
+
+            const {
+                personneId,
+                organisationId,
+                tenantCode,
+                useCase,
+                question
+            } = req.body;
+
+
+            // =================================================
+            // VALIDATION PARAMÈTRES
+            // =================================================
+
+            if (
+                !personneId ||
+                !organisationId ||
+                !tenantCode ||
+                !useCase ||
+                !question
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        erreur:
+                            "Paramètres assistant manquants."
+                    });
+            }
+
+
+            // =================================================
+            // ASSISTANT CITOYEN
+            // =================================================
+
+            if (
+                useCase ===
+                "CITIZEN_ASSISTANT"
+            ) {
+
+                const resultat =
+                    await repondreAvecIACitoyen(
+                        Number(personneId),
+                        Number(organisationId),
+                        tenantCode,
+                        question
+                    );
+
+
+                return res.json(
+                    resultat
+                );
+            }
+
+
+            // =================================================
+            // USE CASE NON SUPPORTÉ POUR LE MOMENT
+            // =================================================
+
+            return res
+                .status(400)
+                .json({
+                    statut:
+                        "USE_CASE_NON_SUPPORTE",
+
+                    erreur:
+                        "Cet assistant n'est pas encore disponible."
+                });
+
+
+        } catch (erreur) {
+
+            console.error(
+                erreur
+            );
+
+
+            res
+                .status(500)
+                .json({
+                    erreur:
+                        "Erreur assistant SATEER."
+                });
+        }
+    }
+);
+// =========================================================
 // DÉMARRAGE
 // =========================================================
 

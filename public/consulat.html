@@ -113,12 +113,15 @@
                 <div class="services-grid">
 
                     <!-- ================================= -->
-                    <!-- ASSISTANT CITOYEN -->
+                    <!-- ASSISTANT GÉNÉRIQUE -->
                     <!-- ================================= -->
 
                     <button
                         class="service-card"
-                        id="assistantCitoyenButton"
+                        onclick="
+                            window.location.href =
+                            '/assistant.html?organisation=1&useCase=CITIZEN_ASSISTANT&source=MON_CONSULAT'
+                        "
                     >
 
                         <span class="service-icon">
@@ -140,7 +143,10 @@
                     <!-- NOUVELLE DEMANDE -->
                     <!-- ================================= -->
 
-                    <button class="service-card">
+                    <button
+                        class="service-card"
+                        id="nouvelleDemandeButton"
+                    >
 
                         <span class="service-icon">
                             ＋
@@ -161,7 +167,10 @@
                     <!-- MES DEMARCHES -->
                     <!-- ================================= -->
 
-                    <button class="service-card">
+                    <button
+                        class="service-card"
+                        id="mesDemarchesButton"
+                    >
 
                         <span class="service-icon">
                             📄
@@ -178,82 +187,6 @@
                     </button>
 
                 </div>
-
-            </section>
-
-
-            <!-- ======================================== -->
-            <!-- PANNEAU ASSISTANT CITOYEN -->
-            <!-- ======================================== -->
-
-            <section
-                class="assistant-panel hidden"
-                id="assistantPanel"
-            >
-
-                <div class="assistant-header">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            ASSISTANT CITOYEN
-                        </p>
-
-                        <h2>
-                            Comment puis-je vous aider ?
-                        </h2>
-
-                    </div>
-
-
-                    <button
-                        class="assistant-close"
-                        id="assistantCloseButton"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-
-                <div
-                    class="assistant-conversation"
-                    id="assistantConversation"
-                >
-
-                    <div class="message message-ai">
-
-                        Bonjour Fatou 👋
-
-                        Posez-moi une question concernant
-                        vos démarches consulaires.
-
-                    </div>
-
-                </div>
-
-
-                <form
-                    class="assistant-form"
-                    id="assistantForm"
-                >
-
-                    <input
-                        type="text"
-                        id="assistantInput"
-                        placeholder="Ex. Comment renouveler mon passeport ?"
-                        autocomplete="off"
-                    >
-
-
-                    <button
-                        type="submit"
-                        class="assistant-send"
-                    >
-                        Envoyer
-                    </button>
-
-                </form>
 
             </section>
 

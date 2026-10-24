@@ -279,406 +279,61 @@ function afficherNotifications(
 
 
 // =========================================================
-// ASSISTANT CITOYEN
+// BOUTON NOUVELLE DEMANDE
 // =========================================================
 
-const assistantPanel =
+const nouvelleDemandeButton =
     document.getElementById(
-        "assistantPanel"
+        "nouvelleDemandeButton"
     );
 
 
-const assistantButton =
-    document.getElementById(
-        "assistantCitoyenButton"
-    );
+if (nouvelleDemandeButton) {
 
+    nouvelleDemandeButton.addEventListener(
+        "click",
+        () => {
 
-const assistantCloseButton =
-    document.getElementById(
-        "assistantCloseButton"
-    );
-
-
-const assistantForm =
-    document.getElementById(
-        "assistantForm"
-    );
-
-
-const assistantInput =
-    document.getElementById(
-        "assistantInput"
-    );
-
-
-const assistantConversation =
-    document.getElementById(
-        "assistantConversation"
-    );
-
-
-// =========================================================
-// OUVRIR ASSISTANT
-// =========================================================
-
-assistantButton.addEventListener(
-    "click",
-    () => {
-
-        assistantPanel.classList.remove(
-            "hidden"
-        );
-
-
-        assistantInput.focus();
-
-
-        assistantPanel.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
-);
-
-
-// =========================================================
-// FERMER ASSISTANT
-// =========================================================
-
-assistantCloseButton.addEventListener(
-    "click",
-    () => {
-
-        assistantPanel.classList.add(
-            "hidden"
-        );
-    }
-);
-
-
-// =========================================================
-// AJOUTER MESSAGE
-// =========================================================
-
-function ajouterMessage(
-    contenu,
-    type,
-    sources = []
-) {
-
-    const message =
-        document.createElement(
-            "div"
-        );
-
-
-    message.className =
-        type === "user"
-            ? "message message-user"
-            : "message message-ai";
-
-
-    const texte =
-        document.createElement(
-            "div"
-        );
-
-
-    texte.textContent =
-        contenu;
-
-
-    message.appendChild(
-        texte
-    );
-
-
-    // =====================================================
-    // SOURCES INSTITUTIONNELLES
-    // =====================================================
-
-    if (
-        type === "ai" &&
-        sources.length > 0
-    ) {
-
-        const sourceContainer =
-            document.createElement(
-                "div"
-            );
-
-
-        sourceContainer.className =
-            "message-source";
-
-
-        const titreSource =
-            document.createElement(
-                "strong"
-            );
-
-
-        titreSource.textContent =
-            "Source institutionnelle :";
-
-
-        sourceContainer.appendChild(
-            titreSource
-        );
-
-
-        for (
-            const source
-            of sources
-        ) {
-
-            const ligne =
-                document.createElement(
-                    "div"
-                );
-
-
-            ligne.textContent =
-                source.titre +
-                " — " +
-                source.source;
-
-
-            sourceContainer.appendChild(
-                ligne
+            console.log(
+                "Nouvelle demande : bientôt disponible"
             );
         }
-
-
-        message.appendChild(
-            sourceContainer
-        );
-    }
-
-
-    assistantConversation.appendChild(
-        message
     );
-
-
-    assistantConversation.scrollTop =
-        assistantConversation.scrollHeight;
 }
 
 
 // =========================================================
-// ENVOYER QUESTION
+// BOUTON MES DEMARCHES
 // =========================================================
 
-assistantForm.addEventListener(
-    "submit",
-    async event => {
-
-        event.preventDefault();
-
-
-        const question =
-            assistantInput.value.trim();
+const mesDemarchesButton =
+    document.getElementById(
+        "mesDemarchesButton"
+    );
 
 
-        if (!question) {
+if (mesDemarchesButton) {
 
-            return;
+    mesDemarchesButton.addEventListener(
+        "click",
+        () => {
+
+            const sectionDemandes =
+                document.getElementById(
+                    "demandesConsulatContainer"
+                );
+
+
+            if (sectionDemandes) {
+
+                sectionDemandes.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
         }
-
-
-        // =================================================
-        // AFFICHAGE QUESTION FATOU
-        // =================================================
-
-        ajouterMessage(
-            question,
-            "user"
-        );
-
-
-        assistantInput.value =
-            "";
-
-
-        assistantInput.disabled =
-            true;
-
-
-        // =================================================
-        // MESSAGE D'ATTENTE
-        // =================================================
-
-        const messageAttente =
-            document.createElement(
-                "div"
-            );
-
-
-        messageAttente.className =
-            "message message-ai";
-
-
-        messageAttente.textContent =
-            "Je recherche dans les informations officielles du Consulat...";
-
-
-        assistantConversation.appendChild(
-            messageAttente
-        );
-
-
-        assistantConversation.scrollTop =
-            assistantConversation.scrollHeight;
-
-
-        try {
-
-            // =================================================
-            // APPEL API IA CITOYEN
-            // =================================================
-
-            const reponse =
-                await fetch(
-                    "/api/ia-citoyen",
-                    {
-                        method:
-                            "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                personneId:
-                                    PERSONNE_ID,
-
-                                organisationId:
-                                    CONSULAT_ID,
-
-                                tenantCode:
-                                    TENANT,
-
-                                question:
-                                    question
-                            })
-                    }
-                );
-
-
-            if (!reponse.ok) {
-
-                throw new Error(
-                    "Erreur lors de l'appel à l'assistant citoyen."
-                );
-            }
-
-
-            const resultat =
-                await reponse.json();
-
-
-            messageAttente.remove();
-
-
-            // =================================================
-            // REPONSE AUTORISEE
-            // =================================================
-
-            if (
-                resultat.statut ===
-                "REPONSE_AUTORISEE"
-            ) {
-
-                ajouterMessage(
-                    resultat.reponse,
-                    "ai",
-                    resultat.sources || []
-                );
-
-            }
-
-            // =================================================
-            // ESCALADE HUMAINE
-            // =================================================
-
-            else if (
-                resultat.statut ===
-                "ESCALADE_HUMAINE"
-            ) {
-
-                ajouterMessage(
-                    resultat.reponse,
-                    "ai"
-                );
-
-
-                const messageEscalade =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                messageEscalade.className =
-                    "message message-ai";
-
-
-                messageEscalade.innerHTML = `
-                    <strong>
-                        Un agent du Consulat peut prendre le relais.
-                    </strong>
-                `;
-
-
-                assistantConversation.appendChild(
-                    messageEscalade
-                );
-
-            }
-
-            // =================================================
-            // AUTRE CAS
-            // =================================================
-
-            else {
-
-                ajouterMessage(
-                    resultat.reponse ||
-                    "Je ne peux pas répondre à cette question pour le moment.",
-                    "ai"
-                );
-            }
-
-
-        } catch (erreur) {
-
-            console.error(
-                erreur
-            );
-
-
-            messageAttente.remove();
-
-
-            ajouterMessage(
-                "Une erreur est survenue. Vous pouvez contacter directement le Consulat.",
-                "ai"
-            );
-
-        } finally {
-
-            assistantInput.disabled =
-                false;
-
-
-            assistantInput.focus();
-        }
-    }
-);
+    );
+}
 
 
 // =========================================================
@@ -748,7 +403,7 @@ async function chargerMonConsulat() {
 
 
 // =========================================================
-// DÉMARRAGE PAGE
+// INITIALISATION
 // =========================================================
 
 chargerMonConsulat();
