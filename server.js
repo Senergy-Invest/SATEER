@@ -7,7 +7,8 @@ const {
     listerPublicationsVisiblesPourPersonneDatabase,
     listerDemandesPersonneDatabase,
     listerNotificationsPersonneDatabase,
-    creerDemandeDatabase
+    creerDemandeDatabase,
+    listerReponsesDemandeCitoyenDatabase
 } = require("./services-database");
 
 const {
@@ -518,6 +519,162 @@ app.post(
 
                     erreur:
                         "Impossible d'enregistrer la demande pour le moment."
+                });
+        }
+    }
+);
+// =========================================================
+// API - DÉTAIL D'UNE DEMANDE CITOYEN
+// =========================================================
+
+app.get(
+    "/api/demandes/:demandeId",
+    async (req, res) => {
+
+        try {
+
+            const demandeId =
+                Number(
+                    req.params.demandeId
+                );
+
+
+            const personneId =
+                Number(
+                    req.query.personneId
+                );
+
+
+            const organisationId =
+                Number(
+                    req.query.organisationId
+                );
+
+
+            const tenantCode =
+                req.query.tenant;
+
+
+            // =================================================
+            // VALIDATION
+            // =================================================
+
+            if (
+                !demandeId ||
+                !personneId ||
+                !organisationId ||
+                !tenantCode
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Paramètres de demande manquants."
+                    });
+            }
+
+
+            // =================================================
+            // DEMANDES ACCESSIBLES PAR LE CITOYEN
+            // =================================================
+
+            const demandes =
+                await listerDemandesPersonneDatabase(
+
+                    personneId,
+
+                    organisationId,
+
+                    tenantCode
+                );
+
+
+            // =================================================
+            // RECHERCHE DE LA DEMANDE
+            // =================================================
+
+            const demande =
+                demandes.find(
+                    item =>
+                        Number(
+                            item.id
+                        ) === demandeId
+                );
+
+
+            if (
+                !demande
+            ) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        statut:
+                            "DEMANDE_INTROUVABLE",
+
+                        erreur:
+                            "Cette demande est introuvable ou vous n'êtes pas autorisé à la consulter."
+                    });
+            }
+
+
+            // =================================================
+            // RÉPONSES
+            // =================================================
+
+            const reponses =
+                await listerReponsesDemandeCitoyenDatabase(
+
+                    demandeId,
+
+                    personneId,
+
+                    organisationId,
+
+                    tenantCode
+                );
+
+
+            // =================================================
+            // RÉPONSE API
+            // =================================================
+
+            return res.json({
+
+                statut:
+                    "DEMANDE_TROUVEE",
+
+                demande:
+                    demande,
+
+                reponses:
+                    reponses || []
+            });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur détail demande SATEER :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_DETAIL_DEMANDE",
+
+                    erreur:
+                        "Impossible de charger cette demande."
                 });
         }
     }

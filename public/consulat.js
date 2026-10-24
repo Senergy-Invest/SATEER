@@ -31,7 +31,9 @@ function classeStatut(
 
     return (
         "status status-" +
-        String(statut)
+        String(
+            statut || ""
+        )
             .toLowerCase()
     );
 }
@@ -51,7 +53,8 @@ function afficherPublications(
         );
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     if (
@@ -140,7 +143,8 @@ function afficherDemandes(
         );
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     if (
@@ -165,35 +169,100 @@ function afficherDemandes(
 
         const item =
             document.createElement(
+                "button"
+            );
+
+
+        item.type =
+            "button";
+
+
+        item.className =
+            "list-item demande-list-button";
+
+
+        const contenu =
+            document.createElement(
                 "div"
             );
 
 
-        item.className =
-            "list-item";
+        contenu.className =
+            "list-main";
 
 
-        item.innerHTML = `
-
-            <div class="list-main">
-
-                <p class="list-title">
-                    ${demande.objet}
-                </p>
-
-                <p class="list-subtitle">
-                    ${demande.categorie}
-                </p>
-
-            </div>
+        const titre =
+            document.createElement(
+                "p"
+            );
 
 
-            <span
-                class="${classeStatut(demande.statut)}"
-            >
-                ${demande.statut}
-            </span>
-        `;
+        titre.className =
+            "list-title";
+
+
+        titre.textContent =
+            demande.objet;
+
+
+        const sousTitre =
+            document.createElement(
+                "p"
+            );
+
+
+        sousTitre.className =
+            "list-subtitle";
+
+
+        sousTitre.textContent =
+            demande.categorie;
+
+
+        contenu.appendChild(
+            titre
+        );
+
+
+        contenu.appendChild(
+            sousTitre
+        );
+
+
+        const statut =
+            document.createElement(
+                "span"
+            );
+
+
+        statut.className =
+            classeStatut(
+                demande.statut
+            );
+
+
+        statut.textContent =
+            demande.statut;
+
+
+        item.appendChild(
+            contenu
+        );
+
+
+        item.appendChild(
+            statut
+        );
+
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    `/demande-detail.html?demande=${demande.id}&organisation=${CONSULAT_ID}&source=MON_CONSULAT`;
+            }
+        );
 
 
         container.appendChild(
@@ -217,7 +286,8 @@ function afficherNotifications(
         );
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     if (
@@ -332,8 +402,11 @@ if (
             ) {
 
                 sectionDemandes.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
+                    behavior:
+                        "smooth",
+
+                    block:
+                        "center"
                 });
             }
         }

@@ -1498,3 +1498,167 @@ h2 {
     cursor:
         not-allowed;
 }
+/* =========================================================
+   DÉTAIL D'UNE DEMANDE SATEER
+   ========================================================= */
+
+.demande-list-button {
+    width: 100%;
+
+    border: 0;
+
+    text-align: left;
+
+    font: inherit;
+
+    cursor: pointer;
+
+    background: transparent;
+}
+
+
+.demande-list-button:hover {
+    transform: translateY(-1px);
+}
+
+
+.demande-detail-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap:
+        18px;
+
+    margin-top:
+        20px;
+}
+
+
+.detail-field {
+    display: flex;
+
+    flex-direction: column;
+
+    gap:
+        6px;
+
+    padding:
+        16px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    background:
+        rgba(255, 255, 255, 0.7);
+}
+
+
+.detail-label {
+    color:
+        var(--muted);
+
+    font-size:
+        12px;
+
+    font-weight:
+        750;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.05em;
+}
+
+
+.demande-message-block {
+    margin-top:
+        22px;
+
+    padding:
+        18px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    background:
+        white;
+}
+
+
+.demande-message-block p {
+    margin:
+        10px 0 0;
+
+    line-height:
+        1.6;
+}
+
+
+.demande-reponses {
+    display: flex;
+
+    flex-direction:
+        column;
+
+    gap:
+        14px;
+}
+
+
+.demande-reponse-card {
+    padding:
+        18px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        16px;
+
+    background:
+        white;
+}
+
+
+.demande-reponse-contenu {
+    margin:
+        0;
+
+    line-height:
+        1.6;
+}
+
+
+.demande-reponse-meta {
+    margin-top:
+        12px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        12px;
+
+    font-weight:
+        650;
+}
+
+
+@media (
+    max-width: 650px
+) {
+
+    .demande-detail-grid {
+        grid-template-columns:
+            1fr;
+    }
+}
