@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Organisation du Consulat - SATEER
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/styles.css"
+    >
+</head>
+
+<body>
+
+    <main class="page">
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="eyebrow">
+                    SATEER • Administration institutionnelle
+                </p>
+
+                <h1>
+                    Organisation du Consulat
+                </h1>
+
+                <p id="organisationNom">
+                    Chargement de l'organisation...
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        STRUCTURE INTERNE
+                    </p>
+
+                    <h2>
+                        Organigramme
+                    </h2>
+
+                    <p class="muted">
+                        Visualisation des bureaux, services
+                        et agents rattachés à l'institution.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="organisationLoading"
+                class="info-card"
+            >
+                Chargement de la structure...
+            </div>
+
+
+            <div
+                id="organisationErreur"
+                class="info-card"
+                hidden
+            >
+            </div>
+
+
+            <div
+                id="organisationTree"
+                class="organisation-tree"
+                hidden
+            >
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        PRINCIPES DE GOUVERNANCE
+                    </p>
+
+                    <h2>
+                        Rôles institutionnels
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="cards-grid">
+
+                <article class="info-card">
+
+                    <h3>
+                        Chef de mission
+                    </h3>
+
+                    <p>
+                        Le Consul assure principalement
+                        la supervision stratégique,
+                        la représentation institutionnelle
+                        et la continuité de la mission.
+                    </p>
+
+                </article>
+
+
+                <article class="info-card">
+
+                    <h3>
+                        Adjoint opérationnel
+                    </h3>
+
+                    <p>
+                        Le Vice-Consul pilote
+                        le fonctionnement quotidien,
+                        supervise les services
+                        et suit les demandes sensibles.
+                    </p>
+
+                </article>
+
+
+                <article class="info-card">
+
+                    <h3>
+                        Secrétariat
+                    </h3>
+
+                    <p>
+                        Le secrétariat reçoit,
+                        organise et oriente
+                        les demandes entrantes.
+                    </p>
+
+                </article>
+
+
+                <article class="info-card">
+
+                    <h3>
+                        Agents
+                    </h3>
+
+                    <p>
+                        Les agents traitent
+                        les demandes affectées
+                        à leur service.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <a
+                class="button button-secondary"
+                href="/consulat.html"
+            >
+                ← Retour à Mon Consulat
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <script src="/organisation-consulat.js"></script>
+
+</body>
+
+</html>

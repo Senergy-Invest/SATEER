@@ -4560,7 +4560,7 @@ async function obtenirAnalyticsConsulatDatabase(
             territoiresResultat.rows
     };
 }
-// =========================================================
+/// =========================================================
 // HISTORIQUE D'UNE DEMANDE CITOYEN
 // =========================================================
 
@@ -4620,6 +4620,210 @@ async function listerHistoriqueDemandeCitoyenDatabase(
 
     return resultat.rows;
 }
+
+
+// =========================================================
+// STRUCTURE INTERNE D'UNE ORGANISATION
+// =========================================================
+//
+// Retourne :
+// - l'organisation
+// - ses unités internes
+// - les personnes affectées à chaque unité
+//
+// Cette fonction reste générique.
+// Elle pourra servir pour :
+// - un Consulat
+// - une Ambassade
+// - un Ministère
+// - une entreprise
+// - toute organisation SATEER
+//
+// =========================================================
+
+async function obtenirStructureOrganisationDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    // -----------------------------------------------------
+    // 1. Vérifier que l'organisation appartient au tenant
+    // -----------------------------------------------------
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id,
+                o.nom,
+                o.type
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                o.id = $1
+                AND t.code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (organisationResultat.rows.length === 0) {
+
+        return null;
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Récupérer les unités internes
+    // -----------------------------------------------------
+
+    const unitsResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id,
+                u.organisation_id,
+                u.parent_unit_id,
+                u.code,
+                u.nom,
+                u.type,
+                u.actif,
+                u.metadata,
+                u.date_creation,
+                u.date_modification
+
+            FROM organisation_units u
+
+            WHERE
+                u.organisation_id = $1
+                AND u.actif = TRUE
+
+            ORDER BY
+                u.id ASC
+            `,
+            [
+                organisationId
+            ]
+        );
+
+
+    // -----------------------------------------------------
+    // 3. Récupérer les personnes affectées aux unités
+    // -----------------------------------------------------
+
+    const membresResultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id AS relation_id,
+
+                r.organisation_unit_id,
+
+                r.role,
+                r.principal,
+                r.actif,
+
+                p.id AS personne_id,
+                p.prenom,
+                p.nom
+
+            FROM relations_personne_organisation_unit r
+
+            INNER JOIN personnes p
+                ON p.id = r.personne_id
+
+            INNER JOIN organisation_units u
+                ON u.id = r.organisation_unit_id
+
+            WHERE
+                u.organisation_id = $1
+                AND r.actif = TRUE
+                AND u.actif = TRUE
+
+            ORDER BY
+                u.id ASC,
+                r.principal DESC,
+                p.prenom ASC,
+                p.nom ASC
+            `,
+            [
+                organisationId
+            ]
+        );
+
+
+    // -----------------------------------------------------
+    // 4. Ajouter les membres à leur unité
+    // -----------------------------------------------------
+
+    const units =
+        unitsResultat.rows.map(
+            (unit) => {
+
+                const membres =
+                    membresResultat.rows
+                        .filter(
+                            (membre) =>
+                                membre.organisation_unit_id === unit.id
+                        )
+                        .map(
+                            (membre) => ({
+                                relationId:
+                                    membre.relation_id,
+
+                                personneId:
+                                    membre.personne_id,
+
+                                prenom:
+                                    membre.prenom,
+
+                                nom:
+                                    membre.nom,
+
+                                role:
+                                    membre.role,
+
+                                principal:
+                                    membre.principal
+                            })
+                        );
+
+
+                return {
+                    ...unit,
+                    membres
+                };
+            }
+        );
+
+
+    // -----------------------------------------------------
+    // 5. Retour final
+    // -----------------------------------------------------
+
+    return {
+
+        organisation:
+            organisationResultat.rows[0],
+
+        units
+    };
+}
+
+
+// =========================================================
+// EXPORTS
+// =========================================================
+
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -4655,5 +4859,8 @@ module.exports = {
     listerPublicationsAmbassadePourPersonneDatabase,
     obtenirContexteIASecretariatDatabase,
     obtenirContexteIACitoyenDatabase,
-    obtenirAnalyticsConsulatDatabase
+    obtenirAnalyticsConsulatDatabase,
+
+    // Structure organisationnelle interne
+    obtenirStructureOrganisationDatabase
 };
