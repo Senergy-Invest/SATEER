@@ -13,7 +13,8 @@ const {
     listerDemandesOrganisationDatabase,
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
-    obtenirStructureOrganisationDatabase
+    obtenirStructureOrganisationDatabase,
+    obtenirDashboardConsulatDatabase
 } = require("./services-database");
 
 const {
@@ -774,6 +775,76 @@ app.get(
                 .json({
                     erreur:
                         "Impossible de charger la structure de l'organisation."
+                });
+        }
+    }
+);
+// =========================================================
+// API - DASHBOARD OPÉRATIONNEL D'UNE ORGANISATION
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/dashboard-operationnel",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(
+                    req.params.organisationId
+                );
+
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            if (!organisationId) {
+
+                return res
+                    .status(400)
+                    .json({
+                        erreur:
+                            "organisationId invalide."
+                    });
+            }
+
+
+            const dashboard =
+                await obtenirDashboardConsulatDatabase(
+                    organisationId,
+                    tenantCode
+                );
+
+
+            if (!dashboard) {
+
+                return res
+                    .status(404)
+                    .json({
+                        erreur:
+                            "Dashboard institutionnel introuvable."
+                    });
+            }
+
+
+            return res.json(
+                dashboard
+            );
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur API dashboard opérationnel :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    erreur:
+                        "Impossible de charger le dashboard opérationnel."
                 });
         }
     }

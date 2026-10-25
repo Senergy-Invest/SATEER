@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Dashboard Vice-Consul - SATEER
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/styles.css"
+    >
+</head>
+
+<body>
+
+    <main class="page">
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="eyebrow">
+                    SATEER • PILOTAGE OPÉRATIONNEL
+                </p>
+
+                <h1>
+                    Dashboard Vice-Consul
+                </h1>
+
+                <p id="organisationNom">
+                    Chargement...
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ACTIVITÉ
+                    </p>
+
+                    <h2>
+                        Vue opérationnelle
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-kpis">
+
+                <article class="dashboard-kpi">
+                    <span>Nouvelles</span>
+                    <strong id="kpiNouvelles">0</strong>
+                </article>
+
+                <article class="dashboard-kpi">
+                    <span>En cours</span>
+                    <strong id="kpiEnCours">0</strong>
+                </article>
+
+                <article class="dashboard-kpi">
+                    <span>Traitées</span>
+                    <strong id="kpiTraitees">0</strong>
+                </article>
+
+                <article class="dashboard-kpi">
+                    <span>À surveiller</span>
+                    <strong id="kpiSurveillance">0</strong>
+                </article>
+
+                <article class="dashboard-kpi">
+                    <span>Délai moyen</span>
+                    <strong id="kpiDelai">—</strong>
+                </article>
+
+                <article class="dashboard-kpi">
+                    <span>Usagers</span>
+                    <strong id="kpiUsagers">0</strong>
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ACTIONS
+                    </p>
+
+                    <h2>
+                        Outils opérationnels
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="services-grid">
+
+                <button
+                    class="service-card"
+                    onclick="
+                        window.location.href =
+                        '/agent-demandes.html?organisation=1&source=MON_CONSULAT'
+                    "
+                >
+                    <span class="service-icon">
+                        📥
+                    </span>
+
+                    <strong>
+                        Gérer les demandes
+                    </strong>
+
+                    <small>
+                        Prendre en charge et répondre
+                    </small>
+                </button>
+
+
+                <button
+                    class="service-card"
+                    onclick="
+                        window.location.href =
+                        '/organisation-consulat.html?organisation=1&tenant=SN'
+                    "
+                >
+                    <span class="service-icon">
+                        ◫
+                    </span>
+
+                    <strong>
+                        Organisation
+                    </strong>
+
+                    <small>
+                        Voir les bureaux et agents
+                    </small>
+                </button>
+
+
+                <button
+                    class="service-card"
+                    disabled
+                >
+                    <span class="service-icon">
+                        ✦
+                    </span>
+
+                    <strong>
+                        Assistant secrétariat
+                    </strong>
+
+                    <small>
+                        Interface à connecter
+                    </small>
+                </button>
+
+
+                <button
+                    class="service-card"
+                    disabled
+                >
+                    <span class="service-icon">
+                        📰
+                    </span>
+
+                    <strong>
+                        Publications
+                    </strong>
+
+                    <small>
+                        Gestion à connecter
+                    </small>
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="dashboard-columns">
+
+                <article class="panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                SUIVI
+                            </p>
+
+                            <h2>
+                                Dernières demandes
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="dernieresDemandes"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                ALERTES
+                            </p>
+
+                            <h2>
+                                À surveiller
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="demandesSurveillance"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <div class="dashboard-columns">
+
+                <article class="panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                TERRITOIRE
+                            </p>
+
+                            <h2>
+                                Répartition des usagers
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="territoiresContainer"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                COMMUNICATION
+                            </p>
+
+                            <h2>
+                                Publications
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="publicationsResume"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <section class="section">
+
+            <a
+                class="button button-secondary"
+                href="/consulat.html"
+            >
+                ← Retour à Mon Consulat
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <script src="/dashboard-vice-consul.js"></script>
+
+</body>
+
+</html>
