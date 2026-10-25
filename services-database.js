@@ -4819,7 +4819,409 @@ async function obtenirStructureOrganisationDatabase(
     };
 }
 
+// =========================================================
+// ÉCOSYSTÈME D'UNE ORGANISATION
+// =========================================================
+//
+// Cette fonction retourne automatiquement :
+//
+// - les organisations reliées
+// - les usagers / citoyens reliés
+// - les territoires représentés
+// - les demandes de rattachement en attente
+// - les invitations en attente
+// - un résumé pour le dashboard
+//
+// Exemple :
+//
+// Consulat Bordeaux
+// ├── citoyens
+// ├── associations
+// ├── partenaires
+// ├── territoires
+// └── rattachements en attente
+//
+// La logique reste générique pour toute organisation SATEER.
+//
+// =========================================================
 
+async function obtenirEcosystemeOrganisationDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    // =====================================================
+    // 1. ORGANISATION PRINCIPALE
+    // =====================================================
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id,
+                o.nom,
+                o.type,
+                t.code AS tenant_code
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                o.id = $1
+                AND t.code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (
+        organisationResultat.rows.length === 0
+    ) {
+
+        return null;
+    }
+
+
+    // =====================================================
+    // 2. ORGANISATIONS RELIÉES
+    // =====================================================
+    //
+    // Dans notre modèle :
+    //
+    // Association
+    //      ↓
+    // COMMUNITY_MEMBER
+    //      ↓
+    // Consulat
+    //
+    // source = organisation membre
+    // target = institution
+    //
+    // =====================================================
+
+    const organisationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id AS relation_id,
+
+                r.type AS relation_type,
+                r.statut AS relation_statut,
+
+                o.id AS organisation_id,
+                o.nom,
+                o.type,
+
+                r.date_debut
+
+            FROM organisation_relationships r
+
+            INNER JOIN organisations o
+                ON o.id = r.source_organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = r.tenant_id
+
+            WHERE
+                r.target_organisation_id = $1
+                AND t.code = $2
+                AND r.actif = TRUE
+                AND r.statut = 'ACTIVE'
+
+            ORDER BY
+                o.type ASC,
+                o.nom ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // 3. USAGERS / CITOYENS RELIÉS
+    // =====================================================
+
+    const usagersResultat =
+        await executerRequete(
+            `
+            SELECT
+                p.id,
+                p.prenom,
+                p.nom,
+
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                ) AS territoire
+
+            FROM relations_personne_organisation r
+
+            INNER JOIN personnes p
+                ON p.id = r.personne_id
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            LEFT JOIN territories tr
+                ON tr.id = p.residence_territory_id
+
+            WHERE
+                r.organisation_id = $1
+                AND t.code = $2
+                AND r.type = 'USAGER'
+
+            ORDER BY
+                p.prenom ASC,
+                p.nom ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // 4. TERRITOIRES REPRÉSENTÉS
+    // =====================================================
+
+    const territoiresResultat =
+        await executerRequete(
+            `
+            SELECT
+
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                ) AS territoire,
+
+                COUNT(
+                    DISTINCT p.id
+                ) AS personnes
+
+            FROM relations_personne_organisation r
+
+            INNER JOIN personnes p
+                ON p.id = r.personne_id
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            LEFT JOIN territories tr
+                ON tr.id = p.residence_territory_id
+
+            WHERE
+                r.organisation_id = $1
+                AND t.code = $2
+                AND r.type = 'USAGER'
+
+            GROUP BY
+                COALESCE(
+                    tr.nom,
+                    p.departement,
+                    'Non renseigné'
+                )
+
+            ORDER BY
+                personnes DESC,
+                territoire ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // 5. DEMANDES DE RATTACHEMENT EN ATTENTE
+    // =====================================================
+
+    const rattachementsResultat =
+        await executerRequete(
+            `
+            SELECT
+                jr.id,
+
+                jr.type_relation,
+                jr.statut,
+                jr.message,
+                jr.date_creation,
+
+                o.id AS organisation_id,
+                o.nom,
+                o.type
+
+            FROM organisation_join_requests jr
+
+            INNER JOIN organisations o
+                ON o.id =
+                    jr.organisation_demandeuse_id
+
+            INNER JOIN tenants t
+                ON t.id = jr.tenant_id
+
+            WHERE
+                jr.organisation_cible_id = $1
+                AND t.code = $2
+                AND jr.statut = 'EN_ATTENTE'
+
+            ORDER BY
+                jr.date_creation DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // 6. INVITATIONS EN ATTENTE
+    // =====================================================
+
+    const invitationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                i.id,
+                i.email,
+                i.nom_organisation,
+                i.type_relation,
+                i.statut,
+                i.date_expiration,
+                i.date_creation
+
+            FROM organisation_invitations i
+
+            INNER JOIN tenants t
+                ON t.id = i.tenant_id
+
+            WHERE
+                i.organisation_source_id = $1
+                AND t.code = $2
+                AND i.statut = 'EN_ATTENTE'
+
+            ORDER BY
+                i.date_creation DESC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // 7. RÉSUMÉ DES ORGANISATIONS
+    // =====================================================
+
+    const resumeOrganisationsResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.type,
+
+                COUNT(*) AS total
+
+            FROM organisation_relationships r
+
+            INNER JOIN organisations o
+                ON o.id = r.source_organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = r.tenant_id
+
+            WHERE
+                r.target_organisation_id = $1
+                AND t.code = $2
+                AND r.actif = TRUE
+                AND r.statut = 'ACTIVE'
+
+            GROUP BY
+                o.type
+
+            ORDER BY
+                total DESC,
+                o.type ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    // =====================================================
+    // 8. RETOUR FINAL
+    // =====================================================
+
+    return {
+
+        organisation:
+            organisationResultat.rows[0],
+
+
+        resume: {
+
+            usagers:
+                usagersResultat.rows.length,
+
+            organisations:
+                organisationsResultat.rows.length,
+
+            territoires:
+                territoiresResultat.rows.length,
+
+            rattachementsEnAttente:
+                rattachementsResultat.rows.length,
+
+            invitationsEnAttente:
+                invitationsResultat.rows.length
+        },
+
+
+        organisations:
+            organisationsResultat.rows,
+
+
+        organisationsParType:
+            resumeOrganisationsResultat.rows,
+
+
+        usagers:
+            usagersResultat.rows,
+
+
+        territoires:
+            territoiresResultat.rows,
+
+
+        rattachementsEnAttente:
+            rattachementsResultat.rows,
+
+
+        invitationsEnAttente:
+            invitationsResultat.rows
+    };
+}
 // =========================================================
 // EXPORTS
 // =========================================================
@@ -4862,5 +5264,8 @@ module.exports = {
     obtenirAnalyticsConsulatDatabase,
 
     // Structure organisationnelle interne
-    obtenirStructureOrganisationDatabase
+    obtenirStructureOrganisationDatabase,
+
+    // Réseau / écosystème institutionnel
+    obtenirEcosystemeOrganisationDatabase
 };

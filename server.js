@@ -14,7 +14,8 @@ const {
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
     obtenirStructureOrganisationDatabase,
-    obtenirDashboardConsulatDatabase
+    obtenirDashboardConsulatDatabase,
+    obtenirEcosystemeOrganisationDatabase
 } = require("./services-database");
 
 const {
@@ -845,6 +846,77 @@ app.get(
                 .json({
                     erreur:
                         "Impossible de charger le dashboard opérationnel."
+                });
+        }
+    }
+);
+
+// =========================================================
+// API - ÉCOSYSTÈME D'UNE ORGANISATION
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/ecosysteme",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(
+                    req.params.organisationId
+                );
+
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            if (!organisationId) {
+
+                return res
+                    .status(400)
+                    .json({
+                        erreur:
+                            "organisationId invalide."
+                    });
+            }
+
+
+            const ecosysteme =
+                await obtenirEcosystemeOrganisationDatabase(
+                    organisationId,
+                    tenantCode
+                );
+
+
+            if (!ecosysteme) {
+
+                return res
+                    .status(404)
+                    .json({
+                        erreur:
+                            "Écosystème institutionnel introuvable."
+                    });
+            }
+
+
+            return res.json(
+                ecosysteme
+            );
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur API écosystème organisation :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    erreur:
+                        "Impossible de charger l'écosystème institutionnel."
                 });
         }
     }
