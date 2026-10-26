@@ -161,181 +161,224 @@
 
 
         <!-- ============================================= -->
-        <!-- ÉCOSYSTÈME -->
-        <!-- ============================================= -->
+<!-- COMMUNAUTÉ -->
+<!-- ============================================= -->
 
-        <section class="section">
+<section class="section">
 
-            <div class="section-header">
+    <div class="section-header">
+
+        <div>
+
+            <p class="eyebrow">
+                COMMUNAUTÉ
+            </p>
+
+            <h2>
+                Communauté liée au Consulat
+            </h2>
+
+            <p class="muted">
+                Vue synthétique des citoyens connus
+                et de leur présence territoriale.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="ecosystem-summary">
+
+        <article class="ecosystem-stat">
+
+            <strong id="ecosystemUsagers">
+                0
+            </strong>
+
+            <span>
+                Citoyens
+            </span>
+
+        </article>
+
+
+        <article class="ecosystem-stat">
+
+            <strong id="ecosystemTerritoires">
+                0
+            </strong>
+
+            <span>
+                Territoires
+            </span>
+
+        </article>
+
+    </div>
+
+
+    <div class="dashboard-columns">
+
+        <article class="panel">
+
+            <div class="compact-panel-header">
 
                 <div>
 
                     <p class="eyebrow">
-                        ÉCOSYSTÈME
+                        TERRITOIRES
                     </p>
 
-                    <h2>
-                        Communauté liée au Consulat
-                    </h2>
-
-                    <p class="muted">
-                        Citoyens, associations, organisations
-                        et territoires reliés à l'institution.
-                    </p>
+                    <h3>
+                        Présence de la communauté
+                    </h3>
 
                 </div>
 
             </div>
 
 
-            <div class="ecosystem-summary">
+            <div
+                id="ecosystemTerritoiresListe"
+                class="list"
+            >
+            </div>
 
-                <article class="ecosystem-stat">
+        </article>
 
-                    <strong id="ecosystemUsagers">
-                        0
-                    </strong>
-
-                    <span>
-                        Citoyens
-                    </span>
-
-                </article>
+    </div>
 
 
-                <article class="ecosystem-stat">
+    <div class="dashboard-section-actions">
 
-                    <strong id="ecosystemOrganisations">
-                        0
-                    </strong>
+        <a
+            class="button button-secondary"
+            href="/communaute.html?organisation=1&tenant=SN"
+        >
+            Voir la communauté
+        </a>
 
-                    <span>
-                        Organisations
-                    </span>
+    </div>
 
-                </article>
-
-
-                <article class="ecosystem-stat">
-
-                    <strong id="ecosystemTerritoires">
-                        0
-                    </strong>
-
-                    <span>
-                        Territoires
-                    </span>
-
-                </article>
+</section>
 
 
-                <article class="ecosystem-stat">
+<!-- ============================================= -->
+<!-- ÉCOSYSTÈME -->
+<!-- ============================================= -->
 
-                    <strong id="ecosystemRattachements">
-                        0
-                    </strong>
+<section class="section">
 
-                    <span>
-                        Rattachements à valider
-                    </span>
+    <div class="section-header">
 
-                </article>
+        <div>
+
+            <p class="eyebrow">
+                ÉCOSYSTÈME
+            </p>
+
+            <h2>
+                Réseau institutionnel
+            </h2>
+
+            <p class="muted">
+                Associations, organisations partenaires,
+                rattachements et invitations liés au Consulat.
+            </p>
+
+        </div>
+
+    </div>
 
 
-                <article class="ecosystem-stat">
+    <div class="ecosystem-summary">
 
-                    <strong id="ecosystemInvitations">
-                        0
-                    </strong>
+        <article class="ecosystem-stat">
 
-                    <span>
-                        Invitations en attente
-                    </span>
+            <strong id="ecosystemOrganisations">
+                0
+            </strong>
 
-                </article>
+            <span>
+                Organisations
+            </span>
+
+        </article>
+
+
+        <article class="ecosystem-stat">
+
+            <strong id="ecosystemRattachements">
+                0
+            </strong>
+
+            <span>
+                Rattachements à valider
+            </span>
+
+        </article>
+
+
+        <article class="ecosystem-stat">
+
+            <strong id="ecosystemInvitations">
+                0
+            </strong>
+
+            <span>
+                Invitations en attente
+            </span>
+
+        </article>
+
+    </div>
+
+
+    <div class="dashboard-columns">
+
+        <article class="panel">
+
+            <div class="compact-panel-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ORGANISATIONS
+                    </p>
+
+                    <h3>
+                        Réseau connecté
+                    </h3>
+
+                </div>
 
             </div>
 
 
-            <div class="dashboard-columns ecosystem-columns">
-
-                <article class="panel">
-
-                    <div class="compact-panel-header">
-
-                        <div>
-
-                            <p class="eyebrow">
-                                ORGANISATIONS
-                            </p>
-
-                            <h3>
-                                Réseau institutionnel
-                            </h3>
-
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        id="ecosystemOrganisationsListe"
-                        class="list"
-                    >
-                    </div>
-
-                </article>
-
-
-                <article class="panel">
-
-                    <div class="compact-panel-header">
-
-                        <div>
-
-                            <p class="eyebrow">
-                                TERRITOIRES
-                            </p>
-
-                            <h3>
-                                Présence de la communauté
-                            </h3>
-
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        id="ecosystemTerritoiresListe"
-                        class="list"
-                    >
-                    </div>
-
-                </article>
-
+            <div
+                id="ecosystemOrganisationsListe"
+                class="list"
+            >
             </div>
 
-        </section>
+        </article>
 
-        <div class="dashboard-section-actions">
-
-    <a
-        class="button button-secondary"
-        href="/communaute.html?organisation=1&tenant=SN"
-    >
-        Voir la communauté
-    </a>
+    </div>
 
 
-    <a
-        class="button button-secondary"
-        href="/ecosysteme.html?organisation=1&tenant=SN"
-    >
-        Voir l'écosystème
-    </a>
+    <div class="dashboard-section-actions">
 
-</div>
+        <a
+            class="button button-secondary"
+            href="/ecosysteme.html?organisation=1&tenant=SN"
+        >
+            Voir l'écosystème
+        </a>
+
+    </div>
+
+</section>
 
 
         <!-- ============================================= -->
@@ -424,119 +467,188 @@
         </section>
 
 
-        <!-- ============================================= -->
-        <!-- OUTILS -->
-        <!-- ============================================= -->
+       <!-- ============================================= -->
+<!-- PILOTAGE DES SERVICES -->
+<!-- ============================================= -->
 
-        <section class="section">
+<section class="section">
 
-            <div class="section-header">
+    <div class="section-header">
 
-                <div>
+        <div>
 
-                    <p class="eyebrow">
-                        PILOTAGE
-                    </p>
+            <p class="eyebrow">
+                PILOTAGE
+            </p>
 
-                    <h2>
-                        Outils opérationnels
-                    </h2>
+            <h2>
+                Services supervisés
+            </h2>
 
-                </div>
+            <p class="muted">
+                Le Vice-Consul supervise les unités opérationnelles
+                sans se substituer à leur travail quotidien.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="supervision-grid">
+
+        <!-- ========================================= -->
+        <!-- SECRÉTARIAT -->
+        <!-- ========================================= -->
+
+        <article class="supervision-card">
+
+            <div class="supervision-card-top">
+
+                <span class="supervision-icon">
+                    ✉
+                </span>
+
+                <span class="supervision-status">
+                    Actif
+                </span>
+
+            </div>
+
+
+            <h3>
+                Secrétariat
+            </h3>
+
+
+            <p>
+                Réception, tri, orientation
+                et suivi des demandes entrantes.
+            </p>
+
+
+            <div class="supervision-capability">
+                ✦ Assistant secrétariat disponible
+            </div>
+
+
+            <button
+                class="button button-secondary"
+                disabled
+            >
+                Voir le Secrétariat
+            </button>
+
+        </article>
+
+
+        <!-- ========================================= -->
+        <!-- SERVICE CONSULAIRE -->
+        <!-- ========================================= -->
+
+        <article class="supervision-card">
+
+            <div class="supervision-card-top">
+
+                <span class="supervision-icon">
+                    📄
+                </span>
+
+                <span class="supervision-status">
+                    Actif
+                </span>
 
             </div>
 
 
-            <div class="services-grid">
-
-                <button
-                    class="service-card"
-                    onclick="
-                        window.location.href =
-                        '/agent-demandes.html?organisation=1&source=MON_CONSULAT'
-                    "
-                >
-
-                    <span class="service-icon">
-                        📥
-                    </span>
-
-                    <strong>
-                        Gérer les demandes
-                    </strong>
-
-                    <small>
-                        Prendre en charge et répondre
-                    </small>
-
-                </button>
+            <h3>
+                Service consulaire
+            </h3>
 
 
-                <button
-                    class="service-card"
-                    onclick="
-                        window.location.href =
-                        '/organisation-consulat.html?organisation=1&tenant=SN'
-                    "
-                >
-
-                    <span class="service-icon">
-                        ◫
-                    </span>
-
-                    <strong>
-                        Organisation interne
-                    </strong>
-
-                    <small>
-                        Bureaux, services et agents
-                    </small>
-
-                </button>
+            <p>
+                Traitement opérationnel
+                des démarches consulaires.
+            </p>
 
 
-                <button
-                    class="service-card"
-                    disabled
-                >
-
-                    <span class="service-icon">
-                        ✦
-                    </span>
-
-                    <strong>
-                        Assistant secrétariat
-                    </strong>
-
-                    <small>
-                        Interface à connecter
-                    </small>
-
-                </button>
+            <div class="supervision-detail">
+                Awa Fall • Agent
+            </div>
 
 
-                <button
-                    class="service-card"
-                    disabled
-                >
+            <button
+                class="button button-secondary"
+                onclick="
+                    window.location.href =
+                    '/agent-demandes.html?organisation=1&source=MON_CONSULAT'
+                "
+            >
+                Voir les demandes
+            </button>
 
-                    <span class="service-icon">
-                        📰
-                    </span>
+        </article>
 
-                    <strong>
-                        Publications
-                    </strong>
 
-                    <small>
-                        Gestion à connecter
-                    </small>
+        <!-- ========================================= -->
+        <!-- BUREAU DE PROJET -->
+        <!-- ========================================= -->
 
-                </button>
+        <article class="supervision-card">
+
+            <div class="supervision-card-top">
+
+                <span class="supervision-icon">
+                    ◇
+                </span>
+
+                <span class="supervision-status">
+                    Actif
+                </span>
 
             </div>
 
-        </section>
+
+            <h3>
+                Bureau de projet
+            </h3>
+
+
+            <p>
+                Suivi des projets, initiatives
+                et actions transversales.
+            </p>
+
+
+            <div class="supervision-detail">
+                Pilotage des projets institutionnels
+            </div>
+
+
+            <button
+                class="button button-secondary"
+                disabled
+            >
+                Voir les projets
+            </button>
+
+        </article>
+
+    </div>
+
+
+    <div class="dashboard-section-actions">
+
+        <a
+            class="button button-secondary"
+            href="/organisation-consulat.html?organisation=1&tenant=SN"
+        >
+            Voir l'organisation interne
+        </a>
+
+    </div>
+
+</section>
 
 
         <!-- ============================================= -->

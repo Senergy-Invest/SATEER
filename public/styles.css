@@ -3382,3 +3382,449 @@ body {
 
     gap: 12px;
 }
+/* =========================================================
+   ORGANISATION - MISSIONS ET CAPACITÉS
+   ========================================================= */
+
+.organisation-mission {
+    margin:
+        14px
+        0
+        0;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    color: #667085;
+}
+
+
+.organisation-capability {
+    margin-top: 14px;
+
+    padding:
+        9px
+        12px;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e7ebf0;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #344054;
+}
+/* =========================================================
+   SUPERVISION DES SERVICES
+   ========================================================= */
+
+.supervision-grid {
+    width: 100%;
+    max-width: 1050px;
+
+    margin: 0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+
+    gap: 18px;
+}
+
+
+.supervision-card {
+    min-width: 0;
+
+    padding: 22px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 14px;
+
+    box-shadow:
+        0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+
+.supervision-card-top {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+.supervision-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #f2f4f7;
+
+    font-size: 19px;
+}
+
+
+.supervision-status {
+    padding:
+        5px
+        9px;
+
+    border: 1px solid #e4e7ec;
+
+    border-radius: 999px;
+
+    background: #f8fafc;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    color: #475467;
+}
+
+
+.supervision-card h3 {
+    margin: 0;
+
+    font-size: 19px;
+
+    color: #101828;
+}
+
+
+.supervision-card p {
+    margin: 0;
+
+    min-height: 68px;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    color: #667085;
+}
+
+
+.supervision-capability,
+.supervision-detail {
+    padding:
+        10px
+        12px;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    font-size: 13px;
+
+    color: #475467;
+}
+
+
+.supervision-capability {
+    font-weight: 700;
+}
+
+
+.supervision-card .button {
+    margin-top: auto;
+}
+
+
+@media (max-width: 900px) {
+
+    .supervision-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .supervision-card p {
+        min-height: auto;
+    }
+
+}
+/* =========================================================
+   DASHBOARD - CENTRAGE COMMUNAUTÉ / ÉCOSYSTÈME
+   ========================================================= */
+
+#ecosystemTerritoiresListe,
+#ecosystemOrganisationsListe {
+    width: 100%;
+}
+
+
+/* Centre les blocs principaux des sections */
+.section .ecosystem-summary,
+.section .dashboard-columns,
+.section .dashboard-section-actions {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* Largeur plus équilibrée pour les statistiques */
+.ecosystem-summary {
+    max-width: 760px;
+}
+
+
+/* Centre les panneaux Territoires / Organisations */
+.dashboard-columns {
+    max-width: 900px;
+}
+
+
+/* Le panel occupe une largeur agréable sans être collé à gauche */
+.dashboard-columns .panel {
+    width: 100%;
+}
+
+
+/* Titres centrés uniquement pour les sections communauté / écosystème */
+.section:has(#ecosystemTerritoiresListe) .section-header,
+.section:has(#ecosystemOrganisationsListe) .section-header {
+    text-align: center;
+}
+
+
+.section:has(#ecosystemTerritoiresListe) .section-header > div,
+.section:has(#ecosystemOrganisationsListe) .section-header > div {
+    margin-left: auto;
+    margin-right: auto;
+
+    max-width: 720px;
+}
+
+
+/* Centre les sous-en-têtes Territoires / Organisations */
+.section:has(#ecosystemTerritoiresListe) .compact-panel-header,
+.section:has(#ecosystemOrganisationsListe) .compact-panel-header {
+    justify-content: center;
+    text-align: center;
+}
+
+
+/* Centre les boutons */
+.dashboard-section-actions {
+    justify-content: center;
+}
+/* =========================================================
+   DASHBOARD VICE-CONSUL
+   CENTRAGE STRICT COMMUNAUTÉ / ÉCOSYSTÈME
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   1. CENTRAGE DU CONTENU DES DEUX SECTIONS
+   --------------------------------------------------------- */
+
+.section:has(#ecosystemTerritoiresListe),
+.section:has(#ecosystemOrganisationsListe) {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+/* ---------------------------------------------------------
+   2. TITRES PRINCIPAUX
+   --------------------------------------------------------- */
+
+.section:has(#ecosystemTerritoiresListe) > .section-header,
+.section:has(#ecosystemOrganisationsListe) > .section-header {
+    width: 100%;
+    max-width: 900px;
+
+    margin-left: auto;
+    margin-right: auto;
+
+    display: flex;
+    justify-content: center;
+
+    text-align: center;
+}
+
+
+.section:has(#ecosystemTerritoiresListe) > .section-header > div,
+.section:has(#ecosystemOrganisationsListe) > .section-header > div {
+    width: 100%;
+    max-width: 700px;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ---------------------------------------------------------
+   3. CARTES DE STATISTIQUES
+   --------------------------------------------------------- */
+
+.section:has(#ecosystemTerritoiresListe) > .ecosystem-summary,
+.section:has(#ecosystemOrganisationsListe) > .ecosystem-summary {
+    width: 100%;
+    max-width: 760px;
+
+    margin:
+        24px
+        auto
+        0;
+
+    justify-content: center;
+}
+
+
+/* COMMUNAUTÉ : 2 cartes */
+.section:has(#ecosystemTerritoiresListe) > .ecosystem-summary {
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(180px, 260px)
+        );
+}
+
+
+/* ÉCOSYSTÈME : 3 cartes */
+.section:has(#ecosystemOrganisationsListe) > .ecosystem-summary {
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(180px, 230px)
+        );
+}
+
+
+/* ---------------------------------------------------------
+   4. PANNEAUX TERRITOIRES / ORGANISATIONS
+   --------------------------------------------------------- */
+
+.section:has(#ecosystemTerritoiresListe) > .dashboard-columns,
+.section:has(#ecosystemOrganisationsListe) > .dashboard-columns {
+    width: 100%;
+    max-width: 760px;
+
+    margin:
+        24px
+        auto
+        0;
+
+    display: block;
+}
+
+
+/* Force réellement la carte au centre */
+.section:has(#ecosystemTerritoiresListe) .panel,
+.section:has(#ecosystemOrganisationsListe) .panel {
+    box-sizing: border-box;
+
+    width: 100%;
+    max-width: 760px;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ---------------------------------------------------------
+   5. TITRES INTERNES
+   --------------------------------------------------------- */
+
+.section:has(#ecosystemTerritoiresListe) .compact-panel-header,
+.section:has(#ecosystemOrganisationsListe) .compact-panel-header {
+    width: 100%;
+
+    display: flex;
+    justify-content: center;
+
+    text-align: center;
+}
+
+
+.section:has(#ecosystemTerritoiresListe) .compact-panel-header > div,
+.section:has(#ecosystemOrganisationsListe) .compact-panel-header > div {
+    width: 100%;
+
+    text-align: center;
+}
+
+
+/* ---------------------------------------------------------
+   6. LISTES
+   --------------------------------------------------------- */
+
+#ecosystemTerritoiresListe,
+#ecosystemOrganisationsListe {
+    width: 100%;
+    max-width: 100%;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ---------------------------------------------------------
+   7. BOUTONS
+   --------------------------------------------------------- */
+
+.section:has(#ecosystemTerritoiresListe) > .dashboard-section-actions,
+.section:has(#ecosystemOrganisationsListe) > .dashboard-section-actions {
+    width: 100%;
+
+    margin:
+        22px
+        auto
+        0;
+
+    display: flex;
+    justify-content: center;
+}
+
+
+/* ---------------------------------------------------------
+   8. MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 800px) {
+
+    .section:has(#ecosystemTerritoiresListe) > .ecosystem-summary,
+    .section:has(#ecosystemOrganisationsListe) > .ecosystem-summary {
+        width: 100%;
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .section:has(#ecosystemTerritoiresListe) > .dashboard-columns,
+    .section:has(#ecosystemOrganisationsListe) > .dashboard-columns {
+        width: 100%;
+    }
+
+}

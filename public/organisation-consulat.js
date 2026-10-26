@@ -99,7 +99,6 @@ async function chargerOrganisation() {
 
         organisationErreur.textContent =
             erreur.message;
-
     }
 }
 
@@ -218,6 +217,66 @@ function creerUnite(
     card.appendChild(
         type
     );
+
+
+    // =====================================================
+    // MISSION
+    // =====================================================
+
+    if (
+        unit.metadata
+        &&
+        unit.metadata.mission
+    ) {
+
+        const mission =
+            document.createElement(
+                "p"
+            );
+
+
+        mission.className =
+            "organisation-mission";
+
+
+        mission.textContent =
+            unit.metadata.mission;
+
+
+        card.appendChild(
+            mission
+        );
+    }
+
+
+    // =====================================================
+    // ASSISTANT SECRÉTARIAT
+    // =====================================================
+
+    if (
+        unit.metadata
+        &&
+        unit.metadata.assistantSecretariat === true
+    ) {
+
+        const assistant =
+            document.createElement(
+                "div"
+            );
+
+
+        assistant.className =
+            "organisation-capability";
+
+
+        assistant.textContent =
+            "✦ Assistant secrétariat";
+
+
+        card.appendChild(
+            assistant
+        );
+    }
 
 
     // =====================================================
@@ -373,7 +432,10 @@ function libelleType(
             "Secrétariat",
 
         SERVICE:
-            "Service"
+            "Service",
+
+        PROJECT_OFFICE:
+            "Bureau de projet"
     };
 
 
