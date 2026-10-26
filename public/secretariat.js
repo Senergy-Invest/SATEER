@@ -34,6 +34,10 @@ const demandesContainer =
     );
 
 
+let unitesOrientation =
+    [];
+
+
 // =========================================================
 // CHARGEMENT
 // =========================================================
@@ -52,29 +56,58 @@ async function chargerSecretariat() {
             true;
 
 
-        const reponse =
-            await fetch(
-                `/api/agent/demandes?organisationId=${organisationId}&tenant=${tenant}`
-            );
+        const [
+    reponseDemandes,
+    reponseStructure
+] =
+    await Promise.all([
+
+        fetch(
+            `/api/secretariat/demandes?organisationId=${organisationId}&tenant=${tenant}`
+        ),
+
+        fetch(
+            `/api/organisations/${organisationId}/structure?tenant=${tenant}`
+        )
+
+    ]);
 
 
-        const donnees =
-            await reponse.json();
+        const donneesDemandes =
+            await reponseDemandes.json();
 
 
-        if (!reponse.ok) {
+        const donneesStructure =
+            await reponseStructure.json();
+
+
+        if (!reponseDemandes.ok) {
 
             throw new Error(
-                donnees.erreur
+                donneesDemandes.erreur
                 || "Impossible de charger les demandes."
+            );
+        }
+
+
+        if (!reponseStructure.ok) {
+
+            throw new Error(
+                donneesStructure.erreur
+                || "Impossible de charger l'organisation."
             );
         }
 
 
         const demandes =
             extraireDemandes(
-                donnees
+                donneesDemandes
             );
+
+
+        preparerUnitesOrientation(
+            donneesStructure.units || []
+        );
 
 
         afficherStatistiques(
@@ -113,6 +146,32 @@ async function chargerSecretariat() {
         erreur.textContent =
             exception.message;
     }
+}
+
+
+// =========================================================
+// UNITÉS AUTORISÉES POUR L'ORIENTATION
+// =========================================================
+
+function preparerUnitesOrientation(
+    units
+) {
+
+    const codesAutorises =
+        new Set([
+            "CONSULAR_SERVICE",
+            "PROJECT_OFFICE",
+            "OPERATIONAL_DEPUTY"
+        ]);
+
+
+    unitesOrientation =
+        units.filter(
+            (unit) =>
+                codesAutorises.has(
+                    unit.code
+                )
+        );
 }
 
 
@@ -186,13 +245,9 @@ function afficherStatistiques(
     const prioritaires =
         demandes.filter(
             (demande) =>
-                demande.urgente === true
-                ||
-                demande.urgent === true
-                ||
-                demande.importante === true
-                ||
-                demande.important === true
+                normaliserPriorite(
+                    demande.priorite
+                ) !== "NORMALE"
         ).length;
 
 
@@ -271,6 +326,20 @@ function afficherDemandes(
 
             card.className =
                 "secretariat-request-card";
+
+
+            // =============================================
+            // EN-TÊTE
+            // =============================================
+
+            const lignePrincipale =
+                document.createElement(
+                    "div"
+                );
+
+
+            lignePrincipale.className =
+                "secretariat-request-row";
 
 
             const contenu =
@@ -353,41 +422,99 @@ function afficherDemandes(
             );
 
 
-            if (
-                demande.id
-            ) {
-
-                const lien =
-                    document.createElement(
-                        "a"
-                    );
-
-
-                lien.className =
-                    "button button-secondary";
-
-
-                lien.href =
-                    `/demande-detail.html?demande=${demande.id}&organisation=${organisationId}&tenant=${tenant}`;
-
-
-                lien.textContent =
-                    "Voir";
-
-
-                droite.appendChild(
-                    lien
+            const voir =
+                document.createElement(
+                    "a"
                 );
-            }
 
 
-            card.appendChild(
+            voir.className =
+                "button button-secondary";
+
+
+            voir.href =
+                `/demande-detail.html?demande=${demande.id}&organisation=${organisationId}&tenant=${tenant}`;
+
+
+            voir.textContent =
+                "Voir";
+
+
+            droite.appendChild(
+                voir
+            );
+
+
+            const orienter =
+                document.createElement(
+                    "button"
+                );
+
+
+            orienter.type =
+                "button";
+
+
+            orienter.className =
+                "button button-secondary";
+
+
+            orienter.textContent =
+                "Orienter";
+
+
+            droite.appendChild(
+                orienter
+            );
+
+
+            lignePrincipale.appendChild(
                 contenu
             );
 
 
-            card.appendChild(
+            lignePrincipale.appendChild(
                 droite
+            );
+
+
+            card.appendChild(
+                lignePrincipale
+            );
+
+
+            // =============================================
+            // FORMULAIRE D'ORIENTATION
+            // =============================================
+
+            const formulaire =
+                creerFormulaireOrientation(
+                    demande
+                );
+
+
+            formulaire.hidden =
+                true;
+
+
+            card.appendChild(
+                formulaire
+            );
+
+
+            orienter.addEventListener(
+                "click",
+                () => {
+
+                    formulaire.hidden =
+                        !formulaire.hidden;
+
+
+                    orienter.textContent =
+                        formulaire.hidden
+                            ? "Orienter"
+                            : "Fermer";
+                }
             );
 
 
@@ -396,6 +523,340 @@ function afficherDemandes(
             );
         }
     );
+}
+
+
+// =========================================================
+// FORMULAIRE D'ORIENTATION
+// =========================================================
+
+function creerFormulaireOrientation(
+    demande
+) {
+
+    const formulaire =
+        document.createElement(
+            "form"
+        );
+
+
+    formulaire.className =
+        "secretariat-routing-form";
+
+
+    // =============================================
+    // DESTINATION
+    // =============================================
+
+    const groupeDestination =
+        document.createElement(
+            "div"
+        );
+
+
+    groupeDestination.className =
+        "secretariat-form-group";
+
+
+    const labelDestination =
+        document.createElement(
+            "label"
+        );
+
+
+    labelDestination.textContent =
+        "Service de destination";
+
+
+    const selectDestination =
+        document.createElement(
+            "select"
+        );
+
+
+    selectDestination.required =
+        true;
+
+
+    const optionVide =
+        document.createElement(
+            "option"
+        );
+
+
+    optionVide.value =
+        "";
+
+
+    optionVide.textContent =
+        "Choisir une destination";
+
+
+    selectDestination.appendChild(
+        optionVide
+    );
+
+
+    unitesOrientation.forEach(
+        (unit) => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                unit.id;
+
+
+            option.textContent =
+                unit.nom;
+
+
+            selectDestination.appendChild(
+                option
+            );
+        }
+    );
+
+
+    groupeDestination.appendChild(
+        labelDestination
+    );
+
+
+    groupeDestination.appendChild(
+        selectDestination
+    );
+
+
+    // =============================================
+    // MOTIF
+    // =============================================
+
+    const groupeMotif =
+        document.createElement(
+            "div"
+        );
+
+
+    groupeMotif.className =
+        "secretariat-form-group";
+
+
+    const labelMotif =
+        document.createElement(
+            "label"
+        );
+
+
+    labelMotif.textContent =
+        "Motif de l'orientation";
+
+
+    const motif =
+        document.createElement(
+            "textarea"
+        );
+
+
+    motif.rows =
+        3;
+
+
+    motif.required =
+        true;
+
+
+    motif.placeholder =
+        "Ex. Demande de passeport à traiter par le service consulaire";
+
+
+    groupeMotif.appendChild(
+        labelMotif
+    );
+
+
+    groupeMotif.appendChild(
+        motif
+    );
+
+
+    // =============================================
+    // MESSAGE
+    // =============================================
+
+    const message =
+        document.createElement(
+            "div"
+        );
+
+
+    message.className =
+        "secretariat-routing-message";
+
+
+    // =============================================
+    // BOUTON
+    // =============================================
+
+    const bouton =
+        document.createElement(
+            "button"
+        );
+
+
+    bouton.type =
+        "submit";
+
+
+    bouton.className =
+        "button";
+
+
+    bouton.textContent =
+        "Confirmer l'orientation";
+
+
+    formulaire.appendChild(
+        groupeDestination
+    );
+
+
+    formulaire.appendChild(
+        groupeMotif
+    );
+
+
+    formulaire.appendChild(
+        bouton
+    );
+
+
+    formulaire.appendChild(
+        message
+    );
+
+
+    // =============================================
+    // ENVOI
+    // =============================================
+
+    formulaire.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+
+            bouton.disabled =
+                true;
+
+
+            bouton.textContent =
+                "Orientation...";
+
+
+            message.textContent =
+                "";
+
+
+            try {
+
+                const reponse =
+                    await fetch(
+                        `/api/secretariat/demandes/${demande.id}/orientation`,
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    organisationId:
+                                        organisationId,
+
+                                    tenantCode:
+                                        tenant,
+
+                                    destinationUnitId:
+                                        Number(
+                                            selectDestination.value
+                                        ),
+
+                                    motif:
+                                        motif.value.trim()
+                                })
+                        }
+                    );
+
+
+                const resultat =
+                    await reponse.json();
+
+
+                if (!reponse.ok) {
+
+                    throw new Error(
+                        resultat.erreur
+                        || "Orientation impossible."
+                    );
+                }
+
+
+                message.className =
+                    "secretariat-routing-message success";
+
+
+                message.textContent =
+                    `✓ Orientée vers ${resultat.destination.nom}`;
+
+
+                bouton.textContent =
+                    "Orientation enregistrée";
+
+
+                selectDestination.disabled =
+                    true;
+
+
+                motif.disabled =
+                    true;
+
+            } catch (exception) {
+
+                console.error(
+                    "Erreur orientation :",
+                    exception
+                );
+
+
+                message.className =
+                    "secretariat-routing-message error";
+
+
+                message.textContent =
+                    exception.message;
+
+
+                bouton.disabled =
+                    false;
+
+
+                bouton.textContent =
+                    "Confirmer l'orientation";
+            }
+        }
+    );
+
+
+    return formulaire;
 }
 
 
@@ -455,6 +916,18 @@ function normaliserStatut(
 
     return String(
         statut || "NOUVELLE"
+    )
+        .trim()
+        .toUpperCase();
+}
+
+
+function normaliserPriorite(
+    priorite
+) {
+
+    return String(
+        priorite || "NORMALE"
     )
         .trim()
         .toUpperCase();

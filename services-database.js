@@ -1801,7 +1801,9 @@ async function listerDemandesPersonneDatabase(
 async function listerDemandesOrganisationDatabase(
     organisationId,
     tenantCode,
-    statut = null
+    statut = null,
+    destinationCode = null,
+    uniquementNonOrientees = false
 ) {
 
     const resultat =
@@ -1818,19 +1820,38 @@ async function listerDemandesOrganisationDatabase(
                 d.date_creation,
                 d.date_modification,
 
-                citoyen.id AS personne_id,
+                d.destination_unit_id,
+
+                destination.code
+                    AS destination_code,
+
+                destination.nom
+                    AS destination_nom,
+
+                citoyen.id
+                    AS personne_id,
+
                 citoyen.prenom,
+
                 citoyen.nom,
 
-                pays.nom AS pays,
+                pays.nom
+                    AS pays,
 
-                territoire.nom AS territoire,
+                territoire.nom
+                    AS territoire,
 
-                agent.id AS assignee_id,
-                agent.prenom AS assignee_prenom,
-                agent.nom AS assignee_nom,
+                agent.id
+                    AS assignee_id,
 
-                o.nom AS organisation
+                agent.prenom
+                    AS assignee_prenom,
+
+                agent.nom
+                    AS assignee_nom,
+
+                o.nom
+                    AS organisation
 
             FROM demandes d
 
@@ -1854,6 +1875,10 @@ async function listerDemandesOrganisationDatabase(
             LEFT JOIN personnes agent
                 ON agent.id = d.assignee_a
 
+            LEFT JOIN organisation_units destination
+                ON destination.id =
+                    d.destination_unit_id
+
             WHERE
                 d.organisation_id = $1
 
@@ -1862,6 +1887,16 @@ async function listerDemandesOrganisationDatabase(
                 AND (
                     $3::text IS NULL
                     OR d.statut = $3::text
+                )
+
+                AND (
+                    $4::text IS NULL
+                    OR destination.code = $4::text
+                )
+
+                AND (
+                    $5::boolean = FALSE
+                    OR d.destination_unit_id IS NULL
                 )
 
             ORDER BY
@@ -1883,7 +1918,9 @@ async function listerDemandesOrganisationDatabase(
             [
                 organisationId,
                 tenantCode,
-                statut
+                statut,
+                destinationCode,
+                uniquementNonOrientees
             ]
         );
 
@@ -2142,6 +2179,7 @@ async function prendreEnChargeDemandeDatabase(
                     d.tenant_id,
                     d.organisation_id,
                     d.statut AS ancien_statut,
+                    d.destination_unit_id,
 
                     agent.id AS agent_id
 
@@ -2153,6 +2191,10 @@ async function prendreEnChargeDemandeDatabase(
                 INNER JOIN organisations o
                     ON o.id = d.organisation_id
                     AND o.tenant_id = t.id
+
+                INNER JOIN organisation_units destination
+                    ON destination.id = d.destination_unit_id
+                    AND destination.organisation_id = o.id
 
                 INNER JOIN personnes agent
                     ON agent.id = $2
@@ -2173,6 +2215,9 @@ async function prendreEnChargeDemandeDatabase(
                     AND t.code = $4
 
                     AND d.statut = 'NOUVELLE'
+
+                    AND destination.code =
+                        'CONSULAR_SERVICE'
             ),
 
 
@@ -2207,6 +2252,7 @@ async function prendreEnChargeDemandeDatabase(
                     d.statut,
                     d.priorite,
                     d.assignee_a,
+                    d.destination_unit_id,
                     d.date_modification
             ),
 
@@ -2230,7 +2276,7 @@ async function prendreEnChargeDemandeDatabase(
                     contexte.ancien_statut,
                     'EN_COURS',
                     'PRISE_EN_CHARGE',
-                    'Demande prise en charge par un agent.'
+                    'Demande prise en charge par un agent du service consulaire.'
 
                 FROM demande_modifiee dm
 
@@ -2253,6 +2299,7 @@ async function prendreEnChargeDemandeDatabase(
                 dm.statut,
                 dm.priorite,
                 dm.assignee_a,
+                dm.destination_unit_id,
                 dm.date_modification,
 
                 h.id AS history_id
@@ -2275,6 +2322,7 @@ async function prendreEnChargeDemandeDatabase(
     if (
         resultat.rows.length === 0
     ) {
+
         return undefined;
     }
 

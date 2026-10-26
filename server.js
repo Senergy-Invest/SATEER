@@ -966,14 +966,18 @@ app.get(
 
 
             const demandes =
-                await listerDemandesOrganisationDatabase(
+    await listerDemandesOrganisationDatabase(
 
-                    organisationId,
+        organisationId,
 
-                    tenantCode,
+        tenantCode,
 
-                    statut
-                );
+        statut,
+
+        "CONSULAR_SERVICE",
+
+        false
+    );
 
 
             return res.json({
@@ -1003,6 +1007,92 @@ app.get(
 
                     erreur:
                         "Impossible de charger les demandes."
+                });
+        }
+    }
+);
+
+// =========================================================
+// API - SECRÉTARIAT - DEMANDES À ORIENTER
+// =========================================================
+
+app.get(
+    "/api/secretariat/demandes",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(
+                    req.query.organisationId
+                );
+
+
+            const tenantCode =
+                req.query.tenant;
+
+
+            if (
+                !organisationId
+                ||
+                !tenantCode
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Organisation ou tenant manquant."
+                    });
+            }
+
+
+            const demandes =
+                await listerDemandesOrganisationDatabase(
+
+                    organisationId,
+
+                    tenantCode,
+
+                    "NOUVELLE",
+
+                    null,
+
+                    true
+                );
+
+
+            return res.json({
+
+                statut:
+                    "DEMANDES_SECRETARIAT_CHARGEES",
+
+                demandes:
+                    demandes || []
+            });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur demandes secrétariat :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_DEMANDES_SECRETARIAT",
+
+                    erreur:
+                        "Impossible de charger les demandes du Secrétariat."
                 });
         }
     }
