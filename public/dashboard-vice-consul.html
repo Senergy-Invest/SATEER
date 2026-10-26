@@ -23,6 +23,10 @@
 
     <main class="page">
 
+        <!-- ============================================= -->
+        <!-- HERO -->
+        <!-- ============================================= -->
+
         <section class="hero">
 
             <div class="hero-content">
@@ -44,6 +48,10 @@
         </section>
 
 
+        <!-- ============================================= -->
+        <!-- ACTIVITÉ -->
+        <!-- ============================================= -->
+
         <section class="section">
 
             <div class="section-header">
@@ -58,6 +66,11 @@
                         Vue opérationnelle
                     </h2>
 
+                    <p class="muted">
+                        L'essentiel de l'activité consulaire
+                        en un seul regard.
+                    </p>
+
                 </div>
 
             </div>
@@ -66,39 +79,90 @@
             <div class="dashboard-kpis">
 
                 <article class="dashboard-kpi">
-                    <span>Nouvelles</span>
-                    <strong id="kpiNouvelles">0</strong>
+
+                    <span>
+                        Nouvelles
+                    </span>
+
+                    <strong id="kpiNouvelles">
+                        0
+                    </strong>
+
                 </article>
 
-                <article class="dashboard-kpi">
-                    <span>En cours</span>
-                    <strong id="kpiEnCours">0</strong>
-                </article>
 
                 <article class="dashboard-kpi">
-                    <span>Traitées</span>
-                    <strong id="kpiTraitees">0</strong>
+
+                    <span>
+                        En cours
+                    </span>
+
+                    <strong id="kpiEnCours">
+                        0
+                    </strong>
+
                 </article>
 
-                <article class="dashboard-kpi">
-                    <span>À surveiller</span>
-                    <strong id="kpiSurveillance">0</strong>
-                </article>
 
                 <article class="dashboard-kpi">
-                    <span>Délai moyen</span>
-                    <strong id="kpiDelai">—</strong>
+
+                    <span>
+                        Traitées
+                    </span>
+
+                    <strong id="kpiTraitees">
+                        0
+                    </strong>
+
                 </article>
 
+
                 <article class="dashboard-kpi">
-                    <span>Usagers</span>
-                    <strong id="kpiUsagers">0</strong>
+
+                    <span>
+                        À surveiller
+                    </span>
+
+                    <strong id="kpiSurveillance">
+                        0
+                    </strong>
+
+                </article>
+
+
+                <article class="dashboard-kpi">
+
+                    <span>
+                        Délai moyen
+                    </span>
+
+                    <strong id="kpiDelai">
+                        —
+                    </strong>
+
+                </article>
+
+
+                <article class="dashboard-kpi">
+
+                    <span>
+                        Usagers
+                    </span>
+
+                    <strong id="kpiUsagers">
+                        0
+                    </strong>
+
                 </article>
 
             </div>
 
         </section>
 
+
+        <!-- ============================================= -->
+        <!-- ÉCOSYSTÈME -->
+        <!-- ============================================= -->
 
         <section class="section">
 
@@ -107,7 +171,271 @@
                 <div>
 
                     <p class="eyebrow">
-                        ACTIONS
+                        ÉCOSYSTÈME
+                    </p>
+
+                    <h2>
+                        Communauté liée au Consulat
+                    </h2>
+
+                    <p class="muted">
+                        Citoyens, associations, organisations
+                        et territoires reliés à l'institution.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="ecosystem-summary">
+
+                <article class="ecosystem-stat">
+
+                    <strong id="ecosystemUsagers">
+                        0
+                    </strong>
+
+                    <span>
+                        Citoyens
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="ecosystemOrganisations">
+                        0
+                    </strong>
+
+                    <span>
+                        Organisations
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="ecosystemTerritoires">
+                        0
+                    </strong>
+
+                    <span>
+                        Territoires
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="ecosystemRattachements">
+                        0
+                    </strong>
+
+                    <span>
+                        Rattachements à valider
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="ecosystemInvitations">
+                        0
+                    </strong>
+
+                    <span>
+                        Invitations en attente
+                    </span>
+
+                </article>
+
+            </div>
+
+
+            <div class="dashboard-columns ecosystem-columns">
+
+                <article class="panel">
+
+                    <div class="compact-panel-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                ORGANISATIONS
+                            </p>
+
+                            <h3>
+                                Réseau institutionnel
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="ecosystemOrganisationsListe"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="compact-panel-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                TERRITOIRES
+                            </p>
+
+                            <h3>
+                                Présence de la communauté
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="ecosystemTerritoiresListe"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <div class="dashboard-section-actions">
+
+    <a
+        class="button button-secondary"
+        href="/communaute.html?organisation=1&tenant=SN"
+    >
+        Voir la communauté
+    </a>
+
+
+    <a
+        class="button button-secondary"
+        href="/ecosysteme.html?organisation=1&tenant=SN"
+    >
+        Voir l'écosystème
+    </a>
+
+</div>
+
+
+        <!-- ============================================= -->
+        <!-- COMMUNICATION -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        COMMUNICATION
+                    </p>
+
+                    <h2>
+                        Communication ciblée
+                    </h2>
+
+                    <p class="muted">
+                        Préparer une communication vers
+                        les publics et organisations
+                        de l'écosystème.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="communication-audiences">
+
+                <div class="audience-chip">
+                    Tous les Sénégalais
+                </div>
+
+                <div class="audience-chip">
+                    Associations
+                </div>
+
+                <div class="audience-chip">
+                    Étudiants
+                </div>
+
+                <div class="audience-chip">
+                    Jeunes
+                </div>
+
+                <div class="audience-chip">
+                    Entrepreneurs
+                </div>
+
+                <div class="audience-chip">
+                    Professionnels
+                </div>
+
+            </div>
+
+
+            <div class="communication-preview">
+
+                <div>
+
+                    <strong>
+                        Communication multi-destinataires
+                    </strong>
+
+                    <p>
+                        Le prochain module permettra de sélectionner
+                        une ou plusieurs organisations, catégories
+                        ou personnes avant diffusion.
+                    </p>
+
+                </div>
+
+                <button
+                    class="button"
+                    disabled
+                >
+                    Composer un message
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- OUTILS -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        PILOTAGE
                     </p>
 
                     <h2>
@@ -128,6 +456,7 @@
                         '/agent-demandes.html?organisation=1&source=MON_CONSULAT'
                     "
                 >
+
                     <span class="service-icon">
                         📥
                     </span>
@@ -139,6 +468,7 @@
                     <small>
                         Prendre en charge et répondre
                     </small>
+
                 </button>
 
 
@@ -149,17 +479,19 @@
                         '/organisation-consulat.html?organisation=1&tenant=SN'
                     "
                 >
+
                     <span class="service-icon">
                         ◫
                     </span>
 
                     <strong>
-                        Organisation
+                        Organisation interne
                     </strong>
 
                     <small>
-                        Voir les bureaux et agents
+                        Bureaux, services et agents
                     </small>
+
                 </button>
 
 
@@ -167,6 +499,7 @@
                     class="service-card"
                     disabled
                 >
+
                     <span class="service-icon">
                         ✦
                     </span>
@@ -178,6 +511,7 @@
                     <small>
                         Interface à connecter
                     </small>
+
                 </button>
 
 
@@ -185,6 +519,7 @@
                     class="service-card"
                     disabled
                 >
+
                     <span class="service-icon">
                         📰
                     </span>
@@ -196,6 +531,7 @@
                     <small>
                         Gestion à connecter
                     </small>
+
                 </button>
 
             </div>
@@ -203,13 +539,17 @@
         </section>
 
 
+        <!-- ============================================= -->
+        <!-- SUIVI -->
+        <!-- ============================================= -->
+
         <section class="section">
 
             <div class="dashboard-columns">
 
                 <article class="panel">
 
-                    <div class="section-header">
+                    <div class="compact-panel-header">
 
                         <div>
 
@@ -217,13 +557,14 @@
                                 SUIVI
                             </p>
 
-                            <h2>
+                            <h3>
                                 Dernières demandes
-                            </h2>
+                            </h3>
 
                         </div>
 
                     </div>
+
 
                     <div
                         id="dernieresDemandes"
@@ -236,7 +577,7 @@
 
                 <article class="panel">
 
-                    <div class="section-header">
+                    <div class="compact-panel-header">
 
                         <div>
 
@@ -244,13 +585,14 @@
                                 ALERTES
                             </p>
 
-                            <h2>
+                            <h3>
                                 À surveiller
-                            </h2>
+                            </h3>
 
                         </div>
 
                     </div>
+
 
                     <div
                         id="demandesSurveillance"
@@ -265,27 +607,32 @@
         </section>
 
 
+        <!-- ============================================= -->
+        <!-- COMMUNICATION / PUBLICATIONS -->
+        <!-- ============================================= -->
+
         <section class="section">
 
             <div class="dashboard-columns">
 
                 <article class="panel">
 
-                    <div class="section-header">
+                    <div class="compact-panel-header">
 
                         <div>
 
                             <p class="eyebrow">
-                                TERRITOIRE
+                                DIASPORA
                             </p>
 
-                            <h2>
-                                Répartition des usagers
-                            </h2>
+                            <h3>
+                                Couverture territoriale
+                            </h3>
 
                         </div>
 
                     </div>
+
 
                     <div
                         id="territoiresContainer"
@@ -298,21 +645,22 @@
 
                 <article class="panel">
 
-                    <div class="section-header">
+                    <div class="compact-panel-header">
 
                         <div>
 
                             <p class="eyebrow">
-                                COMMUNICATION
+                                PUBLICATIONS
                             </p>
 
-                            <h2>
-                                Publications
-                            </h2>
+                            <h3>
+                                Communication officielle
+                            </h3>
 
                         </div>
 
                     </div>
+
 
                     <div
                         id="publicationsResume"

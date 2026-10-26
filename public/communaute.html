@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Communauté - SATEER
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/styles.css"
+    >
+</head>
+
+<body>
+
+    <main class="page">
+
+        <!-- ============================================= -->
+        <!-- HERO -->
+        <!-- ============================================= -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="eyebrow">
+                    SATEER • COMMUNAUTÉ
+                </p>
+
+                <h1>
+                    Communauté
+                </h1>
+
+                <p id="organisationNom">
+                    Chargement...
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- RÉSUMÉ -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        VUE D'ENSEMBLE
+                    </p>
+
+                    <h2>
+                        Citoyens reliés
+                    </h2>
+
+                    <p class="muted">
+                        Les personnes connues de l'institution
+                        et leur présence territoriale.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="community-summary">
+
+                <article class="ecosystem-stat">
+
+                    <strong id="resumeCitoyens">
+                        0
+                    </strong>
+
+                    <span>
+                        Citoyens
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="resumeTerritoires">
+                        0
+                    </strong>
+
+                    <span>
+                        Territoires
+                    </span>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- RECHERCHE -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="community-toolbar">
+
+                <div class="community-search">
+
+                    <label for="rechercheCitoyen">
+                        Rechercher un citoyen
+                    </label>
+
+                    <input
+                        id="rechercheCitoyen"
+                        type="search"
+                        placeholder="Nom, prénom ou territoire..."
+                    >
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- CITOYENS -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ANNUAIRE
+                    </p>
+
+                    <h2>
+                        Membres de la communauté
+                    </h2>
+
+                    <p
+                        id="resultatsCitoyens"
+                        class="muted"
+                    >
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="citoyensListe"
+                class="community-directory"
+            >
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- TERRITOIRES -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        TERRITOIRES
+                    </p>
+
+                    <h2>
+                        Répartition géographique
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="territoiresListe"
+                class="ecosystem-directory"
+            >
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- RETOUR -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <a
+                class="button button-secondary"
+                href="/dashboard-vice-consul.html?organisation=1&tenant=SN"
+            >
+                ← Retour au dashboard Vice-Consul
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <script src="/communaute.js"></script>
+
+</body>
+
+</html>

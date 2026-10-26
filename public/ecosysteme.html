@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Écosystème institutionnel - SATEER
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/styles.css"
+    >
+</head>
+
+<body>
+
+    <main class="page">
+
+        <!-- ============================================= -->
+        <!-- HERO -->
+        <!-- ============================================= -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="eyebrow">
+                    SATEER • ÉCOSYSTÈME INSTITUTIONNEL
+                </p>
+
+                <h1>
+                    Écosystème
+                </h1>
+
+                <p id="organisationNom">
+                    Chargement...
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- RÉSUMÉ -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        VUE D'ENSEMBLE
+                    </p>
+
+                    <h2>
+                        Réseau institutionnel
+                    </h2>
+
+                    <p class="muted">
+                        Associations, organisations partenaires,
+                        rattachements et invitations liés à l'institution.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="ecosystem-summary">
+
+                <article class="ecosystem-stat">
+
+                    <strong id="resumeOrganisations">
+                        0
+                    </strong>
+
+                    <span>
+                        Organisations
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="resumeRattachements">
+                        0
+                    </strong>
+
+                    <span>
+                        Rattachements à valider
+                    </span>
+
+                </article>
+
+
+                <article class="ecosystem-stat">
+
+                    <strong id="resumeInvitations">
+                        0
+                    </strong>
+
+                    <span>
+                        Invitations en attente
+                    </span>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- ORGANISATIONS -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ORGANISATIONS
+                    </p>
+
+                    <h2>
+                        Réseau connecté
+                    </h2>
+
+                    <p class="muted">
+                        Associations et organisations actuellement reliées
+                        à l'institution.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="organisationsListe"
+                class="ecosystem-directory"
+            >
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- RATTACHEMENTS / INVITATIONS -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="dashboard-columns">
+
+                <article class="panel">
+
+                    <div class="compact-panel-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                RATTACHEMENTS
+                            </p>
+
+                            <h3>
+                                Demandes en attente
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="rattachementsListe"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+
+                <article class="panel">
+
+                    <div class="compact-panel-header">
+
+                        <div>
+
+                            <p class="eyebrow">
+                                INVITATIONS
+                            </p>
+
+                            <h3>
+                                Invitations envoyées
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="invitationsListe"
+                        class="list"
+                    >
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- ACTIONS -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <div class="ecosystem-actions">
+
+                <button
+                    class="button"
+                    disabled
+                >
+                    Inviter une organisation
+                </button>
+
+
+                <button
+                    class="button button-secondary"
+                    disabled
+                >
+                    Composer un message
+                </button>
+
+            </div>
+
+
+            <p class="ecosystem-actions-note">
+                Ces actions seront connectées dans la prochaine étape.
+            </p>
+
+        </section>
+
+
+        <!-- ============================================= -->
+        <!-- RETOUR -->
+        <!-- ============================================= -->
+
+        <section class="section">
+
+            <a
+                class="button button-secondary"
+                href="/dashboard-vice-consul.html?organisation=1&tenant=SN"
+            >
+                ← Retour au dashboard Vice-Consul
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <script src="/ecosysteme.js"></script>
+
+</body>
+
+</html>

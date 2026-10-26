@@ -16,31 +16,62 @@ const tenant =
     || "SN";
 
 
+// =========================================================
+// CHARGEMENT GLOBAL
+// =========================================================
+
 async function chargerDashboard() {
 
     try {
 
-        const reponse =
-            await fetch(
-                `/api/organisations/${organisationId}/dashboard-operationnel?tenant=${tenant}`
-            );
+        const [
+            dashboardReponse,
+            ecosystemeReponse
+        ] =
+            await Promise.all([
+                fetch(
+                    `/api/organisations/${organisationId}/dashboard-operationnel?tenant=${tenant}`
+                ),
+
+                fetch(
+                    `/api/organisations/${organisationId}/ecosysteme?tenant=${tenant}`
+                )
+            ]);
 
 
-        const donnees =
-            await reponse.json();
+        const dashboard =
+            await dashboardReponse.json();
 
 
-        if (!reponse.ok) {
+        const ecosysteme =
+            await ecosystemeReponse.json();
+
+
+        if (!dashboardReponse.ok) {
 
             throw new Error(
-                donnees.erreur
+                dashboard.erreur
                 || "Impossible de charger le dashboard."
             );
         }
 
 
+        if (!ecosystemeReponse.ok) {
+
+            throw new Error(
+                ecosysteme.erreur
+                || "Impossible de charger l'écosystème."
+            );
+        }
+
+
         afficherDashboard(
-            donnees
+            dashboard
+        );
+
+
+        afficherEcosysteme(
+            ecosysteme
         );
 
     } catch (erreur) {
@@ -49,9 +80,14 @@ async function chargerDashboard() {
             "Erreur dashboard Vice-Consul :",
             erreur
         );
+
     }
 }
 
+
+// =========================================================
+// DASHBOARD OPÉRATIONNEL
+// =========================================================
 
 function afficherDashboard(
     donnees
@@ -117,7 +153,7 @@ function afficherDashboard(
     );
 
 
-    afficherTerritoires(
+    afficherTerritoiresDashboard(
         donnees.territoires
     );
 
@@ -127,6 +163,291 @@ function afficherDashboard(
     );
 }
 
+
+// =========================================================
+// ÉCOSYSTÈME
+// =========================================================
+
+function afficherEcosysteme(
+    donnees
+) {
+
+    document.getElementById(
+        "ecosystemUsagers"
+    ).textContent =
+        donnees.resume.usagers;
+
+
+    document.getElementById(
+        "ecosystemOrganisations"
+    ).textContent =
+        donnees.resume.organisations;
+
+
+    document.getElementById(
+        "ecosystemTerritoires"
+    ).textContent =
+        donnees.resume.territoires;
+
+
+    document.getElementById(
+        "ecosystemRattachements"
+    ).textContent =
+        donnees.resume.rattachementsEnAttente;
+
+
+    document.getElementById(
+        "ecosystemInvitations"
+    ).textContent =
+        donnees.resume.invitationsEnAttente;
+
+
+    afficherOrganisationsEcosysteme(
+        donnees.organisations
+    );
+
+
+    afficherTerritoiresEcosysteme(
+        donnees.territoires
+    );
+}
+
+
+// =========================================================
+// ORGANISATIONS DE L'ÉCOSYSTÈME
+// =========================================================
+
+function afficherOrganisationsEcosysteme(
+    organisations
+) {
+
+    const container =
+        document.getElementById(
+            "ecosystemOrganisationsListe"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        !organisations
+        ||
+        organisations.length === 0
+    ) {
+
+        const vide =
+            document.createElement(
+                "div"
+            );
+
+
+        vide.className =
+            "dashboard-empty";
+
+
+        vide.textContent =
+            "Aucune organisation reliée.";
+
+
+        container.appendChild(
+            vide
+        );
+
+
+        return;
+    }
+
+
+    organisations.forEach(
+        (organisation) => {
+
+            const element =
+                document.createElement(
+                    "div"
+                );
+
+
+            element.className =
+                "ecosystem-organisation-item";
+
+
+            const informations =
+                document.createElement(
+                    "div"
+                );
+
+
+            const nom =
+                document.createElement(
+                    "strong"
+                );
+
+
+            nom.textContent =
+                organisation.nom;
+
+
+            const meta =
+                document.createElement(
+                    "span"
+                );
+
+
+            meta.textContent =
+                `${libelleTypeOrganisation(
+                    organisation.type
+                )} • ${libelleRelation(
+                    organisation.relation_type
+                )}`;
+
+
+            informations.appendChild(
+                nom
+            );
+
+
+            informations.appendChild(
+                meta
+            );
+
+
+            const statut =
+                document.createElement(
+                    "span"
+                );
+
+
+            statut.className =
+                "ecosystem-status";
+
+
+            statut.textContent =
+                organisation.relation_statut === "ACTIVE"
+                    ? "Connectée"
+                    : organisation.relation_statut;
+
+
+            element.appendChild(
+                informations
+            );
+
+
+            element.appendChild(
+                statut
+            );
+
+
+            container.appendChild(
+                element
+            );
+        }
+    );
+}
+
+
+// =========================================================
+// TERRITOIRES ÉCOSYSTÈME
+// =========================================================
+
+function afficherTerritoiresEcosysteme(
+    territoires
+) {
+
+    const container =
+        document.getElementById(
+            "ecosystemTerritoiresListe"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        !territoires
+        ||
+        territoires.length === 0
+    ) {
+
+        const vide =
+            document.createElement(
+                "div"
+            );
+
+
+        vide.className =
+            "dashboard-empty";
+
+
+        vide.textContent =
+            "Aucun territoire renseigné.";
+
+
+        container.appendChild(
+            vide
+        );
+
+
+        return;
+    }
+
+
+    territoires.forEach(
+        (territoire) => {
+
+            const element =
+                document.createElement(
+                    "div"
+                );
+
+
+            element.className =
+                "dashboard-list-item";
+
+
+            const nom =
+                document.createElement(
+                    "strong"
+                );
+
+
+            nom.textContent =
+                territoire.territoire;
+
+
+            const nombre =
+                document.createElement(
+                    "span"
+                );
+
+
+            nombre.textContent =
+                `${territoire.personnes} personne(s)`;
+
+
+            element.appendChild(
+                nom
+            );
+
+
+            element.appendChild(
+                nombre
+            );
+
+
+            container.appendChild(
+                element
+            );
+        }
+    );
+}
+
+
+// =========================================================
+// DERNIÈRES DEMANDES
+// =========================================================
 
 function afficherDernieresDemandes(
     demandes
@@ -168,18 +489,64 @@ function afficherDernieresDemandes(
                 "dashboard-list-item";
 
 
-            element.innerHTML = `
-                <div>
-                    <strong>${demande.objet}</strong>
-                    <span>
-                        ${demande.prenom} ${demande.nom}
-                    </span>
-                </div>
+            const informations =
+                document.createElement(
+                    "div"
+                );
 
-                <span class="dashboard-status">
-                    ${demande.statut}
-                </span>
-            `;
+
+            const titre =
+                document.createElement(
+                    "strong"
+                );
+
+
+            titre.textContent =
+                demande.objet;
+
+
+            const citoyen =
+                document.createElement(
+                    "span"
+                );
+
+
+            citoyen.textContent =
+                `${demande.prenom} ${demande.nom}`;
+
+
+            informations.appendChild(
+                titre
+            );
+
+
+            informations.appendChild(
+                citoyen
+            );
+
+
+            const statut =
+                document.createElement(
+                    "span"
+                );
+
+
+            statut.className =
+                "dashboard-status";
+
+
+            statut.textContent =
+                demande.statut;
+
+
+            element.appendChild(
+                informations
+            );
+
+
+            element.appendChild(
+                statut
+            );
 
 
             container.appendChild(
@@ -189,6 +556,10 @@ function afficherDernieresDemandes(
     );
 }
 
+
+// =========================================================
+// SURVEILLANCE
+// =========================================================
 
 function afficherSurveillance(
     demandes
@@ -210,13 +581,24 @@ function afficherSurveillance(
         demandes.length === 0
     ) {
 
-        container.innerHTML =
-            `
-            <div class="dashboard-empty">
-                ✓ Aucun dossier nécessitant
-                une surveillance particulière.
-            </div>
-            `;
+        const vide =
+            document.createElement(
+                "div"
+            );
+
+
+        vide.className =
+            "dashboard-empty";
+
+
+        vide.textContent =
+            "✓ Aucun dossier nécessitant une surveillance particulière.";
+
+
+        container.appendChild(
+            vide
+        );
+
 
         return;
     }
@@ -235,20 +617,64 @@ function afficherSurveillance(
                 "dashboard-list-item";
 
 
-            element.innerHTML = `
-                <div>
-                    <strong>${demande.objet}</strong>
+            const informations =
+                document.createElement(
+                    "div"
+                );
 
-                    <span>
-                        ${demande.prenom} ${demande.nom}
-                        • ${demande.territoire}
-                    </span>
-                </div>
 
-                <span class="dashboard-status">
-                    ${demande.priorite}
-                </span>
-            `;
+            const titre =
+                document.createElement(
+                    "strong"
+                );
+
+
+            titre.textContent =
+                demande.objet;
+
+
+            const meta =
+                document.createElement(
+                    "span"
+                );
+
+
+            meta.textContent =
+                `${demande.prenom} ${demande.nom} • ${demande.territoire}`;
+
+
+            informations.appendChild(
+                titre
+            );
+
+
+            informations.appendChild(
+                meta
+            );
+
+
+            const priorite =
+                document.createElement(
+                    "span"
+                );
+
+
+            priorite.className =
+                "dashboard-status";
+
+
+            priorite.textContent =
+                demande.priorite;
+
+
+            element.appendChild(
+                informations
+            );
+
+
+            element.appendChild(
+                priorite
+            );
 
 
             container.appendChild(
@@ -259,7 +685,11 @@ function afficherSurveillance(
 }
 
 
-function afficherTerritoires(
+// =========================================================
+// TERRITOIRES DASHBOARD
+// =========================================================
+
+function afficherTerritoiresDashboard(
     territoires
 ) {
 
@@ -286,15 +716,34 @@ function afficherTerritoires(
                 "dashboard-list-item";
 
 
-            element.innerHTML = `
-                <strong>
-                    ${territoire.territoire}
-                </strong>
+            const nom =
+                document.createElement(
+                    "strong"
+                );
 
-                <span>
-                    ${territoire.personnes} usager(s)
-                </span>
-            `;
+
+            nom.textContent =
+                territoire.territoire;
+
+
+            const nombre =
+                document.createElement(
+                    "span"
+                );
+
+
+            nombre.textContent =
+                `${territoire.personnes} usager(s)`;
+
+
+            element.appendChild(
+                nom
+            );
+
+
+            element.appendChild(
+                nombre
+            );
 
 
             container.appendChild(
@@ -304,6 +753,10 @@ function afficherTerritoires(
     );
 }
 
+
+// =========================================================
+// PUBLICATIONS
+// =========================================================
 
 function afficherPublications(
     publications
@@ -315,34 +768,150 @@ function afficherPublications(
         );
 
 
+    const lignes = [
+        [
+            "Publications totales",
+            publications.total
+        ],
+        [
+            "Publiées",
+            publications.publiees
+        ],
+        [
+            "Importantes",
+            publications.importantes
+        ],
+        [
+            "Urgentes",
+            publications.urgentes
+        ],
+        [
+            "Diffusées Diaspora",
+            publications.diffusees_diaspora
+        ]
+    ];
+
+
     container.innerHTML =
-        `
-        <div class="dashboard-list-item">
-            <span>Publications totales</span>
-            <strong>${publications.total}</strong>
-        </div>
+        "";
 
-        <div class="dashboard-list-item">
-            <span>Publiées</span>
-            <strong>${publications.publiees}</strong>
-        </div>
 
-        <div class="dashboard-list-item">
-            <span>Importantes</span>
-            <strong>${publications.importantes}</strong>
-        </div>
+    lignes.forEach(
+        ([libelle, valeur]) => {
 
-        <div class="dashboard-list-item">
-            <span>Urgentes</span>
-            <strong>${publications.urgentes}</strong>
-        </div>
+            const element =
+                document.createElement(
+                    "div"
+                );
 
-        <div class="dashboard-list-item">
-            <span>Diffusées Diaspora</span>
-            <strong>${publications.diffusees_diaspora}</strong>
-        </div>
-        `;
+
+            element.className =
+                "dashboard-list-item";
+
+
+            const texte =
+                document.createElement(
+                    "span"
+                );
+
+
+            texte.textContent =
+                libelle;
+
+
+            const nombre =
+                document.createElement(
+                    "strong"
+                );
+
+
+            nombre.textContent =
+                valeur;
+
+
+            element.appendChild(
+                texte
+            );
+
+
+            element.appendChild(
+                nombre
+            );
+
+
+            container.appendChild(
+                element
+            );
+        }
+    );
 }
 
+
+// =========================================================
+// LIBELLÉS
+// =========================================================
+
+function libelleTypeOrganisation(
+    type
+) {
+
+    const labels = {
+
+        ASSOCIATION:
+            "Association",
+
+        ENTREPRISE_PUBLIQUE:
+            "Entreprise publique",
+
+        ENTREPRISE:
+            "Entreprise",
+
+        AMBASSADE:
+            "Ambassade",
+
+        CONSULAT:
+            "Consulat",
+
+        BANQUE:
+            "Banque",
+
+        SATEER:
+            "SATEER"
+    };
+
+
+    return labels[type]
+        || type;
+}
+
+
+function libelleRelation(
+    relation
+) {
+
+    const labels = {
+
+        COMMUNITY_MEMBER:
+            "Membre de l'écosystème",
+
+        PARTNER:
+            "Partenaire",
+
+        REPRESENTATIVE_ORGANISATION:
+            "Organisation représentative",
+
+        INSTITUTIONAL_RELATION:
+            "Relation institutionnelle"
+    };
+
+
+    return labels[relation]
+        || relation;
+}
+
+
+// =========================================================
+// DÉMARRAGE
+// =========================================================
 
 chargerDashboard();

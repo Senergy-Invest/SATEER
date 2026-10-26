@@ -2720,3 +2720,665 @@ body {
     }
 
 }
+/* =========================================================
+   ÉCOSYSTÈME INSTITUTIONNEL
+   ========================================================= */
+
+.ecosystem-summary {
+    width: 100%;
+    max-width: 1050px;
+
+    margin: 0 auto 24px auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(0, 1fr)
+        );
+
+    gap: 14px;
+}
+
+
+.ecosystem-stat {
+    min-width: 0;
+
+    padding: 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 16px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+
+    text-align: center;
+}
+
+
+.ecosystem-stat strong {
+    font-size: 27px;
+
+    color: #101828;
+}
+
+
+.ecosystem-stat span {
+    font-size: 13px;
+
+    line-height: 1.4;
+
+    color: #667085;
+}
+
+
+.ecosystem-columns {
+    margin-top: 0;
+}
+
+
+.compact-panel-header {
+    margin-bottom: 18px;
+}
+
+
+.compact-panel-header .eyebrow {
+    margin-bottom: 6px;
+}
+
+
+.compact-panel-header h3 {
+    margin: 0;
+
+    font-size: 20px;
+
+    color: #101828;
+}
+
+
+.ecosystem-organisation-item {
+    padding: 15px 0;
+
+    border-bottom: 1px solid #eaecf0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+}
+
+
+.ecosystem-organisation-item:last-child {
+    border-bottom: none;
+}
+
+
+.ecosystem-organisation-item > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.ecosystem-organisation-item strong {
+    color: #101828;
+
+    line-height: 1.4;
+}
+
+
+.ecosystem-organisation-item > div span {
+    font-size: 13px;
+
+    color: #667085;
+}
+
+
+.ecosystem-status {
+    flex-shrink: 0;
+
+    padding: 6px 10px;
+
+    border: 1px solid #e4e7ec;
+
+    border-radius: 999px;
+
+    background: #f8fafc;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    color: #475467;
+}
+
+
+/* =========================================================
+   COMMUNICATION RAPIDE
+   ========================================================= */
+
+.communication-audiences {
+    width: 100%;
+    max-width: 900px;
+
+    margin: 0 auto 20px auto;
+
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+
+.audience-chip {
+    padding: 9px 14px;
+
+    background: #ffffff;
+
+    border: 1px solid #e4e7ec;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #344054;
+}
+
+
+.communication-preview {
+    width: 100%;
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    padding: 22px;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 18px;
+
+    background: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+}
+
+
+.communication-preview > div {
+    min-width: 0;
+}
+
+
+.communication-preview strong {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #101828;
+}
+
+
+.communication-preview p {
+    max-width: 620px;
+
+    margin: 0;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    color: #667085;
+}
+
+
+@media (max-width: 900px) {
+
+    .ecosystem-summary {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .ecosystem-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .communication-preview {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .ecosystem-organisation-item {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+}
+/* =========================================================
+   ANNUAIRE ÉCOSYSTÈME
+   ========================================================= */
+
+.ecosystem-directory {
+    width: 100%;
+    max-width: 1000px;
+
+    margin: 0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 16px;
+}
+
+
+.ecosystem-directory-card {
+    padding: 20px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    box-shadow:
+        0 6px 20px rgba(15, 23, 42, 0.035);
+}
+
+
+.ecosystem-directory-main {
+    min-width: 0;
+}
+
+
+.ecosystem-directory-main h3 {
+    margin:
+        9px
+        0
+        6px;
+
+    font-size: 17px;
+
+    line-height: 1.35;
+
+    color: #101828;
+}
+
+
+.ecosystem-directory-main p {
+    margin: 0;
+
+    font-size: 13px;
+
+    color: #667085;
+}
+
+
+.ecosystem-directory-badge {
+    display: inline-flex;
+
+    padding:
+        5px
+        9px;
+
+    border-radius: 999px;
+
+    background: #f2f4f7;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    color: #475467;
+}
+
+
+.ecosystem-person-card {
+    padding: 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 18px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+.ecosystem-person-avatar {
+    width: 44px;
+    height: 44px;
+
+    flex: 0 0 44px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #f2f4f7;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    color: #344054;
+}
+
+
+.ecosystem-person-card > div:last-child {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.ecosystem-person-card strong {
+    color: #101828;
+}
+
+
+.ecosystem-person-card span {
+    font-size: 13px;
+
+    color: #667085;
+}
+
+
+.ecosystem-territory-card {
+    padding: 20px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+}
+
+
+.ecosystem-territory-card strong {
+    color: #101828;
+}
+
+
+.ecosystem-territory-card span {
+    font-size: 13px;
+
+    color: #667085;
+}
+
+
+.ecosystem-actions {
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+}
+
+
+.ecosystem-actions-note {
+    margin:
+        12px
+        auto
+        0;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    color: #667085;
+}
+
+
+@media (max-width: 760px) {
+
+    .ecosystem-directory {
+        grid-template-columns: 1fr;
+    }
+
+
+    .ecosystem-directory-card {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+}
+/* =========================================================
+   COMMUNAUTÉ
+   ========================================================= */
+
+.community-summary {
+    width: 100%;
+    max-width: 520px;
+
+    margin: 0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 16px;
+}
+
+
+.community-toolbar {
+    width: 100%;
+    max-width: 760px;
+
+    margin: 0 auto;
+}
+
+
+.community-search {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+
+.community-search label {
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #344054;
+}
+
+
+.community-search input {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding:
+        12px
+        15px;
+
+    background: #ffffff;
+
+    border: 1px solid #d0d5dd;
+
+    border-radius: 14px;
+
+    font: inherit;
+
+    font-size: 16px;
+
+    color: #101828;
+
+    outline: none;
+}
+
+
+.community-search input:focus {
+    border-color: #98a2b3;
+
+    box-shadow:
+        0 0 0 3px rgba(152, 162, 179, 0.14);
+}
+
+
+.community-directory {
+    width: 100%;
+    max-width: 950px;
+
+    margin: 0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 14px;
+}
+
+
+.community-person-card {
+    min-width: 0;
+
+    padding: 17px 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 16px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+.community-person-avatar {
+    width: 46px;
+    height: 46px;
+
+    flex: 0 0 46px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #f2f4f7;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    color: #344054;
+}
+
+
+.community-person-info {
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.community-person-info strong {
+    font-size: 15px;
+
+    color: #101828;
+}
+
+
+.community-person-info span {
+    font-size: 13px;
+
+    color: #667085;
+}
+
+
+@media (max-width: 700px) {
+
+    .community-summary,
+    .community-directory {
+        grid-template-columns: 1fr;
+    }
+
+}
+.dashboard-section-actions {
+    width: 100%;
+    max-width: 900px;
+
+    margin: 22px auto 0 auto;
+
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 12px;
+}
