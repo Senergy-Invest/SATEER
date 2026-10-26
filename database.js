@@ -24,6 +24,16 @@ async function executerRequete(
 }
 
 
+// =========================================================
+// CLIENT TRANSACTIONNEL
+// =========================================================
+
+async function obtenirClientDatabase() {
+
+    return await pool.connect();
+}
+
+
 async function fermerDatabase() {
 
     await pool.end();
@@ -32,5 +42,6 @@ async function fermerDatabase() {
 
 module.exports = {
     executerRequete,
+    obtenirClientDatabase,
     fermerDatabase
 };

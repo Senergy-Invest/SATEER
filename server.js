@@ -13,6 +13,7 @@ const {
     listerDemandesOrganisationDatabase,
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
+    orienterDemandeDatabase,
     obtenirStructureOrganisationDatabase,
     obtenirDashboardConsulatDatabase,
     obtenirEcosystemeOrganisationDatabase
@@ -1007,6 +1008,169 @@ app.get(
     }
 );
 
+// =========================================================
+// API - SECRÉTARIAT - ORIENTER UNE DEMANDE
+// =========================================================
+
+app.post(
+    "/api/secretariat/demandes/:demandeId/orientation",
+    async (req, res) => {
+
+        try {
+
+            const demandeId =
+                Number(
+                    req.params.demandeId
+                );
+
+
+            const {
+                organisationId,
+                tenantCode,
+                destinationUnitId,
+                motif,
+                orienteePar
+            } = req.body;
+
+
+            if (
+                !demandeId
+                ||
+                !organisationId
+                ||
+                !tenantCode
+                ||
+                !destinationUnitId
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        statut:
+                            "REQUETE_INVALIDE",
+
+                        erreur:
+                            "Paramètres d'orientation manquants."
+                    });
+            }
+
+
+            const resultat =
+                await orienterDemandeDatabase(
+
+                    demandeId,
+
+                    Number(
+                        organisationId
+                    ),
+
+                    tenantCode,
+
+                    Number(
+                        destinationUnitId
+                    ),
+
+                    motif
+                        ? String(motif).trim()
+                        : null,
+
+                    orienteePar
+                        ? Number(orienteePar)
+                        : null
+                );
+
+
+            if (
+                !resultat.succes
+            ) {
+
+                if (
+                    resultat.raison ===
+                    "DEMANDE_INTROUVABLE"
+                ) {
+
+                    return res
+                        .status(404)
+                        .json({
+
+                            statut:
+                                "DEMANDE_INTROUVABLE",
+
+                            erreur:
+                                "La demande n'existe pas dans cette organisation."
+                        });
+                }
+
+
+                if (
+                    resultat.raison ===
+                    "DESTINATION_INVALIDE"
+                ) {
+
+                    return res
+                        .status(400)
+                        .json({
+
+                            statut:
+                                "DESTINATION_INVALIDE",
+
+                            erreur:
+                                "Le service de destination est invalide."
+                        });
+                }
+
+
+                return res
+                    .status(409)
+                    .json({
+
+                        statut:
+                            "ORIENTATION_IMPOSSIBLE",
+
+                        erreur:
+                            "Impossible d'orienter cette demande."
+                    });
+            }
+
+
+            return res.json({
+
+                statut:
+                    "DEMANDE_ORIENTEE",
+
+                message:
+                    "La demande a été orientée.",
+
+                demande:
+                    resultat.demande,
+
+                destination:
+                    resultat.destination
+            });
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur orientation demande :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    statut:
+                        "ERREUR_ORIENTATION",
+
+                    erreur:
+                        "Impossible d'orienter la demande."
+                });
+        }
+    }
+);
 
 // =========================================================
 // API - ESPACE AGENT - PRISE EN CHARGE

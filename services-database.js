@@ -1,5 +1,6 @@
 const {
-    executerRequete
+    executerRequete,
+    obtenirClientDatabase
 } = require("./database");
 
 
@@ -1888,6 +1889,241 @@ async function listerDemandesOrganisationDatabase(
 
 
     return resultat.rows;
+}
+// =========================================================
+// SECRÉTARIAT - ORIENTER UNE DEMANDE
+// =========================================================
+
+async function orienterDemandeDatabase(
+    demandeId,
+    organisationId,
+    tenantCode,
+    destinationUnitId,
+    motif,
+    orienteePar = null
+) {
+
+    const client =
+    await obtenirClientDatabase();
+
+
+    try {
+
+        await client.query(
+            "BEGIN"
+        );
+
+
+        // =================================================
+        // 1. VÉRIFIER LA DEMANDE ET LE TENANT
+        // =================================================
+
+        const demandeResult =
+            await client.query(
+                `
+                SELECT
+                    d.id,
+                    d.destination_unit_id
+
+                FROM demandes d
+
+                INNER JOIN organisations o
+                    ON o.id = d.organisation_id
+
+                INNER JOIN tenants t
+                    ON t.id = o.tenant_id
+
+                WHERE
+                    d.id = $1
+                    AND d.organisation_id = $2
+                    AND t.code = $3
+
+                FOR UPDATE
+                `,
+                [
+                    demandeId,
+                    organisationId,
+                    tenantCode
+                ]
+            );
+
+
+        if (
+            demandeResult.rowCount === 0
+        ) {
+
+            await client.query(
+                "ROLLBACK"
+            );
+
+
+            return {
+                succes: false,
+                raison: "DEMANDE_INTROUVABLE"
+            };
+        }
+
+
+        const demande =
+            demandeResult.rows[0];
+
+
+        // =================================================
+        // 2. VÉRIFIER L'UNITÉ DE DESTINATION
+        // =================================================
+
+        const destinationResult =
+            await client.query(
+                `
+                SELECT
+                    ou.id,
+                    ou.code,
+                    ou.nom,
+                    ou.type
+
+                FROM organisation_units ou
+
+                INNER JOIN organisations o
+                    ON o.id = ou.organisation_id
+
+                INNER JOIN tenants t
+                    ON t.id = o.tenant_id
+
+                WHERE
+                    ou.id = $1
+                    AND ou.organisation_id = $2
+                    AND t.code = $3
+                    AND ou.actif = TRUE
+                `,
+                [
+                    destinationUnitId,
+                    organisationId,
+                    tenantCode
+                ]
+            );
+
+
+        if (
+            destinationResult.rowCount === 0
+        ) {
+
+            await client.query(
+                "ROLLBACK"
+            );
+
+
+            return {
+                succes: false,
+                raison: "DESTINATION_INVALIDE"
+            };
+        }
+
+
+        const destination =
+            destinationResult.rows[0];
+
+
+        // =================================================
+        // 3. METTRE À JOUR LA DESTINATION ACTUELLE
+        // =================================================
+
+        const updateResult =
+            await client.query(
+                `
+                UPDATE demandes
+
+                SET
+                    destination_unit_id = $1,
+                    orientee_par = $2,
+                    motif_orientation = $3,
+                    date_orientation = CURRENT_TIMESTAMP,
+                    date_modification = CURRENT_TIMESTAMP
+
+                WHERE
+                    id = $4
+
+                RETURNING
+                    id,
+                    objet,
+                    statut,
+                    priorite,
+                    destination_unit_id,
+                    orientee_par,
+                    motif_orientation,
+                    date_orientation
+                `,
+                [
+                    destinationUnitId,
+                    orienteePar,
+                    motif,
+                    demandeId
+                ]
+            );
+
+
+        // =================================================
+        // 4. HISTORIQUE DE L'ORIENTATION
+        // =================================================
+
+        await client.query(
+            `
+            INSERT INTO demande_orientations (
+                demande_id,
+                ancienne_unit_id,
+                nouvelle_unit_id,
+                orientee_par,
+                motif
+            )
+
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+            )
+            `,
+            [
+                demandeId,
+                demande.destination_unit_id,
+                destinationUnitId,
+                orienteePar,
+                motif
+            ]
+        );
+
+
+        await client.query(
+            "COMMIT"
+        );
+
+
+        return {
+
+            succes:
+                true,
+
+            demande:
+                updateResult.rows[0],
+
+            destination:
+                destination
+        };
+
+
+    } catch (erreur) {
+
+        await client.query(
+            "ROLLBACK"
+        );
+
+
+        throw erreur;
+
+    } finally {
+
+        client.release();
+    }
 }
 async function prendreEnChargeDemandeDatabase(
     demandeId,
@@ -5248,6 +5484,7 @@ module.exports = {
     listerDemandesOrganisationDatabase,
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
+    orienterDemandeDatabase,
     listerReponsesDemandeCitoyenDatabase,
     listerHistoriqueDemandeCitoyenDatabase,
     listerNotificationsPersonneDatabase,
