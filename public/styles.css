@@ -3828,3 +3828,177 @@ body {
     }
 
 }
+/* =========================================================
+   ESPACE SECRÉTARIAT
+   ========================================================= */
+
+.secretariat-stats {
+    width: 100%;
+    max-width: 900px;
+
+    margin: 24px auto 0;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    gap: 14px;
+}
+
+
+.secretariat-assistant {
+    width: 100%;
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    padding: 26px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 22px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+
+.secretariat-assistant > div {
+    max-width: 620px;
+}
+
+
+.secretariat-assistant h2 {
+    margin-top: 6px;
+}
+
+
+.secretariat-inbox {
+    width: 100%;
+    max-width: 950px;
+
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+
+.secretariat-request-card {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 18px 20px;
+
+    background: #ffffff;
+
+    border: 1px solid #e7ebf0;
+
+    border-radius: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 18px;
+}
+
+
+.secretariat-request-main {
+    min-width: 0;
+}
+
+
+.secretariat-request-main h3 {
+    margin: 0 0 6px;
+
+    font-size: 16px;
+
+    color: #101828;
+}
+
+
+.secretariat-request-main p {
+    margin: 0;
+}
+
+
+.secretariat-request-side {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    flex-shrink: 0;
+}
+
+
+.secretariat-routing-grid {
+    width: 100%;
+    max-width: 1000px;
+
+    margin: 0 auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+
+    gap: 18px;
+}
+
+
+@media (max-width: 850px) {
+
+    .secretariat-stats {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .secretariat-routing-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .secretariat-assistant {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+
+    .secretariat-request-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+}
+
+
+@media (max-width: 520px) {
+
+    .secretariat-stats {
+        grid-template-columns: 1fr;
+    }
+
+}
