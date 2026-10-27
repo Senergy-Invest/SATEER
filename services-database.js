@@ -5821,6 +5821,879 @@ async function desactiverOrganisationUnitDatabase(
     };
 }
 // =========================================================
+// ADMINISTRATION GÉNÉRIQUE DES MEMBRES D'UNE UNITÉ
+// =========================================================
+//
+// Doctrine :
+//
+// Personne
+//     ↓
+// Affectation à une unité
+//     ↓
+// Rôle configurable
+//     ↓
+// Permissions
+//
+// Aucun nom métier particulier n'est connu ici.
+//
+// "principal" = affectation principale de la personne
+// dans cette organisation.
+//
+// Le responsable d'une unité est déterminé par son rôle,
+// pas par le champ "principal".
+//
+// =========================================================
+
+
+// =========================================================
+// LISTER LES MEMBRES D'UNE UNITÉ
+// =========================================================
+
+async function listerMembresOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode
+) {
+
+    // -----------------------------------------------------
+    // 1. Vérifier l'unité et le tenant
+    // -----------------------------------------------------
+
+    const uniteResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id,
+                u.organisation_id,
+                u.parent_unit_id,
+                u.code,
+                u.nom,
+                u.type,
+                u.actif
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (uniteResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_INTROUVABLE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Récupérer les membres actifs
+    // -----------------------------------------------------
+
+    const membresResultat =
+        await executerRequete(
+            `
+            SELECT
+                relation.id AS relation_id,
+
+                relation.personne_id,
+                relation.organisation_unit_id,
+
+                relation.role AS role_legacy,
+                relation.role_id,
+
+                role_config.code AS role_code,
+                role_config.nom AS role_nom,
+                role_config.scope AS role_scope,
+
+                relation.principal,
+                relation.actif,
+                relation.date_debut,
+                relation.date_fin,
+                relation.metadata,
+                relation.date_creation,
+                relation.date_modification,
+
+                p.prenom,
+                p.nom
+
+            FROM relations_personne_organisation_unit relation
+
+            INNER JOIN personnes p
+                ON p.id = relation.personne_id
+
+            LEFT JOIN organisation_roles role_config
+                ON role_config.id = relation.role_id
+
+            WHERE
+                relation.organisation_unit_id = $1
+                AND relation.actif = TRUE
+
+            ORDER BY
+                relation.principal DESC,
+                p.prenom ASC,
+                p.nom ASC
+            `,
+            [
+                unitId
+            ]
+        );
+
+
+    return {
+        succes: true,
+        unite: uniteResultat.rows[0],
+        membres: membresResultat.rows
+    };
+}
+
+
+// =========================================================
+// AFFECTER UNE PERSONNE À UNE UNITÉ
+// =========================================================
+
+async function affecterMembreOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode,
+    donnees
+) {
+
+    const {
+        personneId,
+        roleId,
+        principal = false,
+        metadata = {}
+    } = donnees;
+
+
+    const client =
+        await obtenirClientDatabase();
+
+
+    try {
+
+        await client.query("BEGIN");
+
+
+        // -------------------------------------------------
+        // 1. Vérifier l'unité
+        // -------------------------------------------------
+
+        const uniteResultat =
+            await client.query(
+                `
+                SELECT
+                    u.id
+
+                FROM organisation_units u
+
+                INNER JOIN organisations o
+                    ON o.id = u.organisation_id
+
+                INNER JOIN tenants t
+                    ON t.id = o.tenant_id
+
+                WHERE
+                    u.id = $1
+                    AND u.organisation_id = $2
+                    AND t.code = $3
+                    AND u.actif = TRUE
+
+                LIMIT 1
+                `,
+                [
+                    unitId,
+                    organisationId,
+                    tenantCode
+                ]
+            );
+
+
+        if (uniteResultat.rows.length === 0) {
+
+            await client.query("ROLLBACK");
+
+            return {
+                succes: false,
+                code: "UNITE_INTROUVABLE"
+            };
+        }
+
+
+        // -------------------------------------------------
+        // 2. Vérifier que la personne appartient
+        //    à l'organisation
+        // -------------------------------------------------
+
+        const personneResultat =
+            await client.query(
+                `
+                SELECT
+                    p.id,
+                    p.prenom,
+                    p.nom
+
+                FROM personnes p
+
+                INNER JOIN relations_personne_organisation relation_org
+                    ON relation_org.personne_id = p.id
+
+                WHERE
+                    p.id = $1
+                    AND relation_org.organisation_id = $2
+
+                LIMIT 1
+                `,
+                [
+                    personneId,
+                    organisationId
+                ]
+            );
+
+
+        if (personneResultat.rows.length === 0) {
+
+            await client.query("ROLLBACK");
+
+            return {
+                succes: false,
+                code: "PERSONNE_HORS_ORGANISATION"
+            };
+        }
+
+
+        // -------------------------------------------------
+        // 3. Vérifier le rôle configurable
+        // -------------------------------------------------
+
+        const roleResultat =
+            await client.query(
+                `
+                SELECT
+                    id,
+                    code,
+                    nom,
+                    scope
+
+                FROM organisation_roles
+
+                WHERE
+                    id = $1
+                    AND organisation_id = $2
+                    AND actif = TRUE
+                    AND scope IN (
+                        'UNIT',
+                        'BOTH'
+                    )
+
+                LIMIT 1
+                `,
+                [
+                    roleId,
+                    organisationId
+                ]
+            );
+
+
+        if (roleResultat.rows.length === 0) {
+
+            await client.query("ROLLBACK");
+
+            return {
+                succes: false,
+                code: "ROLE_UNITE_INVALIDE"
+            };
+        }
+
+
+        // -------------------------------------------------
+        // 4. Rechercher une ancienne affectation identique
+        // -------------------------------------------------
+
+        const existanteResultat =
+            await client.query(
+                `
+                SELECT
+                    id,
+                    actif
+
+                FROM relations_personne_organisation_unit
+
+                WHERE
+                    personne_id = $1
+                    AND organisation_unit_id = $2
+                    AND role_id = $3
+
+                LIMIT 1
+                `,
+                [
+                    personneId,
+                    unitId,
+                    roleId
+                ]
+            );
+
+
+        if (
+            existanteResultat.rows.length > 0
+            && existanteResultat.rows[0].actif === true
+        ) {
+
+            await client.query("ROLLBACK");
+
+            return {
+                succes: false,
+                code: "AFFECTATION_EXISTANTE"
+            };
+        }
+
+
+        // -------------------------------------------------
+        // 5. Si principal :
+        //    retirer le principal aux autres affectations
+        //    de cette personne dans la même organisation
+        // -------------------------------------------------
+
+        if (principal === true) {
+
+            await client.query(
+                `
+                UPDATE relations_personne_organisation_unit relation
+
+                SET
+                    principal = FALSE,
+                    date_modification = CURRENT_TIMESTAMP
+
+                FROM organisation_units unit
+
+                WHERE
+                    relation.organisation_unit_id = unit.id
+                    AND relation.personne_id = $1
+                    AND unit.organisation_id = $2
+                    AND relation.actif = TRUE
+                `,
+                [
+                    personneId,
+                    organisationId
+                ]
+            );
+        }
+
+
+        let affectationResultat;
+
+
+        // -------------------------------------------------
+        // 6A. Réactiver une ancienne affectation
+        // -------------------------------------------------
+
+        if (existanteResultat.rows.length > 0) {
+
+            affectationResultat =
+                await client.query(
+                    `
+                    UPDATE relations_personne_organisation_unit
+
+                    SET
+                        actif = TRUE,
+                        principal = $2,
+                        date_debut = CURRENT_TIMESTAMP,
+                        date_fin = NULL,
+                        metadata = $3::jsonb,
+                        role = NULL,
+                        date_modification = CURRENT_TIMESTAMP
+
+                    WHERE
+                        id = $1
+
+                    RETURNING
+                        id,
+                        personne_id,
+                        organisation_unit_id,
+                        role,
+                        role_id,
+                        principal,
+                        actif,
+                        date_debut,
+                        date_fin,
+                        metadata,
+                        date_creation,
+                        date_modification
+                    `,
+                    [
+                        existanteResultat.rows[0].id,
+                        principal,
+                        JSON.stringify(metadata)
+                    ]
+                );
+
+        } else {
+
+            // ---------------------------------------------
+            // 6B. Nouvelle affectation
+            // ---------------------------------------------
+
+            affectationResultat =
+                await client.query(
+                    `
+                    INSERT INTO relations_personne_organisation_unit (
+                        personne_id,
+                        organisation_unit_id,
+                        role,
+                        role_id,
+                        principal,
+                        actif,
+                        metadata
+                    )
+
+                    VALUES (
+                        $1,
+                        $2,
+                        NULL,
+                        $3,
+                        $4,
+                        TRUE,
+                        $5::jsonb
+                    )
+
+                    RETURNING
+                        id,
+                        personne_id,
+                        organisation_unit_id,
+                        role,
+                        role_id,
+                        principal,
+                        actif,
+                        date_debut,
+                        date_fin,
+                        metadata,
+                        date_creation,
+                        date_modification
+                    `,
+                    [
+                        personneId,
+                        unitId,
+                        roleId,
+                        principal,
+                        JSON.stringify(metadata)
+                    ]
+                );
+        }
+
+
+        await client.query("COMMIT");
+
+
+        return {
+            succes: true,
+            affectation: affectationResultat.rows[0],
+            personne: personneResultat.rows[0],
+            role: roleResultat.rows[0]
+        };
+
+
+    } catch (erreur) {
+
+        await client.query("ROLLBACK");
+
+        throw erreur;
+
+    } finally {
+
+        client.release();
+    }
+}
+
+
+// =========================================================
+// MODIFIER UNE AFFECTATION
+// =========================================================
+
+async function modifierMembreOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    relationId,
+    tenantCode,
+    donnees
+) {
+
+    const {
+        roleId,
+        principal,
+        metadata
+    } = donnees;
+
+
+    const client =
+        await obtenirClientDatabase();
+
+
+    try {
+
+        await client.query("BEGIN");
+
+
+        // -------------------------------------------------
+        // 1. Vérifier l'affectation
+        // -------------------------------------------------
+
+        const relationResultat =
+            await client.query(
+                `
+                SELECT
+                    relation.id,
+                    relation.personne_id,
+                    relation.organisation_unit_id,
+                    relation.role_id
+
+                FROM relations_personne_organisation_unit relation
+
+                INNER JOIN organisation_units unit
+                    ON unit.id = relation.organisation_unit_id
+
+                INNER JOIN organisations organisation
+                    ON organisation.id = unit.organisation_id
+
+                INNER JOIN tenants tenant
+                    ON tenant.id = organisation.tenant_id
+
+                WHERE
+                    relation.id = $1
+                    AND relation.organisation_unit_id = $2
+                    AND unit.organisation_id = $3
+                    AND tenant.code = $4
+                    AND relation.actif = TRUE
+                    AND unit.actif = TRUE
+
+                LIMIT 1
+                `,
+                [
+                    relationId,
+                    unitId,
+                    organisationId,
+                    tenantCode
+                ]
+            );
+
+
+        if (relationResultat.rows.length === 0) {
+
+            await client.query("ROLLBACK");
+
+            return {
+                succes: false,
+                code: "AFFECTATION_INTROUVABLE"
+            };
+        }
+
+
+        const relation =
+            relationResultat.rows[0];
+
+
+        let nouveauRoleId =
+            relation.role_id;
+
+
+        // -------------------------------------------------
+        // 2. Vérifier le nouveau rôle s'il est fourni
+        // -------------------------------------------------
+
+        if (roleId !== undefined) {
+
+            const roleResultat =
+                await client.query(
+                    `
+                    SELECT
+                        id
+
+                    FROM organisation_roles
+
+                    WHERE
+                        id = $1
+                        AND organisation_id = $2
+                        AND actif = TRUE
+                        AND scope IN (
+                            'UNIT',
+                            'BOTH'
+                        )
+
+                    LIMIT 1
+                    `,
+                    [
+                        roleId,
+                        organisationId
+                    ]
+                );
+
+
+            if (roleResultat.rows.length === 0) {
+
+                await client.query("ROLLBACK");
+
+                return {
+                    succes: false,
+                    code: "ROLE_UNITE_INVALIDE"
+                };
+            }
+
+
+            nouveauRoleId =
+                Number(roleId);
+
+
+            // ---------------------------------------------
+            // Empêcher deux affectations identiques
+            // ---------------------------------------------
+
+            const doublonResultat =
+                await client.query(
+                    `
+                    SELECT
+                        id
+
+                    FROM relations_personne_organisation_unit
+
+                    WHERE
+                        personne_id = $1
+                        AND organisation_unit_id = $2
+                        AND role_id = $3
+                        AND id <> $4
+
+                    LIMIT 1
+                    `,
+                    [
+                        relation.personne_id,
+                        unitId,
+                        nouveauRoleId,
+                        relationId
+                    ]
+                );
+
+
+            if (doublonResultat.rows.length > 0) {
+
+                await client.query("ROLLBACK");
+
+                return {
+                    succes: false,
+                    code: "AFFECTATION_ROLE_EXISTANTE"
+                };
+            }
+        }
+
+
+        // -------------------------------------------------
+        // 3. Si on rend cette affectation principale,
+        //    retirer principal aux autres affectations
+        // -------------------------------------------------
+
+        if (principal === true) {
+
+            await client.query(
+                `
+                UPDATE relations_personne_organisation_unit autre
+
+                SET
+                    principal = FALSE,
+                    date_modification = CURRENT_TIMESTAMP
+
+                FROM organisation_units unit
+
+                WHERE
+                    autre.organisation_unit_id = unit.id
+                    AND autre.personne_id = $1
+                    AND unit.organisation_id = $2
+                    AND autre.id <> $3
+                    AND autre.actif = TRUE
+                `,
+                [
+                    relation.personne_id,
+                    organisationId,
+                    relationId
+                ]
+            );
+        }
+
+
+        // -------------------------------------------------
+        // 4. Modifier l'affectation
+        // -------------------------------------------------
+
+        const resultat =
+            await client.query(
+                `
+                UPDATE relations_personne_organisation_unit
+
+                SET
+                    role_id = $2,
+
+                    role = NULL,
+
+                    principal =
+                        CASE
+                            WHEN $3::boolean IS NULL
+                                THEN principal
+                            ELSE $3::boolean
+                        END,
+
+                    metadata =
+                        CASE
+                            WHEN $4::jsonb IS NULL
+                                THEN metadata
+                            ELSE $4::jsonb
+                        END,
+
+                    date_modification =
+                        CURRENT_TIMESTAMP
+
+                WHERE
+                    id = $1
+
+                RETURNING
+                    id,
+                    personne_id,
+                    organisation_unit_id,
+                    role,
+                    role_id,
+                    principal,
+                    actif,
+                    date_debut,
+                    date_fin,
+                    metadata,
+                    date_creation,
+                    date_modification
+                `,
+                [
+                    relationId,
+                    nouveauRoleId,
+                    principal === undefined
+                        ? null
+                        : principal,
+                    metadata === undefined
+                        ? null
+                        : JSON.stringify(metadata)
+                ]
+            );
+
+
+        await client.query("COMMIT");
+
+
+        return {
+            succes: true,
+            affectation: resultat.rows[0]
+        };
+
+
+    } catch (erreur) {
+
+        await client.query("ROLLBACK");
+
+        throw erreur;
+
+    } finally {
+
+        client.release();
+    }
+}
+
+
+// =========================================================
+// DÉSACTIVER UNE AFFECTATION
+// =========================================================
+
+async function desactiverMembreOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    relationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE relations_personne_organisation_unit relation
+
+            SET
+                actif = FALSE,
+                principal = FALSE,
+                date_fin = CURRENT_TIMESTAMP,
+                date_modification = CURRENT_TIMESTAMP
+
+            FROM organisation_units unit
+
+            INNER JOIN organisations organisation
+                ON organisation.id = unit.organisation_id
+
+            INNER JOIN tenants tenant
+                ON tenant.id = organisation.tenant_id
+
+            WHERE
+                relation.id = $1
+                AND relation.organisation_unit_id = $2
+                AND relation.organisation_unit_id = unit.id
+                AND unit.organisation_id = $3
+                AND tenant.code = $4
+                AND relation.actif = TRUE
+
+            RETURNING
+                relation.id,
+                relation.personne_id,
+                relation.organisation_unit_id,
+                relation.role,
+                relation.role_id,
+                relation.principal,
+                relation.actif,
+                relation.date_debut,
+                relation.date_fin,
+                relation.metadata,
+                relation.date_creation,
+                relation.date_modification
+            `,
+            [
+                relationId,
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (resultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "AFFECTATION_INTROUVABLE"
+        };
+    }
+
+
+    return {
+        succes: true,
+        affectation: resultat.rows[0]
+    };
+}
+// =========================================================
 // ÉCOSYSTÈME D'UNE ORGANISATION
 // =========================================================
 //
@@ -6273,6 +7146,12 @@ module.exports = {
     modifierOrganisationUnitDatabase,
     deplacerOrganisationUnitDatabase,
     desactiverOrganisationUnitDatabase,
+
+    // Administration générique des membres
+    listerMembresOrganisationUnitDatabase,
+    affecterMembreOrganisationUnitDatabase,
+    modifierMembreOrganisationUnitDatabase,
+    desactiverMembreOrganisationUnitDatabase,
 
     // Réseau / écosystème institutionnel
     obtenirEcosystemeOrganisationDatabase

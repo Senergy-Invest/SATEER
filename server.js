@@ -16,10 +16,16 @@ const {
     orienterDemandeDatabase,
 
     obtenirStructureOrganisationDatabase,
+
     creerOrganisationUnitDatabase,
     modifierOrganisationUnitDatabase,
     deplacerOrganisationUnitDatabase,
     desactiverOrganisationUnitDatabase,
+
+    listerMembresOrganisationUnitDatabase,
+    affecterMembreOrganisationUnitDatabase,
+    modifierMembreOrganisationUnitDatabase,
+    desactiverMembreOrganisationUnitDatabase,
 
     obtenirDashboardConsulatDatabase,
     obtenirEcosystemeOrganisationDatabase
@@ -1193,6 +1199,421 @@ app.post(
 
                     erreur:
                         "Impossible de désactiver l unité."
+                });
+        }
+    }
+);
+// =========================================================
+// API - ADMINISTRATION GÉNÉRIQUE DES MEMBRES D'UNE UNITÉ
+// =========================================================
+
+
+// =========================================================
+// LISTER LES MEMBRES
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/units/:unitId/members",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            if (
+                !organisationId
+                || !unitId
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "IDENTIFIANTS_INVALIDES"
+                    });
+            }
+
+
+            const resultat =
+                await listerMembresOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "MEMBRES_UNITE_CHARGES",
+
+                unite:
+                    resultat.unite,
+
+                membres:
+                    resultat.membres
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur liste membres unité :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_MEMBRES_UNITE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// AFFECTER UNE PERSONNE À UNE UNITÉ
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/members",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+            const personneId =
+                Number(req.body.personneId);
+
+            const roleId =
+                Number(req.body.roleId);
+
+
+            if (
+                !organisationId
+                || !unitId
+                || !personneId
+                || !roleId
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "DONNEES_AFFECTATION_INVALIDES"
+                    });
+            }
+
+
+            const resultat =
+                await affecterMembreOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode,
+                    {
+                        personneId,
+                        roleId,
+
+                        principal:
+                            req.body.principal === true,
+
+                        metadata:
+                            req.body.metadata || {}
+                    }
+                );
+
+
+            if (!resultat.succes) {
+
+                const erreurs404 = [
+                    "UNITE_INTROUVABLE",
+                    "PERSONNE_HORS_ORGANISATION",
+                    "ROLE_UNITE_INVALIDE"
+                ];
+
+
+                const statutHttp =
+                    erreurs404.includes(
+                        resultat.code
+                    )
+                        ? 404
+                        : 409;
+
+
+                return res
+                    .status(statutHttp)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res
+                .status(201)
+                .json({
+                    statut:
+                        "MEMBRE_AFFECTE",
+
+                    affectation:
+                        resultat.affectation,
+
+                    personne:
+                        resultat.personne,
+
+                    role:
+                        resultat.role
+                });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur affectation membre :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_AFFECTATION_MEMBRE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// MODIFIER UNE AFFECTATION
+// =========================================================
+
+app.patch(
+    "/api/organisations/:organisationId/units/:unitId/members/:relationId",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const relationId =
+                Number(req.params.relationId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            if (
+                !organisationId
+                || !unitId
+                || !relationId
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "IDENTIFIANTS_INVALIDES"
+                    });
+            }
+
+
+            const donnees = {};
+
+
+            if (req.body.roleId !== undefined) {
+
+                const roleId =
+                    Number(req.body.roleId);
+
+
+                if (!roleId) {
+
+                    return res
+                        .status(400)
+                        .json({
+                            statut:
+                                "ROLE_INVALIDE"
+                        });
+                }
+
+
+                donnees.roleId =
+                    roleId;
+            }
+
+
+            if (req.body.principal !== undefined) {
+
+                donnees.principal =
+                    req.body.principal === true;
+            }
+
+
+            if (req.body.metadata !== undefined) {
+
+                donnees.metadata =
+                    req.body.metadata;
+            }
+
+
+            const resultat =
+                await modifierMembreOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    relationId,
+                    tenantCode,
+                    donnees
+                );
+
+
+            if (!resultat.succes) {
+
+                const statutHttp =
+                    resultat.code ===
+                    "AFFECTATION_ROLE_EXISTANTE"
+                        ? 409
+                        : 404;
+
+
+                return res
+                    .status(statutHttp)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "AFFECTATION_MODIFIEE",
+
+                affectation:
+                    resultat.affectation
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur modification affectation :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_MODIFICATION_AFFECTATION"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// DÉSACTIVER UNE AFFECTATION
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/members/:relationId/disable",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const relationId =
+                Number(req.params.relationId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await desactiverMembreOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    relationId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "AFFECTATION_DESACTIVEE",
+
+                affectation:
+                    resultat.affectation
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur désactivation affectation :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_DESACTIVATION_AFFECTATION"
                 });
         }
     }
