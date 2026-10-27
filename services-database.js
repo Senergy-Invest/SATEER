@@ -5102,7 +5102,724 @@ async function obtenirStructureOrganisationDatabase(
         units
     };
 }
+// =========================================================
+// ADMINISTRATION GÉNÉRIQUE DES UNITÉS ORGANISATIONNELLES
+// =========================================================
+//
+// Ces fonctions ne connaissent aucun métier particulier.
+//
+// Elles fonctionnent pour :
+// - Consulat
+// - Ambassade
+// - Ministère
+// - entreprise
+// - association
+// - toute organisation SATEER
+//
+// Une unité peut être rattachée à une autre unité,
+// sans profondeur imposée.
+//
+// =========================================================
 
+
+// =========================================================
+// CRÉER UNE UNITÉ OU SOUS-UNITÉ
+// =========================================================
+
+async function creerOrganisationUnitDatabase(
+    organisationId,
+    tenantCode,
+    donnees
+) {
+
+    const {
+        parentUnitId = null,
+        code,
+        nom,
+        type,
+        metadata = {}
+    } = donnees;
+
+
+    // -----------------------------------------------------
+    // 1. Vérifier l'organisation et le tenant
+    // -----------------------------------------------------
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                o.id = $1
+                AND t.code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (organisationResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ORGANISATION_INTROUVABLE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Vérifier le parent s'il existe
+    // -----------------------------------------------------
+
+    if (parentUnitId !== null) {
+
+        const parentResultat =
+            await executerRequete(
+                `
+                SELECT
+                    id
+
+                FROM organisation_units
+
+                WHERE
+                    id = $1
+                    AND organisation_id = $2
+                    AND actif = TRUE
+
+                LIMIT 1
+                `,
+                [
+                    parentUnitId,
+                    organisationId
+                ]
+            );
+
+
+        if (parentResultat.rows.length === 0) {
+
+            return {
+                succes: false,
+                code: "UNITE_PARENT_INVALIDE"
+            };
+        }
+    }
+
+
+    // -----------------------------------------------------
+    // 3. Vérifier le code dans l'organisation
+    // -----------------------------------------------------
+
+    const codeExistant =
+        await executerRequete(
+            `
+            SELECT
+                id
+
+            FROM organisation_units
+
+            WHERE
+                organisation_id = $1
+                AND code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                code
+            ]
+        );
+
+
+    if (codeExistant.rows.length > 0) {
+
+        return {
+            succes: false,
+            code: "CODE_UNITE_EXISTANT"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 4. Créer l'unité
+    // -----------------------------------------------------
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO organisation_units (
+                organisation_id,
+                parent_unit_id,
+                code,
+                nom,
+                type,
+                actif,
+                metadata
+            )
+
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                TRUE,
+                $6::jsonb
+            )
+
+            RETURNING
+                id,
+                organisation_id,
+                parent_unit_id,
+                code,
+                nom,
+                type,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                organisationId,
+                parentUnitId,
+                code,
+                nom,
+                type,
+                JSON.stringify(metadata)
+            ]
+        );
+
+
+    return {
+        succes: true,
+        unite: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// MODIFIER UNE UNITÉ
+// =========================================================
+
+async function modifierOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode,
+    donnees
+) {
+
+    const {
+        nom,
+        type,
+        metadata
+    } = donnees;
+
+
+    // -----------------------------------------------------
+    // 1. Vérifier organisation + tenant + unité
+    // -----------------------------------------------------
+
+    const uniteResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (uniteResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_INTROUVABLE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Modifier uniquement les champs fournis
+    // -----------------------------------------------------
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_units
+
+            SET
+                nom =
+                    COALESCE(
+                        $3,
+                        nom
+                    ),
+
+                type =
+                    COALESCE(
+                        $4,
+                        type
+                    ),
+
+                metadata =
+                    CASE
+                        WHEN $5::jsonb IS NULL
+                            THEN metadata
+                        ELSE $5::jsonb
+                    END,
+
+                date_modification =
+                    CURRENT_TIMESTAMP
+
+            WHERE
+                id = $1
+                AND organisation_id = $2
+
+            RETURNING
+                id,
+                organisation_id,
+                parent_unit_id,
+                code,
+                nom,
+                type,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                unitId,
+                organisationId,
+                nom ?? null,
+                type ?? null,
+                metadata === undefined
+                    ? null
+                    : JSON.stringify(metadata)
+            ]
+        );
+
+
+    return {
+        succes: true,
+        unite: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// DÉPLACER UNE UNITÉ
+// =========================================================
+
+async function deplacerOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode,
+    nouveauParentUnitId
+) {
+
+    // -----------------------------------------------------
+    // 1. Vérifier l'unité
+    // -----------------------------------------------------
+
+    const uniteResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (uniteResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_INTROUVABLE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Une unité ne peut pas être son propre parent
+    // -----------------------------------------------------
+
+    if (
+        nouveauParentUnitId !== null
+        && Number(nouveauParentUnitId) === Number(unitId)
+    ) {
+
+        return {
+            succes: false,
+            code: "PARENT_IDENTIQUE_UNITE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 3. Si parent demandé : vérifier même organisation
+    // -----------------------------------------------------
+
+    if (nouveauParentUnitId !== null) {
+
+        const parentResultat =
+            await executerRequete(
+                `
+                SELECT
+                    id
+
+                FROM organisation_units
+
+                WHERE
+                    id = $1
+                    AND organisation_id = $2
+                    AND actif = TRUE
+
+                LIMIT 1
+                `,
+                [
+                    nouveauParentUnitId,
+                    organisationId
+                ]
+            );
+
+
+        if (parentResultat.rows.length === 0) {
+
+            return {
+                succes: false,
+                code: "UNITE_PARENT_INVALIDE"
+            };
+        }
+
+
+        // -------------------------------------------------
+        // 4. Empêcher les boucles
+        //
+        // Exemple interdit :
+        //
+        // A
+        // └── B
+        //     └── C
+        //
+        // puis déplacer A dans C.
+        // -------------------------------------------------
+
+        const boucleResultat =
+            await executerRequete(
+                `
+                WITH RECURSIVE descendants AS (
+
+                    SELECT
+                        id,
+                        parent_unit_id
+
+                    FROM organisation_units
+
+                    WHERE
+                        parent_unit_id = $1
+                        AND organisation_id = $2
+                        AND actif = TRUE
+
+
+                    UNION ALL
+
+
+                    SELECT
+                        enfant.id,
+                        enfant.parent_unit_id
+
+                    FROM organisation_units enfant
+
+                    INNER JOIN descendants parent
+                        ON enfant.parent_unit_id = parent.id
+
+                    WHERE
+                        enfant.organisation_id = $2
+                        AND enfant.actif = TRUE
+                )
+
+                SELECT
+                    id
+
+                FROM descendants
+
+                WHERE
+                    id = $3
+
+                LIMIT 1
+                `,
+                [
+                    unitId,
+                    organisationId,
+                    nouveauParentUnitId
+                ]
+            );
+
+
+        if (boucleResultat.rows.length > 0) {
+
+            return {
+                succes: false,
+                code: "BOUCLE_ORGANISATION_INTERDITE"
+            };
+        }
+    }
+
+
+    // -----------------------------------------------------
+    // 5. Effectuer le déplacement
+    // -----------------------------------------------------
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_units
+
+            SET
+                parent_unit_id = $3,
+                date_modification = CURRENT_TIMESTAMP
+
+            WHERE
+                id = $1
+                AND organisation_id = $2
+
+            RETURNING
+                id,
+                organisation_id,
+                parent_unit_id,
+                code,
+                nom,
+                type,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                unitId,
+                organisationId,
+                nouveauParentUnitId
+            ]
+        );
+
+
+    return {
+        succes: true,
+        unite: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// DÉSACTIVER UNE UNITÉ
+// =========================================================
+
+async function desactiverOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode
+) {
+
+    // -----------------------------------------------------
+    // 1. Vérifier l'unité
+    // -----------------------------------------------------
+
+    const uniteResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (uniteResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_INTROUVABLE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Empêcher la désactivation si des sous-unités
+    //    actives existent encore
+    // -----------------------------------------------------
+
+    const enfantsResultat =
+        await executerRequete(
+            `
+            SELECT
+                COUNT(*)::integer AS total
+
+            FROM organisation_units
+
+            WHERE
+                parent_unit_id = $1
+                AND organisation_id = $2
+                AND actif = TRUE
+            `,
+            [
+                unitId,
+                organisationId
+            ]
+        );
+
+
+    if (enfantsResultat.rows[0].total > 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_CONTIENT_SOUS_UNITES_ACTIVES"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 3. Empêcher la désactivation si des membres actifs
+    //    sont encore affectés
+    // -----------------------------------------------------
+
+    const membresResultat =
+        await executerRequete(
+            `
+            SELECT
+                COUNT(*)::integer AS total
+
+            FROM relations_personne_organisation_unit
+
+            WHERE
+                organisation_unit_id = $1
+                AND actif = TRUE
+            `,
+            [
+                unitId
+            ]
+        );
+
+
+    if (membresResultat.rows[0].total > 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_CONTIENT_MEMBRES_ACTIFS"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 4. Désactivation logique
+    // -----------------------------------------------------
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_units
+
+            SET
+                actif = FALSE,
+                date_modification = CURRENT_TIMESTAMP
+
+            WHERE
+                id = $1
+                AND organisation_id = $2
+
+            RETURNING
+                id,
+                organisation_id,
+                parent_unit_id,
+                code,
+                nom,
+                type,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                unitId,
+                organisationId
+            ]
+        );
+
+
+    return {
+        succes: true,
+        unite: resultat.rows[0]
+    };
+}
 // =========================================================
 // ÉCOSYSTÈME D'UNE ORGANISATION
 // =========================================================
@@ -5550,6 +6267,12 @@ module.exports = {
 
     // Structure organisationnelle interne
     obtenirStructureOrganisationDatabase,
+
+    // Administration générique des unités
+    creerOrganisationUnitDatabase,
+    modifierOrganisationUnitDatabase,
+    deplacerOrganisationUnitDatabase,
+    desactiverOrganisationUnitDatabase,
 
     // Réseau / écosystème institutionnel
     obtenirEcosystemeOrganisationDatabase

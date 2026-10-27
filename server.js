@@ -14,7 +14,13 @@ const {
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
     orienterDemandeDatabase,
+
     obtenirStructureOrganisationDatabase,
+    creerOrganisationUnitDatabase,
+    modifierOrganisationUnitDatabase,
+    deplacerOrganisationUnitDatabase,
+    desactiverOrganisationUnitDatabase,
+
     obtenirDashboardConsulatDatabase,
     obtenirEcosystemeOrganisationDatabase
 } = require("./services-database");
@@ -777,6 +783,416 @@ app.get(
                 .json({
                     erreur:
                         "Impossible de charger la structure de l'organisation."
+                });
+        }
+    }
+);
+
+// =========================================================
+// API - ADMINISTRATION GÉNÉRIQUE DES UNITÉS
+// =========================================================
+
+
+// =========================================================
+// CRÉER UNE UNITÉ / SOUS-UNITÉ
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const {
+                parentUnitId = null,
+                code,
+                nom,
+                type,
+                metadata = {}
+            } = req.body;
+
+
+            if (
+                !organisationId
+                || !code
+                || !nom
+                || !type
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "DONNEES_UNITE_INVALIDES",
+
+                        erreur:
+                            "organisationId, code, nom et type sont obligatoires."
+                    });
+            }
+
+
+            const resultat =
+                await creerOrganisationUnitDatabase(
+                    organisationId,
+                    tenantCode,
+                    {
+                        parentUnitId:
+                            parentUnitId === null
+                                ? null
+                                : Number(parentUnitId),
+
+                        code,
+                        nom,
+                        type,
+                        metadata
+                    }
+                );
+
+
+            if (!resultat.succes) {
+
+                const statutHttp =
+                    resultat.code === "ORGANISATION_INTROUVABLE"
+                        ? 404
+                        : 409;
+
+
+                return res
+                    .status(statutHttp)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res
+                .status(201)
+                .json({
+                    statut:
+                        "UNITE_CREEE",
+
+                    unite:
+                        resultat.unite
+                });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur création unité :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_CREATION_UNITE",
+
+                    erreur:
+                        "Impossible de créer l unité."
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// MODIFIER UNE UNITÉ
+// =========================================================
+
+app.patch(
+    "/api/organisations/:organisationId/units/:unitId",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            if (
+                !organisationId
+                || !unitId
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "IDENTIFIANTS_INVALIDES"
+                    });
+            }
+
+
+            const resultat =
+                await modifierOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode,
+                    {
+                        nom: req.body.nom,
+                        type: req.body.type,
+                        metadata: req.body.metadata
+                    }
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "UNITE_MODIFIEE",
+
+                unite:
+                    resultat.unite
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur modification unité :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_MODIFICATION_UNITE",
+
+                    erreur:
+                        "Impossible de modifier l unité."
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// DÉPLACER UNE UNITÉ
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/move",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            let nouveauParentUnitId =
+                req.body.parentUnitId;
+
+
+            if (
+                nouveauParentUnitId === undefined
+                || nouveauParentUnitId === ""
+            ) {
+
+                nouveauParentUnitId = null;
+            }
+
+
+            if (nouveauParentUnitId !== null) {
+
+                nouveauParentUnitId =
+                    Number(nouveauParentUnitId);
+
+
+                if (!nouveauParentUnitId) {
+
+                    return res
+                        .status(400)
+                        .json({
+                            statut:
+                                "PARENT_INVALIDE"
+                        });
+                }
+            }
+
+
+            const resultat =
+                await deplacerOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode,
+                    nouveauParentUnitId
+                );
+
+
+            if (!resultat.succes) {
+
+                const erreursConflit = [
+                    "PARENT_IDENTIQUE_UNITE",
+                    "BOUCLE_ORGANISATION_INTERDITE"
+                ];
+
+
+                const statutHttp =
+                    erreursConflit.includes(
+                        resultat.code
+                    )
+                        ? 409
+                        : 404;
+
+
+                return res
+                    .status(statutHttp)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "UNITE_DEPLACEE",
+
+                unite:
+                    resultat.unite
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur déplacement unité :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_DEPLACEMENT_UNITE",
+
+                    erreur:
+                        "Impossible de déplacer l unité."
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// DÉSACTIVER UNE UNITÉ
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/disable",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await desactiverOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                const erreursConflit = [
+                    "UNITE_CONTIENT_SOUS_UNITES_ACTIVES",
+                    "UNITE_CONTIENT_MEMBRES_ACTIFS"
+                ];
+
+
+                const statutHttp =
+                    erreursConflit.includes(
+                        resultat.code
+                    )
+                        ? 409
+                        : 404;
+
+
+                return res
+                    .status(statutHttp)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "UNITE_DESACTIVEE",
+
+                unite:
+                    resultat.unite
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur désactivation unité :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_DESACTIVATION_UNITE",
+
+                    erreur:
+                        "Impossible de désactiver l unité."
                 });
         }
     }
