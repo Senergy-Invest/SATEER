@@ -6694,6 +6694,525 @@ async function desactiverMembreOrganisationUnitDatabase(
     };
 }
 // =========================================================
+// ADMINISTRATION GÉNÉRIQUE DES CAPABILITIES D'UNE UNITÉ
+// =========================================================
+//
+// Une capability décrit ce qu'une unité peut faire.
+//
+// Le nom ou le code métier de l'unité ne pilote jamais
+// la logique applicative.
+//
+// =========================================================
+
+
+// =========================================================
+// LISTER LE CATALOGUE DES CAPABILITIES POUR UNITÉS
+// =========================================================
+
+async function listerCapabilitiesUnitDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                o.id = $1
+                AND t.code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (organisationResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ORGANISATION_INTROUVABLE"
+        };
+    }
+
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                id,
+                code,
+                nom,
+                description,
+                scope,
+                actif
+
+            FROM capabilities
+
+            WHERE
+                actif = TRUE
+                AND scope IN (
+                    'UNIT',
+                    'BOTH'
+                )
+
+            ORDER BY
+                nom ASC,
+                code ASC
+            `
+        );
+
+
+    return {
+        succes: true,
+        capabilities: resultat.rows
+    };
+}
+
+
+// =========================================================
+// LISTER LES CAPABILITIES D'UNE UNITÉ
+// =========================================================
+
+async function listerCapabilitiesOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode
+) {
+
+    const uniteResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id,
+                u.organisation_id,
+                u.parent_unit_id,
+                u.code,
+                u.nom,
+                u.type,
+                u.actif
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (uniteResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_INTROUVABLE"
+        };
+    }
+
+
+    const capabilitiesResultat =
+        await executerRequete(
+            `
+            SELECT
+                uc.id AS relation_id,
+
+                c.id AS capability_id,
+                c.code,
+                c.nom,
+                c.description,
+                c.scope,
+
+                uc.actif,
+                uc.configuration,
+                uc.date_activation,
+                uc.date_desactivation,
+                uc.date_modification
+
+            FROM organisation_unit_capabilities uc
+
+            INNER JOIN capabilities c
+                ON c.id = uc.capability_id
+
+            WHERE
+                uc.organisation_unit_id = $1
+                AND uc.actif = TRUE
+                AND c.actif = TRUE
+
+            ORDER BY
+                c.nom ASC,
+                c.code ASC
+            `,
+            [
+                unitId
+            ]
+        );
+
+
+    return {
+        succes: true,
+        unite: uniteResultat.rows[0],
+        capabilities: capabilitiesResultat.rows
+    };
+}
+
+
+// =========================================================
+// ACTIVER UNE CAPABILITY SUR UNE UNITÉ
+// =========================================================
+
+async function activerCapabilityOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    tenantCode,
+    capabilityId,
+    configuration = {}
+) {
+
+    // -----------------------------------------------------
+    // 1. Vérifier l'unité
+    // -----------------------------------------------------
+
+    const uniteResultat =
+        await executerRequete(
+            `
+            SELECT
+                u.id
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                unitId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (uniteResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "UNITE_INTROUVABLE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Vérifier la capability
+    // -----------------------------------------------------
+
+    const capabilityResultat =
+        await executerRequete(
+            `
+            SELECT
+                id,
+                code,
+                nom,
+                scope
+
+            FROM capabilities
+
+            WHERE
+                id = $1
+                AND actif = TRUE
+                AND scope IN (
+                    'UNIT',
+                    'BOTH'
+                )
+
+            LIMIT 1
+            `,
+            [
+                capabilityId
+            ]
+        );
+
+
+    if (capabilityResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "CAPABILITY_UNITE_INVALIDE"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 3. Créer ou réactiver
+    // -----------------------------------------------------
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO organisation_unit_capabilities (
+                organisation_unit_id,
+                capability_id,
+                actif,
+                configuration,
+                date_activation,
+                date_desactivation,
+                date_modification
+            )
+
+            VALUES (
+                $1,
+                $2,
+                TRUE,
+                $3::jsonb,
+                CURRENT_TIMESTAMP,
+                NULL,
+                CURRENT_TIMESTAMP
+            )
+
+            ON CONFLICT (
+                organisation_unit_id,
+                capability_id
+            )
+
+            DO UPDATE SET
+
+                actif = TRUE,
+
+                configuration =
+                    EXCLUDED.configuration,
+
+                date_activation =
+                    CURRENT_TIMESTAMP,
+
+                date_desactivation =
+                    NULL,
+
+                date_modification =
+                    CURRENT_TIMESTAMP
+
+            RETURNING
+                id,
+                organisation_unit_id,
+                capability_id,
+                actif,
+                configuration,
+                date_activation,
+                date_desactivation,
+                date_modification
+            `,
+            [
+                unitId,
+                capabilityId,
+                JSON.stringify(configuration)
+            ]
+        );
+
+
+    return {
+        succes: true,
+        capability:
+            capabilityResultat.rows[0],
+        affectation:
+            resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// MODIFIER LA CONFIGURATION D'UNE CAPABILITY
+// =========================================================
+
+async function modifierCapabilityOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    capabilityId,
+    tenantCode,
+    configuration
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_unit_capabilities uc
+
+            SET
+                configuration = $5::jsonb,
+                date_modification = CURRENT_TIMESTAMP
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            INNER JOIN capabilities c
+                ON c.id = $3
+
+            WHERE
+                uc.organisation_unit_id = $2
+                AND uc.capability_id = $3
+
+                AND u.id = uc.organisation_unit_id
+                AND u.organisation_id = $1
+
+                AND t.code = $4
+
+                AND u.actif = TRUE
+                AND uc.actif = TRUE
+
+                AND c.actif = TRUE
+                AND c.scope IN (
+                    'UNIT',
+                    'BOTH'
+                )
+
+            RETURNING
+                uc.id,
+                uc.organisation_unit_id,
+                uc.capability_id,
+                uc.actif,
+                uc.configuration,
+                uc.date_activation,
+                uc.date_desactivation,
+                uc.date_modification
+            `,
+            [
+                organisationId,
+                unitId,
+                capabilityId,
+                tenantCode,
+                JSON.stringify(configuration)
+            ]
+        );
+
+
+    if (resultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "CAPABILITY_UNITE_INTROUVABLE"
+        };
+    }
+
+
+    return {
+        succes: true,
+        affectation: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// DÉSACTIVER UNE CAPABILITY D'UNE UNITÉ
+// =========================================================
+
+async function desactiverCapabilityOrganisationUnitDatabase(
+    organisationId,
+    unitId,
+    capabilityId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_unit_capabilities uc
+
+            SET
+                actif = FALSE,
+                date_desactivation = CURRENT_TIMESTAMP,
+                date_modification = CURRENT_TIMESTAMP
+
+            FROM organisation_units u
+
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                uc.organisation_unit_id = $2
+                AND uc.capability_id = $3
+
+                AND u.id = uc.organisation_unit_id
+                AND u.organisation_id = $1
+
+                AND t.code = $4
+
+                AND uc.actif = TRUE
+
+            RETURNING
+                uc.id,
+                uc.organisation_unit_id,
+                uc.capability_id,
+                uc.actif,
+                uc.configuration,
+                uc.date_activation,
+                uc.date_desactivation,
+                uc.date_modification
+            `,
+            [
+                organisationId,
+                unitId,
+                capabilityId,
+                tenantCode
+            ]
+        );
+
+
+    if (resultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "CAPABILITY_UNITE_INTROUVABLE"
+        };
+    }
+
+
+    return {
+        succes: true,
+        affectation: resultat.rows[0]
+    };
+}
+// =========================================================
 // ÉCOSYSTÈME D'UNE ORGANISATION
 // =========================================================
 //
@@ -7138,7 +7657,7 @@ module.exports = {
     obtenirContexteIACitoyenDatabase,
     obtenirAnalyticsConsulatDatabase,
 
-    // Structure organisationnelle interne
+    // Structure organisationnelle
     obtenirStructureOrganisationDatabase,
 
     // Administration générique des unités
@@ -7153,6 +7672,13 @@ module.exports = {
     modifierMembreOrganisationUnitDatabase,
     desactiverMembreOrganisationUnitDatabase,
 
-    // Réseau / écosystème institutionnel
+    // Administration générique des capabilities
+    listerCapabilitiesUnitDatabase,
+    listerCapabilitiesOrganisationUnitDatabase,
+    activerCapabilityOrganisationUnitDatabase,
+    modifierCapabilityOrganisationUnitDatabase,
+    desactiverCapabilityOrganisationUnitDatabase,
+
+    // Réseau / écosystème
     obtenirEcosystemeOrganisationDatabase
 };

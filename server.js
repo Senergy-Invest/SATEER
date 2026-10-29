@@ -27,6 +27,12 @@ const {
     modifierMembreOrganisationUnitDatabase,
     desactiverMembreOrganisationUnitDatabase,
 
+    listerCapabilitiesUnitDatabase,
+    listerCapabilitiesOrganisationUnitDatabase,
+    activerCapabilityOrganisationUnitDatabase,
+    modifierCapabilityOrganisationUnitDatabase,
+    desactiverCapabilityOrganisationUnitDatabase,
+
     obtenirDashboardConsulatDatabase,
     obtenirEcosystemeOrganisationDatabase
 } = require("./services-database");
@@ -1614,6 +1620,392 @@ app.post(
                 .json({
                     statut:
                         "ERREUR_DESACTIVATION_AFFECTATION"
+                });
+        }
+    }
+);
+
+// =========================================================
+// API - ADMINISTRATION GÉNÉRIQUE DES CAPABILITIES
+// =========================================================
+
+
+// =========================================================
+// CATALOGUE DES CAPABILITIES POUR UNITÉS
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/unit-capabilities",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            const resultat =
+                await listerCapabilitiesUnitDatabase(
+                    organisationId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "CAPABILITIES_UNIT_CHARGEES",
+
+                capabilities:
+                    resultat.capabilities
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur catalogue capabilities :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_CAPABILITIES_UNIT"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// CAPABILITIES ACTIVES D'UNE UNITÉ
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/units/:unitId/capabilities",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            const resultat =
+                await listerCapabilitiesOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "CAPABILITIES_UNITE_CHARGEES",
+
+                unite:
+                    resultat.unite,
+
+                capabilities:
+                    resultat.capabilities
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur capabilities unité :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_CAPABILITIES_UNITE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// ACTIVER UNE CAPABILITY
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/capabilities",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const capabilityId =
+                Number(req.body.capabilityId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            if (
+                !organisationId
+                || !unitId
+                || !capabilityId
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "DONNEES_CAPABILITY_INVALIDES"
+                    });
+            }
+
+
+            const resultat =
+                await activerCapabilityOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    tenantCode,
+                    capabilityId,
+                    req.body.configuration || {}
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res
+                .status(201)
+                .json({
+                    statut:
+                        "CAPABILITY_UNITE_ACTIVEE",
+
+                    capability:
+                        resultat.capability,
+
+                    affectation:
+                        resultat.affectation
+                });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur activation capability :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_ACTIVATION_CAPABILITY"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// MODIFIER LA CONFIGURATION
+// =========================================================
+
+app.patch(
+    "/api/organisations/:organisationId/units/:unitId/capabilities/:capabilityId",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const capabilityId =
+                Number(req.params.capabilityId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            if (
+                req.body.configuration === undefined
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "CONFIGURATION_MANQUANTE"
+                    });
+            }
+
+
+            const resultat =
+                await modifierCapabilityOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    capabilityId,
+                    tenantCode,
+                    req.body.configuration
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "CAPABILITY_UNITE_MODIFIEE",
+
+                affectation:
+                    resultat.affectation
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur modification capability :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_MODIFICATION_CAPABILITY"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// DÉSACTIVER UNE CAPABILITY
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/capabilities/:capabilityId/disable",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const unitId =
+                Number(req.params.unitId);
+
+            const capabilityId =
+                Number(req.params.capabilityId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await desactiverCapabilityOrganisationUnitDatabase(
+                    organisationId,
+                    unitId,
+                    capabilityId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "CAPABILITY_UNITE_DESACTIVEE",
+
+                affectation:
+                    resultat.affectation
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur désactivation capability :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_DESACTIVATION_CAPABILITY"
                 });
         }
     }
