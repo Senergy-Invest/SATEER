@@ -33,6 +33,17 @@ const {
     modifierCapabilityOrganisationUnitDatabase,
     desactiverCapabilityOrganisationUnitDatabase,
 
+    listerRolesOrganisationDatabase,
+    creerRoleOrganisationDatabase,
+    modifierRoleOrganisationDatabase,
+    desactiverRoleOrganisationDatabase,
+    reactiverRoleOrganisationDatabase,
+    listerPermissionsDatabase,
+    listerPermissionsRoleOrganisationDatabase,
+    ajouterPermissionRoleOrganisationDatabase,
+    modifierPermissionRoleOrganisationDatabase,
+    desactiverPermissionRoleOrganisationDatabase,
+
     obtenirDashboardConsulatDatabase,
     obtenirEcosystemeOrganisationDatabase
 } = require("./services-database");
@@ -2006,6 +2017,718 @@ app.post(
                 .json({
                     statut:
                         "ERREUR_DESACTIVATION_CAPABILITY"
+                });
+        }
+    }
+);
+// =========================================================
+// API - ADMINISTRATION GÉNÉRIQUE DES RÔLES ET PERMISSIONS
+// =========================================================
+
+
+// =========================================================
+// LISTER LES RÔLES D'UNE ORGANISATION
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/roles",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            const resultat =
+                await listerRolesOrganisationDatabase(
+                    organisationId,
+                    tenantCode
+                );
+
+
+            return res.json({
+                statut:
+                    "ROLES_ORGANISATION_CHARGES",
+
+                roles:
+                    resultat.roles
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur chargement rôles :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_ROLES_ORGANISATION"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// CRÉER UN RÔLE
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/roles",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await creerRoleOrganisationDatabase(
+                    organisationId,
+                    tenantCode,
+                    req.body
+                );
+
+
+            if (!resultat.succes) {
+
+                const codeHttp =
+                    resultat.code ===
+                    "ROLE_CODE_EXISTANT"
+                        ? 409
+                        : 400;
+
+
+                return res
+                    .status(codeHttp)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res
+                .status(201)
+                .json({
+                    statut:
+                        "ROLE_ORGANISATION_CREE",
+
+                    role:
+                        resultat.role
+                });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur création rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_CREATION_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// MODIFIER UN RÔLE
+// =========================================================
+
+app.patch(
+    "/api/organisations/:organisationId/roles/:roleId",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await modifierRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    tenantCode,
+                    req.body
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(
+                        resultat.code ===
+                        "ROLE_CODE_EXISTANT"
+                            ? 409
+                            : 404
+                    )
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "ROLE_ORGANISATION_MODIFIE",
+
+                role:
+                    resultat.role
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur modification rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_MODIFICATION_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// DÉSACTIVER UN RÔLE
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/roles/:roleId/disable",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await desactiverRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                if (
+                    resultat.code ===
+                    "ROLE_UTILISE_PAR_AFFECTATIONS_ACTIVES"
+                ) {
+
+                    return res
+                        .status(409)
+                        .json({
+                            statut:
+                                resultat.code,
+
+                            affectationsActives:
+                                resultat.affectationsActives
+                        });
+                }
+
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "ROLE_ORGANISATION_DESACTIVE",
+
+                role:
+                    resultat.role
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur désactivation rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_DESACTIVATION_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// RÉACTIVER UN RÔLE
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/roles/:roleId/activate",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await reactiverRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "ROLE_ORGANISATION_ACTIVE",
+
+                role:
+                    resultat.role
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur réactivation rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_REACTIVATION_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// CATALOGUE GLOBAL DES PERMISSIONS
+// =========================================================
+
+app.get(
+    "/api/permissions",
+    async (req, res) => {
+
+        try {
+
+            const resultat =
+                await listerPermissionsDatabase();
+
+
+            return res.json({
+                statut:
+                    "PERMISSIONS_CHARGEES",
+
+                permissions:
+                    resultat.permissions
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur chargement permissions :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_PERMISSIONS"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// PERMISSIONS D'UN RÔLE
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/roles/:roleId/permissions",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const tenantCode =
+                req.query.tenant || "SN";
+
+
+            const resultat =
+                await listerPermissionsRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "PERMISSIONS_ROLE_CHARGEES",
+
+                role:
+                    resultat.role,
+
+                permissions:
+                    resultat.permissions
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur permissions rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_PERMISSIONS_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// AJOUTER / RÉACTIVER UNE PERMISSION SUR UN RÔLE
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/roles/:roleId/permissions",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const permissionId =
+                Number(req.body.permissionId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            if (!permissionId) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "PERMISSION_ID_MANQUANTE"
+                    });
+            }
+
+
+            const resultat =
+                await ajouterPermissionRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    permissionId,
+                    tenantCode,
+                    req.body.configuration || {}
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res
+                .status(201)
+                .json({
+                    statut:
+                        "PERMISSION_ROLE_ACTIVEE",
+
+                    permission:
+                        resultat.permission,
+
+                    affectation:
+                        resultat.affectation
+                });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur ajout permission rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_AJOUT_PERMISSION_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// MODIFIER CONFIGURATION PERMISSION ↔ RÔLE
+// =========================================================
+
+app.patch(
+    "/api/organisations/:organisationId/roles/:roleId/permissions/:permissionId",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const permissionId =
+                Number(req.params.permissionId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            if (
+                req.body.configuration === undefined
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+                        statut:
+                            "CONFIGURATION_MANQUANTE"
+                    });
+            }
+
+
+            const resultat =
+                await modifierPermissionRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    permissionId,
+                    tenantCode,
+                    req.body.configuration
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "PERMISSION_ROLE_MODIFIEE",
+
+                affectation:
+                    resultat.affectation
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur modification permission rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_MODIFICATION_PERMISSION_ROLE"
+                });
+        }
+    }
+);
+
+
+// =========================================================
+// DÉSACTIVER UNE PERMISSION D'UN RÔLE
+// =========================================================
+
+app.post(
+    "/api/organisations/:organisationId/roles/:roleId/permissions/:permissionId/disable",
+    async (req, res) => {
+
+        try {
+
+            const organisationId =
+                Number(req.params.organisationId);
+
+            const roleId =
+                Number(req.params.roleId);
+
+            const permissionId =
+                Number(req.params.permissionId);
+
+            const tenantCode =
+                req.body.tenantCode
+                || req.query.tenant
+                || "SN";
+
+
+            const resultat =
+                await desactiverPermissionRoleOrganisationDatabase(
+                    organisationId,
+                    roleId,
+                    permissionId,
+                    tenantCode
+                );
+
+
+            if (!resultat.succes) {
+
+                return res
+                    .status(404)
+                    .json({
+                        statut:
+                            resultat.code
+                    });
+            }
+
+
+            return res.json({
+                statut:
+                    "PERMISSION_ROLE_DESACTIVEE",
+
+                affectation:
+                    resultat.affectation
+            });
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur désactivation permission rôle :",
+                erreur
+            );
+
+
+            return res
+                .status(500)
+                .json({
+                    statut:
+                        "ERREUR_DESACTIVATION_PERMISSION_ROLE"
                 });
         }
     }

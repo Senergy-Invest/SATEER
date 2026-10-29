@@ -7213,6 +7213,1042 @@ async function desactiverCapabilityOrganisationUnitDatabase(
     };
 }
 // =========================================================
+// ADMINISTRATION GÉNÉRIQUE DES RÔLES ET PERMISSIONS
+// =========================================================
+//
+// Les rôles appartiennent à une organisation.
+//
+// Les permissions constituent un catalogue canonique global.
+//
+// Un rôle n'a aucune signification codée en dur dans SATEER.
+// Son comportement dépend uniquement des permissions qui
+// lui sont associées.
+//
+// =========================================================
+
+
+// =========================================================
+// LISTER LES RÔLES D'UNE ORGANISATION
+// =========================================================
+
+async function listerRolesOrganisationDatabase(
+    organisationId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id,
+                r.organisation_id,
+                r.code,
+                r.nom,
+                r.description,
+                r.scope,
+                r.actif,
+                r.metadata,
+                r.date_creation,
+                r.date_modification,
+
+                COUNT(rel.id)
+                    FILTER (
+                        WHERE rel.actif = TRUE
+                    ) AS affectations_actives
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            LEFT JOIN relations_personne_organisation_unit rel
+                ON rel.role_id = r.id
+
+            WHERE
+                r.organisation_id = $1
+                AND t.code = $2
+
+            GROUP BY
+                r.id
+
+            ORDER BY
+                r.actif DESC,
+                r.nom ASC,
+                r.code ASC
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    return {
+        succes: true,
+        roles: resultat.rows
+    };
+}
+
+
+// =========================================================
+// CRÉER UN RÔLE
+// =========================================================
+
+async function creerRoleOrganisationDatabase(
+    organisationId,
+    tenantCode,
+    donnees
+) {
+
+    const {
+        code,
+        nom,
+        description = null,
+        scope = "UNIT",
+        metadata = {}
+    } = donnees;
+
+
+    if (
+        !code
+        || !nom
+    ) {
+
+        return {
+            succes: false,
+            code: "DONNEES_ROLE_INVALIDES"
+        };
+    }
+
+
+    if (
+        ![
+            "ORGANISATION",
+            "UNIT",
+            "BOTH"
+        ].includes(scope)
+    ) {
+
+        return {
+            succes: false,
+            code: "SCOPE_ROLE_INVALIDE"
+        };
+    }
+
+
+    const organisationResultat =
+        await executerRequete(
+            `
+            SELECT
+                o.id
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                o.id = $1
+                AND t.code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (organisationResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ORGANISATION_INTROUVABLE"
+        };
+    }
+
+
+    const roleExistant =
+        await executerRequete(
+            `
+            SELECT
+                id
+
+            FROM organisation_roles
+
+            WHERE
+                organisation_id = $1
+                AND code = $2
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                code.trim().toUpperCase()
+            ]
+        );
+
+
+    if (roleExistant.rows.length > 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_CODE_EXISTANT"
+        };
+    }
+
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO organisation_roles (
+                organisation_id,
+                code,
+                nom,
+                description,
+                scope,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            )
+
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                TRUE,
+                $6::jsonb,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+
+            RETURNING
+                id,
+                organisation_id,
+                code,
+                nom,
+                description,
+                scope,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                organisationId,
+                code.trim().toUpperCase(),
+                nom.trim(),
+                description,
+                scope,
+                JSON.stringify(metadata)
+            ]
+        );
+
+
+    return {
+        succes: true,
+        role: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// MODIFIER UN RÔLE
+// =========================================================
+
+async function modifierRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    tenantCode,
+    donnees
+) {
+
+    const roleActuel =
+        await executerRequete(
+            `
+            SELECT
+                r.*
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                r.id = $1
+                AND r.organisation_id = $2
+                AND t.code = $3
+
+            LIMIT 1
+            `,
+            [
+                roleId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (roleActuel.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_INTROUVABLE"
+        };
+    }
+
+
+    const role =
+        roleActuel.rows[0];
+
+
+    const nouveauCode =
+        donnees.code !== undefined
+            ? donnees.code.trim().toUpperCase()
+            : role.code;
+
+
+    const nouveauNom =
+        donnees.nom !== undefined
+            ? donnees.nom.trim()
+            : role.nom;
+
+
+    const nouvelleDescription =
+        donnees.description !== undefined
+            ? donnees.description
+            : role.description;
+
+
+    const nouveauScope =
+        donnees.scope !== undefined
+            ? donnees.scope
+            : role.scope;
+
+
+    const nouveauMetadata =
+        donnees.metadata !== undefined
+            ? donnees.metadata
+            : role.metadata;
+
+
+    if (
+        !nouveauCode
+        || !nouveauNom
+    ) {
+
+        return {
+            succes: false,
+            code: "DONNEES_ROLE_INVALIDES"
+        };
+    }
+
+
+    if (
+        ![
+            "ORGANISATION",
+            "UNIT",
+            "BOTH"
+        ].includes(nouveauScope)
+    ) {
+
+        return {
+            succes: false,
+            code: "SCOPE_ROLE_INVALIDE"
+        };
+    }
+
+
+    const doublon =
+        await executerRequete(
+            `
+            SELECT
+                id
+
+            FROM organisation_roles
+
+            WHERE
+                organisation_id = $1
+                AND code = $2
+                AND id <> $3
+
+            LIMIT 1
+            `,
+            [
+                organisationId,
+                nouveauCode,
+                roleId
+            ]
+        );
+
+
+    if (doublon.rows.length > 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_CODE_EXISTANT"
+        };
+    }
+
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_roles
+
+            SET
+                code = $3,
+                nom = $4,
+                description = $5,
+                scope = $6,
+                metadata = $7::jsonb,
+                date_modification = CURRENT_TIMESTAMP
+
+            WHERE
+                id = $1
+                AND organisation_id = $2
+
+            RETURNING
+                id,
+                organisation_id,
+                code,
+                nom,
+                description,
+                scope,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                roleId,
+                organisationId,
+                nouveauCode,
+                nouveauNom,
+                nouvelleDescription,
+                nouveauScope,
+                JSON.stringify(nouveauMetadata)
+            ]
+        );
+
+
+    return {
+        succes: true,
+        role: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// DÉSACTIVER UN RÔLE
+// =========================================================
+
+async function desactiverRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    tenantCode
+) {
+
+    const roleResultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id,
+                r.code,
+                r.nom,
+                r.actif
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                r.id = $1
+                AND r.organisation_id = $2
+                AND t.code = $3
+
+            LIMIT 1
+            `,
+            [
+                roleId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (roleResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_INTROUVABLE"
+        };
+    }
+
+
+    const affectations =
+        await executerRequete(
+            `
+            SELECT
+                COUNT(*)::integer AS total
+
+            FROM relations_personne_organisation_unit
+
+            WHERE
+                role_id = $1
+                AND actif = TRUE
+            `,
+            [
+                roleId
+            ]
+        );
+
+
+    if (
+        affectations.rows[0].total > 0
+    ) {
+
+        return {
+            succes: false,
+            code: "ROLE_UTILISE_PAR_AFFECTATIONS_ACTIVES",
+            affectationsActives:
+                affectations.rows[0].total
+        };
+    }
+
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_roles
+
+            SET
+                actif = FALSE,
+                date_modification = CURRENT_TIMESTAMP
+
+            WHERE
+                id = $1
+                AND organisation_id = $2
+
+            RETURNING
+                id,
+                organisation_id,
+                code,
+                nom,
+                description,
+                scope,
+                actif,
+                metadata,
+                date_creation,
+                date_modification
+            `,
+            [
+                roleId,
+                organisationId
+            ]
+        );
+
+
+    return {
+        succes: true,
+        role: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// RÉACTIVER UN RÔLE
+// =========================================================
+
+async function reactiverRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE organisation_roles r
+
+            SET
+                actif = TRUE,
+                date_modification = CURRENT_TIMESTAMP
+
+            FROM organisations o
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                r.id = $1
+                AND r.organisation_id = $2
+                AND o.id = r.organisation_id
+                AND t.code = $3
+
+            RETURNING
+                r.id,
+                r.organisation_id,
+                r.code,
+                r.nom,
+                r.description,
+                r.scope,
+                r.actif,
+                r.metadata,
+                r.date_creation,
+                r.date_modification
+            `,
+            [
+                roleId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (resultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_INTROUVABLE"
+        };
+    }
+
+
+    return {
+        succes: true,
+        role: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// LISTER LE CATALOGUE GLOBAL DES PERMISSIONS
+// =========================================================
+
+async function listerPermissionsDatabase() {
+
+    const resultat =
+        await executerRequete(
+            `
+            SELECT
+                id,
+                code,
+                nom,
+                description,
+                actif,
+                date_creation,
+                date_modification
+
+            FROM permissions
+
+            WHERE
+                actif = TRUE
+
+            ORDER BY
+                nom ASC,
+                code ASC
+            `
+        );
+
+
+    return {
+        succes: true,
+        permissions: resultat.rows
+    };
+}
+
+
+// =========================================================
+// LISTER LES PERMISSIONS D'UN RÔLE
+// =========================================================
+
+async function listerPermissionsRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    tenantCode
+) {
+
+    const roleResultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id,
+                r.code,
+                r.nom,
+                r.scope,
+                r.actif
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                r.id = $1
+                AND r.organisation_id = $2
+                AND t.code = $3
+
+            LIMIT 1
+            `,
+            [
+                roleId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (roleResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_INTROUVABLE"
+        };
+    }
+
+
+    const permissionsResultat =
+        await executerRequete(
+            `
+            SELECT
+                rp.id AS relation_id,
+
+                p.id AS permission_id,
+                p.code,
+                p.nom,
+                p.description,
+
+                rp.actif,
+                rp.configuration,
+                rp.date_creation
+
+            FROM role_permissions rp
+
+            INNER JOIN permissions p
+                ON p.id = rp.permission_id
+
+            WHERE
+                rp.role_id = $1
+                AND rp.actif = TRUE
+                AND p.actif = TRUE
+
+            ORDER BY
+                p.nom ASC,
+                p.code ASC
+            `,
+            [
+                roleId
+            ]
+        );
+
+
+    return {
+        succes: true,
+        role: roleResultat.rows[0],
+        permissions: permissionsResultat.rows
+    };
+}
+
+
+// =========================================================
+// AJOUTER / RÉACTIVER UNE PERMISSION SUR UN RÔLE
+// =========================================================
+
+async function ajouterPermissionRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    permissionId,
+    tenantCode,
+    configuration = {}
+) {
+
+    const roleResultat =
+        await executerRequete(
+            `
+            SELECT
+                r.id
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                r.id = $1
+                AND r.organisation_id = $2
+                AND t.code = $3
+                AND r.actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                roleId,
+                organisationId,
+                tenantCode
+            ]
+        );
+
+
+    if (roleResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "ROLE_INTROUVABLE"
+        };
+    }
+
+
+    const permissionResultat =
+        await executerRequete(
+            `
+            SELECT
+                id,
+                code,
+                nom
+
+            FROM permissions
+
+            WHERE
+                id = $1
+                AND actif = TRUE
+
+            LIMIT 1
+            `,
+            [
+                permissionId
+            ]
+        );
+
+
+    if (permissionResultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "PERMISSION_INTROUVABLE"
+        };
+    }
+
+
+    const resultat =
+        await executerRequete(
+            `
+            INSERT INTO role_permissions (
+                role_id,
+                permission_id,
+                actif,
+                configuration,
+                date_creation
+            )
+
+            VALUES (
+                $1,
+                $2,
+                TRUE,
+                $3::jsonb,
+                CURRENT_TIMESTAMP
+            )
+
+            ON CONFLICT (
+                role_id,
+                permission_id
+            )
+
+            DO UPDATE SET
+                actif = TRUE,
+                configuration =
+                    EXCLUDED.configuration
+
+            RETURNING
+                id,
+                role_id,
+                permission_id,
+                actif,
+                configuration,
+                date_creation
+            `,
+            [
+                roleId,
+                permissionId,
+                JSON.stringify(configuration)
+            ]
+        );
+
+
+    return {
+        succes: true,
+        permission:
+            permissionResultat.rows[0],
+        affectation:
+            resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// MODIFIER LA CONFIGURATION D'UNE PERMISSION DE RÔLE
+// =========================================================
+
+async function modifierPermissionRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    permissionId,
+    tenantCode,
+    configuration
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE role_permissions rp
+
+            SET
+                configuration = $5::jsonb
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                rp.role_id = $2
+                AND rp.permission_id = $3
+
+                AND r.id = rp.role_id
+                AND r.organisation_id = $1
+
+                AND t.code = $4
+
+                AND r.actif = TRUE
+                AND rp.actif = TRUE
+
+            RETURNING
+                rp.id,
+                rp.role_id,
+                rp.permission_id,
+                rp.actif,
+                rp.configuration,
+                rp.date_creation
+            `,
+            [
+                organisationId,
+                roleId,
+                permissionId,
+                tenantCode,
+                JSON.stringify(configuration)
+            ]
+        );
+
+
+    if (resultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "PERMISSION_ROLE_INTROUVABLE"
+        };
+    }
+
+
+    return {
+        succes: true,
+        affectation: resultat.rows[0]
+    };
+}
+
+
+// =========================================================
+// RETIRER / DÉSACTIVER UNE PERMISSION D'UN RÔLE
+// =========================================================
+
+async function desactiverPermissionRoleOrganisationDatabase(
+    organisationId,
+    roleId,
+    permissionId,
+    tenantCode
+) {
+
+    const resultat =
+        await executerRequete(
+            `
+            UPDATE role_permissions rp
+
+            SET
+                actif = FALSE
+
+            FROM organisation_roles r
+
+            INNER JOIN organisations o
+                ON o.id = r.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                rp.role_id = $2
+                AND rp.permission_id = $3
+
+                AND r.id = rp.role_id
+                AND r.organisation_id = $1
+
+                AND t.code = $4
+
+                AND rp.actif = TRUE
+
+            RETURNING
+                rp.id,
+                rp.role_id,
+                rp.permission_id,
+                rp.actif,
+                rp.configuration,
+                rp.date_creation
+            `,
+            [
+                organisationId,
+                roleId,
+                permissionId,
+                tenantCode
+            ]
+        );
+
+
+    if (resultat.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "PERMISSION_ROLE_INTROUVABLE"
+        };
+    }
+
+
+    return {
+        succes: true,
+        affectation: resultat.rows[0]
+    };
+}
+// =========================================================
 // ÉCOSYSTÈME D'UNE ORGANISATION
 // =========================================================
 //
@@ -7678,6 +8714,18 @@ module.exports = {
     activerCapabilityOrganisationUnitDatabase,
     modifierCapabilityOrganisationUnitDatabase,
     desactiverCapabilityOrganisationUnitDatabase,
+
+    // Administration générique des rôles et permissions
+    listerRolesOrganisationDatabase,
+    creerRoleOrganisationDatabase,
+    modifierRoleOrganisationDatabase,
+    desactiverRoleOrganisationDatabase,
+    reactiverRoleOrganisationDatabase,
+    listerPermissionsDatabase,
+    listerPermissionsRoleOrganisationDatabase,
+    ajouterPermissionRoleOrganisationDatabase,
+    modifierPermissionRoleOrganisationDatabase,
+    desactiverPermissionRoleOrganisationDatabase,
 
     // Réseau / écosystème
     obtenirEcosystemeOrganisationDatabase
