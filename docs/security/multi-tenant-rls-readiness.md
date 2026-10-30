@@ -23,11 +23,13 @@ The seven review findings concern partner/target references in `introductions`, 
 - automatic routing in `executerRequete()`: inside an active transaction, existing database service functions reuse the pinned client; outside one, the historical `pool.query()` behavior remains;
 - explicit context types `USER` and `SYSTEM`;
 - mandatory positive `personneId` for `USER`, and mandatory named `service` for `SYSTEM`;
-- rejection of nested transactions that could silently replace the active security context.
+- rejection of nested `executerTransactionDatabase()` calls that could silently replace the active security context.
 
 The PostgreSQL settings use `set_config(..., TRUE)`, equivalent to transaction-local settings. Tenant/person/service values are reset by PostgreSQL at commit or rollback. The application context is marked inactive before the client is released.
 
-The test `scripts/database-context-test.js` verifies concurrent tenant contexts, pinned backend connections, context isolation, post-commit cleanup, rollback, missing identity and nested-transaction rejection. CI runs it against the disposable PostgreSQL 16 database.
+The four legacy service functions that use `obtenirClientDatabase()` and their own `BEGIN/COMMIT/ROLLBACK` are now handled through nested PostgreSQL savepoints when called inside an authenticated request transaction. This keeps their queries on the same pinned connection and prevents a nested service `COMMIT` from committing the outer HTTP transaction.
+
+The test `scripts/database-context-test.js` verifies concurrent tenant contexts, pinned backend connections, context isolation, post-commit cleanup, rollback, tenant-context updates, nested savepoint rollback/commit, explicit system context, missing identity and nested-transaction rejection. CI runs it against the disposable PostgreSQL 16 database.
 
 ## 3. Authenticated HTTP context propagation — second increment implemented
 
@@ -43,7 +45,7 @@ The middleware keeps the transaction open for the protected HTTP handler and int
 - transaction/commit failures do not return a successful response;
 - existing `executerRequete()` calls in the request reuse the pinned transaction client.
 
-The resolved tenant is applied with transaction-local `set_config(..., TRUE)`. The two-tenant integration test now checks valid tenant resolution, rejection of cross-tenant context selection, and the authenticated HTTP isolation cases.
+The resolved tenant is applied with transaction-local `set_config(..., TRUE)`. The two-tenant integration test checks valid tenant resolution, rejection of cross-tenant context selection, and authenticated HTTP isolation cases.
 
 **Remaining boundary:** authenticated routes with no tenant/organisation/demand selector receive a person context but no tenant context. Global identity/catalogue endpoints can use that context; tenant-owned access must not rely on a browser-supplied identifier or an implicit tenant fallback.
 

@@ -27,10 +27,10 @@ function lireIdPositif(valeur) {
 
 function extraireSelecteursRequete(req) {
     const tenantBrut = premiereValeur(
-        req.query?.tenant,
-        req.query?.tenantCode,
         req.body?.tenantCode,
         req.body?.tenant,
+        req.query?.tenant,
+        req.query?.tenantCode,
         req.params?.tenantCode
     );
 

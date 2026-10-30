@@ -16,6 +16,7 @@ const pool = new Pool({
 // Le contexte suit uniquement la chaine asynchrone de la transaction.
 // Il n'est jamais stocke dans une variable globale partagee entre requetes.
 const contexteDatabaseAsync = new AsyncLocalStorage();
+let sequenceSavepoint = 0;
 
 function entierPositifOuNull(valeur, nom) {
     if (valeur === undefined || valeur === null || valeur === "") {
@@ -113,6 +114,7 @@ async function executerTransactionDatabase(contexteEntree, callback) {
     const client = await pool.connect();
     let transactionOuverte = false;
     let contexteActif = null;
+    let erreurRollback = null;
 
     try {
         await client.query("BEGIN");
@@ -156,10 +158,11 @@ async function executerTransactionDatabase(contexteEntree, callback) {
         return resultat;
     } catch (erreur) {
         if (transactionOuverte) {
-            await client.query("ROLLBACK").catch(erreurRollback => {
+            await client.query("ROLLBACK").catch(erreurErreurRollback => {
+                erreurRollback = erreurErreurRollback;
                 console.error(
                     "Erreur rollback transaction SATEER :",
-                    erreurRollback
+                    erreurErreurRollback
                 );
             });
         }
@@ -168,32 +171,34 @@ async function executerTransactionDatabase(contexteEntree, callback) {
         if (contexteActif) {
             contexteActif.actif = false;
         }
-        client.release();
+        // Un rollback impossible invalide la connexion au lieu de la remettre
+        // dans le pool dans un etat transactionnel inconnu.
+        client.release(erreurRollback || undefined);
     }
 }
 
 
 // Met a jour le tenant uniquement apres resolution et verification
- // de l'appartenance dans la transaction courante.
- async function definirTenantContexteDatabaseCourant(tenantId) {
-     const actif = contexteDatabaseAsync.getStore();
-     if (!actif || !actif.actif) {
-         throw new Error("CONTEXTE_DATABASE_TRANSACTION_REQUIS");
-     }
+// de l'appartenance dans la transaction courante.
+async function definirTenantContexteDatabaseCourant(tenantId) {
+    const actif = contexteDatabaseAsync.getStore();
+    if (!actif || !actif.actif) {
+        throw new Error("CONTEXTE_DATABASE_TRANSACTION_REQUIS");
+    }
 
-     const tenantNormalise = entierPositifOuNull(tenantId, "tenant_id");
-     await actif.client.query(
-         "SELECT set_config('sateer.tenant_id', $1, TRUE)",
-         [tenantNormalise === null ? "" : String(tenantNormalise)]
-     );
+    const tenantNormalise = entierPositifOuNull(tenantId, "tenant_id");
+    await actif.client.query(
+        "SELECT set_config('sateer.tenant_id', $1, TRUE)",
+        [tenantNormalise === null ? "" : String(tenantNormalise)]
+    );
 
-     actif.contexte = Object.freeze({
-         ...actif.contexte,
-         tenantId: tenantNormalise
-     });
+    actif.contexte = Object.freeze({
+        ...actif.contexte,
+        tenantId: tenantNormalise
+    });
 
-     return tenantNormalise;
- }
+    return tenantNormalise;
+}
 
 
 // =========================================================
@@ -214,8 +219,86 @@ function obtenirContexteDatabaseCourant() {
 // CLIENT TRANSACTIONNEL BAS NIVEAU — COMPATIBILITE
 // =========================================================
 
+// Les anciennes fonctions metier ouvrent parfois leur propre transaction
+// avec obtenirClientDatabase(). Dans une requete deja transactionnelle,
+// on leur fournit un client compatible qui traduit BEGIN/COMMIT/ROLLBACK
+// en SAVEPOINT/RELEASE/ROLLBACK TO SAVEPOINT sur le client epingle.
 async function obtenirClientDatabase() {
-    return pool.connect();
+    const actif = contexteDatabaseAsync.getStore();
+
+    if (!actif) {
+        return pool.connect();
+    }
+
+    if (!actif.actif) {
+        throw new Error("CONTEXTE_DATABASE_TRANSACTION_TERMINE");
+    }
+
+    const savepoint = "sateer_nested_" + (++sequenceSavepoint);
+    await actif.client.query("SAVEPOINT " + savepoint);
+
+    let etat = "ACTIVE";
+    let beginRecu = false;
+
+    return {
+        async query(requete, valeurs = []) {
+            if (etat !== "ACTIVE") {
+                throw new Error("SAVEPOINT_DATABASE_TERMINE");
+            }
+
+            const texte = typeof requete === "string"
+                ? requete
+                : requete && typeof requete.text === "string"
+                    ? requete.text
+                    : "";
+            const commande = texte.trim().replace(/;+$/, "").trim().toUpperCase();
+
+            if (commande === "BEGIN" || commande === "BEGIN TRANSACTION") {
+                if (beginRecu) {
+                    throw new Error("SAVEPOINT_DATABASE_DEJA_DEMARRE");
+                }
+                beginRecu = true;
+                return { command: "BEGIN", rowCount: 0, rows: [] };
+            }
+
+            if (
+                commande === "COMMIT"
+                || commande === "COMMIT TRANSACTION"
+                || commande === "END"
+            ) {
+                const resultat = await actif.client.query(
+                    "RELEASE SAVEPOINT " + savepoint
+                );
+                etat = "COMMITTED";
+                return resultat;
+            }
+
+            if (commande === "ROLLBACK" || commande === "ROLLBACK TRANSACTION") {
+                await actif.client.query(
+                    "ROLLBACK TO SAVEPOINT " + savepoint
+                );
+                const resultat = await actif.client.query(
+                    "RELEASE SAVEPOINT " + savepoint
+                );
+                etat = "ROLLED_BACK";
+                return resultat;
+            }
+
+            return actif.client.query(requete, valeurs);
+        },
+
+        async release() {
+            if (etat !== "ACTIVE") return;
+
+            await actif.client.query(
+                "ROLLBACK TO SAVEPOINT " + savepoint
+            );
+            await actif.client.query(
+                "RELEASE SAVEPOINT " + savepoint
+            );
+            etat = "ROLLED_BACK";
+        }
+    };
 }
 
 

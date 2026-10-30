@@ -11,6 +11,8 @@ const {
     executerRequete,
     executerTransactionDatabase,
     obtenirContexteDatabaseCourant,
+    definirTenantContexteDatabaseCourant,
+    obtenirClientDatabase,
     fermerDatabase
 } = require("../database");
 
@@ -106,6 +108,96 @@ async function testerConcurrenceSansFuite() {
     );
 }
 
+
+async function testerMiseAJourTenant() {
+    await executerTransactionDatabase(
+        { type: "USER", personneId: 2501 },
+        async () => {
+            const tenantId = await definirTenantContexteDatabaseCourant(1501);
+            check(tenantId === 1501,
+                "Le tenant est défini après résolution dans la transaction");
+
+            const resultat = await executerRequete(
+                "SELECT current_setting('sateer.tenant_id', TRUE) AS tenant_id"
+            );
+            check(resultat.rows[0].tenant_id === "1501",
+                "Le paramètre PostgreSQL tenant_id suit le contexte applicatif");
+
+            const contexte = obtenirContexteDatabaseCourant();
+            check(contexte.tenantId === 1501,
+                "Le contexte applicatif reflète le tenant validé");
+
+            await definirTenantContexteDatabaseCourant(null);
+            const contexteEfface = obtenirContexteDatabaseCourant();
+            check(contexteEfface.tenantId === null,
+                "Un contexte tenant peut être explicitement vidé");
+        }
+    );
+}
+
+async function testerSavepointsImbriques() {
+    await executerTransactionDatabase(
+        { type: "USER", tenantId: 1601, personneId: 2601 },
+        async () => {
+            const client = await obtenirClientDatabase();
+            try {
+                await client.query("BEGIN");
+                await client.query(
+                    "SELECT set_config('sateer.tenant_id', '9999', TRUE)"
+                );
+                await client.query("ROLLBACK");
+            } finally {
+                await client.release();
+            }
+
+            const apresRollback = await executerRequete(
+                "SELECT current_setting('sateer.tenant_id', TRUE) AS tenant_id"
+            );
+            check(apresRollback.rows[0].tenant_id === "1601",
+                "Le rollback d'une transaction métier imbriquée restaure le contexte parent");
+
+            const clientCommit = await obtenirClientDatabase();
+            try {
+                await clientCommit.query("BEGIN");
+                await clientCommit.query(
+                    "SELECT set_config('sateer.tenant_id', '1701', TRUE)"
+                );
+                await clientCommit.query("COMMIT");
+            } finally {
+                await clientCommit.release();
+            }
+
+            const apresCommit = await executerRequete(
+                "SELECT current_setting('sateer.tenant_id', TRUE) AS tenant_id"
+            );
+            check(apresCommit.rows[0].tenant_id === "1701",
+                "Le COMMIT imbriqué libère le savepoint sans terminer la transaction HTTP");
+        }
+    );
+}
+
+async function testerContexteSysteme() {
+    await executerTransactionDatabase(
+        { type: "SYSTEM", service: "database-context-test" },
+        async () => {
+            const resultat = await executerRequete(
+                `
+                SELECT
+                    current_setting('sateer.context_type', TRUE) AS context_type,
+                    current_setting('sateer.service', TRUE) AS service,
+                    current_setting('sateer.personne_id', TRUE) AS personne_id
+                `
+            );
+            check(resultat.rows[0].context_type === "SYSTEM",
+                "Le contexte système explicite est accepté");
+            check(resultat.rows[0].service === "database-context-test",
+                "L'identité du service système est propagée à PostgreSQL");
+            check(resultat.rows[0].personne_id === "",
+                "Un contexte système ne simule pas une personne");
+        }
+    );
+}
+
 async function testerRollbackEtErreurs() {
     let erreurAttendue = false;
 
@@ -185,6 +277,9 @@ async function main() {
 
     await testerValidationContexte();
     await testerConcurrenceSansFuite();
+    await testerMiseAJourTenant();
+    await testerSavepointsImbriques();
+    await testerContexteSysteme();
     await testerRollbackEtErreurs();
 
     console.log("\nSUCCES - contexte transactionnel PostgreSQL et isolation asynchrone vérifiés.");
