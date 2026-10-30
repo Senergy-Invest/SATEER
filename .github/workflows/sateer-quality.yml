@@ -81,6 +81,8 @@ jobs:
         run: npm run audit:complete
       - name: Run SQL tenant-boundary constraint tests
         run: npm run test:constraints
+      - name: Run transaction-scoped database context tests
+        run: npm run test:db-context
       - name: Run HTTP integration test
         run: npm run test:integration
       - name: Run multi-tenant isolation test

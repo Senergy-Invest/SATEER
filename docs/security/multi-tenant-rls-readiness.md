@@ -16,12 +16,9 @@ The seven review findings concern partner/target references in `introductions`, 
 
 ## 2. Critical implementation blocker
 
-The current `database.js` exposes:
+Before this increment, `database.js` exposed `executerRequete()` through `pool.query()` only. That meant separate queries could use different pooled connections and could not share a transaction-local tenant context.
 
-- `executerRequete()`, implemented with `pool.query()`;
-- `obtenirClientDatabase()`, which returns a pooled PostgreSQL client.
-
-There is no request-scoped transaction wrapper that establishes tenant/person context with transaction-local PostgreSQL settings. Enabling RLS now would be unsafe:
+Enabling RLS before fixing this would be unsafe:
 
 - `SET LOCAL` values disappear at transaction end;
 - session-level `SET` on a pooled connection can leak one request's context into another request;
@@ -29,21 +26,37 @@ There is no request-scoped transaction wrapper that establishes tenant/person co
 - background jobs and public/system workflows need explicit service contexts;
 - global identity tables (`personnes`, `auth_accounts`, `auth_sessions`) cannot be treated as ordinary tenant-owned tables.
 
-**Therefore migration 027 must not enable RLS, and no RLS policy should be added until the request database-access layer is refactored.**
+**Migration 027 does not enable RLS. No RLS policy should be added until request-level context propagation and membership validation are implemented.**
 
-## 3. Required architecture before RLS
+## 3. Transaction-scoped database context — first increment implemented
 
-1. Add a transaction helper, e.g. `withTenantTransaction(context, callback)`, that obtains one client, begins a transaction, validates the authenticated context, uses `set_config('sateer.tenant_id', ..., true)` and `set_config('sateer.personne_id', ..., true)`, executes all queries through that same client, then commits or rolls back and releases it.
-2. Derive tenant and person identifiers exclusively from the authenticated server-side session and verified organisation memberships. Never trust a tenant/person identifier supplied by the browser.
-3. Migrate request-path database functions from implicit `pool.query()` calls to the transaction client. Do not mix transactional and pool-level queries within one protected request.
-4. Define explicit context classes for normal user requests, public intake, background jobs, scheduled jobs and controlled cross-tenant integrations. A system context must be narrow, authenticated, logged and never silently bypass tenant checks.
-5. Classify every table as tenant-owned, organisation-owned, inherited through a validated parent, global identity, global catalogue or intentional cross-tenant relationship.
-6. Add RLS policies with default-deny semantics. For organisation-owned rows, verify the organisation belongs to the current tenant. For inherited rows, use a safe parent-existence policy or denormalize a validated tenant key.
-7. Treat global identity separately: authenticate globally, then expose only the minimum identity data needed for the current tenant and its verified relationships.
-8. Add tests for missing context, forged context, pooled-connection reuse, rollback, parallel tenants, background/system contexts, intentional partner links and every table policy.
-9. Enable RLS in stages, first on a small low-risk table, then expand after CI and restored-copy validation.
+`database.js` now provides:
 
-## 4. Non-negotiable safety rules
+- `executerTransactionDatabase(context, callback)`: acquires one pooled client, starts a transaction, sets transaction-local context and commits or rolls back;
+- `AsyncLocalStorage`: isolates the active client/context per asynchronous call chain;
+- automatic routing in `executerRequete()`: inside an active transaction, existing database service functions reuse the pinned client; outside one, the historical `pool.query()` behavior remains;
+- explicit context types `USER` and `SYSTEM`;
+- mandatory positive `personneId` for `USER`, and mandatory named `service` for `SYSTEM`;
+- rejection of nested transactions that could silently replace the active security context.
+
+The PostgreSQL settings are applied with `set_config(..., TRUE)`, equivalent to transaction-local settings. Tenant/person/service values are reset by PostgreSQL at commit or rollback. The application context is also marked inactive and discarded before the client is released.
+
+**Important boundary:** this helper validates the shape of a server-created context; it does not prove that a person belongs to a tenant. The caller must derive `tenantId` from the authenticated session and a verified membership query. Do not pass raw browser-supplied identifiers as a trusted context.
+
+The new test `scripts/database-context-test.js` checks concurrent tenant contexts, pinned backend connections, context isolation, post-commit cleanup, rollback, missing identity and nested-transaction rejection. CI runs it against the disposable PostgreSQL 16 database.
+
+## 4. Required architecture before RLS
+
+1. Integrate the transaction helper into authenticated HTTP request handling. Derive the person from the verified session and derive tenant context only after checking the person's active organisation membership. The browser may select a tenant/organisation but cannot establish trusted identity or access.
+2. Ensure every query in a protected request uses the same transaction client. Do not mix transactional and pool-level queries within one request.
+3. Define explicit context classes for normal user requests, public intake, background jobs, scheduled jobs and controlled cross-tenant integrations. A system context must be narrow, authenticated, logged and never silently bypass tenant checks.
+4. Classify every table as tenant-owned, organisation-owned, inherited through a validated parent, global identity, global catalogue or intentional cross-tenant relationship.
+5. Add RLS policies with default-deny semantics. For organisation-owned rows, verify the organisation belongs to the current tenant. For inherited rows, use a safe parent-existence policy or denormalize a validated tenant key.
+6. Treat global identity separately: authenticate globally, then expose only the minimum identity data needed for the current tenant and its verified relationships.
+7. Add tests for missing context, forged context, pooled-connection reuse, rollback, parallel tenants, background/system contexts, intentional partner links and every table policy.
+8. Enable RLS in stages, first on a small low-risk table, then expand after CI and restored-copy validation.
+
+## 5. Non-negotiable safety rules
 
 - Never use session-level tenant settings on pooled connections.
 - Never infer tenant identity from URL/query/body parameters.
@@ -52,6 +65,6 @@ There is no request-scoped transaction wrapper that establishes tenant/person co
 - Preserve legitimate partner and organisation-network links through explicit authorization checks.
 - Do not run migration 027 against the working/local or production database until a verified backup/restore rehearsal and data preflight have passed.
 
-## 5. Next implementation increment
+## 6. Next implementation increment
 
-Implement and test the transaction-scoped database context layer first, without enabling RLS. Add an automated static check that rejects new request-path calls to the global pool where a tenant-scoped transaction is required. Only then design and apply the first RLS policies.
+Add a request-scoped authenticated middleware that resolves the tenant from verified person–organisation membership, keeps the transaction open for the complete HTTP handler, and commits/rolls back before the response is finalized. Then migrate special public/system workflows to explicit contexts and add end-to-end tests before designing the first RLS policies.
