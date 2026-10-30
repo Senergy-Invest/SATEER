@@ -100,7 +100,7 @@ async function executerRequete(texte, valeurs = []) {
 // TRANSACTION AVEC CONTEXTE LOCAL POSTGRESQL
 // =========================================================
 
-async function executerTransactionDatabase(contexte, callback) {
+async function executerTransactionDatabase(contexteEntree, callback) {
     if (typeof callback !== "function") {
         throw new TypeError("CALLBACK_TRANSACTION_DATABASE_REQUISE");
     }
@@ -109,7 +109,7 @@ async function executerTransactionDatabase(contexte, callback) {
         throw new Error("TRANSACTION_DATABASE_IMBRIQUEE_INTERDITE");
     }
 
-    const contexte = normaliserContexteDatabase(contexte);
+    const contexteNormalise = normaliserContexteDatabase(contexteEntree);
     const client = await pool.connect();
     let transactionOuverte = false;
     let contexteActif = null;
@@ -131,17 +131,17 @@ async function executerTransactionDatabase(contexte, callback) {
                 set_config('sateer.request_id', $5, TRUE)
             `,
             [
-                contexte.type,
-                contexte.tenantId === null ? "" : String(contexte.tenantId),
-                contexte.personneId === null ? "" : String(contexte.personneId),
-                contexte.service || "",
-                contexte.requestId
+                contexteNormalise.type,
+                contexteNormalise.tenantId === null ? "" : String(contexteNormalise.tenantId),
+                contexteNormalise.personneId === null ? "" : String(contexteNormalise.personneId),
+                contexteNormalise.service || "",
+                contexteNormalise.requestId
             ]
         );
 
         contexteActif = {
             client,
-            contexte,
+            contexte: contexteNormalise,
             actif: true
         };
 
