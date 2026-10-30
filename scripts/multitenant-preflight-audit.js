@@ -14,6 +14,7 @@ const { obtenirClientDatabase, fermerDatabase } = require("../database");
 const EXPECTED_DB = "sateer_test";
 const OUT = path.join(process.cwd(), "AUDIT");
 const GLOBAL_IDENTITY = new Set(["personnes", "auth_accounts", "auth_sessions"]);
+const TENANT_REGISTRY = new Set(["tenants"]);
 const GLOBAL_CATALOG = new Set(["countries", "territories", "capabilities", "permissions", "metric_definitions", "experiences"]);
 const SENSITIVE = /(email|mail|telephone|phone|adresse|address|nom|prenom|name|message|contenu|content|document|fichier|file|token|jeton|empreinte|hash|secret|password|mot_de_passe|identifiant|identity|passeport|passport|piece|numero|number|date_naissance|birth)/i;
 
@@ -117,6 +118,8 @@ async function main() {
             let scope, reason;
             if (GLOBAL_IDENTITY.has(table.name)) {
                 scope = "GLOBAL_IDENTITY"; reason = "identité/authentification canonique";
+            } else if (TENANT_REGISTRY.has(table.name)) {
+                scope = "TENANT_REGISTRY"; reason = "registre central des espaces tenant";
             } else if (GLOBAL_CATALOG.has(table.name)) {
                 scope = "GLOBAL_CATALOG"; reason = "référentiel partagé explicite";
             } else if (names.has("tenant_id") || names.has("tenant_code")) {
@@ -185,6 +188,34 @@ async function main() {
             "Contrôler les données puis ajouter une garantie composite ou un trigger adapté."
         );
 
+        // Tenant-scoped parent references must carry tenant_id in the same FK pair.
+        // Network tables may intentionally cross tenant boundaries; those remain REVIEW.
+        const crossTenantReviewTables = new Set([
+            "organisation_relationships", "organisation_invitations", "organisation_join_requests",
+            "partner_agreements", "introductions", "leads", "commissions"
+        ]);
+        const tenantFkGaps = fks.filter(fk => {
+            const childNames = new Set((byTable.get(fk.child) || []).map(c => c.column_name));
+            const parentNames = new Set((byTable.get(fk.parent) || []).map(c => c.column_name));
+            if (!childNames.has("tenant_id") || !parentNames.has("tenant_id")) return false;
+            const childIndex = fk.child_columns.indexOf("tenant_id");
+            const parentIndex = fk.parent_columns.indexOf("tenant_id");
+            return childIndex < 0 || parentIndex < 0 || childIndex !== parentIndex;
+        });
+        const tenantGapsByChild = new Map();
+        for (const fk of tenantFkGaps) {
+            if (!tenantGapsByChild.has(fk.child)) tenantGapsByChild.set(fk.child, []);
+            tenantGapsByChild.get(fk.child).push(fk);
+        }
+        for (const [child, gaps] of tenantGapsByChild) {
+            const severity = crossTenantReviewTables.has(child) ? "REVIEW" : "HIGH";
+            addStructural(
+                "TENANT_SCOPED_FK_GAPS:" + child, severity, child,
+                "Références vers des tables tenant-scoped sans paire tenant_id → tenant_id : " + gaps.map(fk => fk.name).join(", ") + ".",
+                "Vérifier les cas inter-tenant autorisés, puis ajouter des clés composites (tenant_id, id) et des FK composites pour les références qui doivent rester dans le même tenant."
+            );
+        }
+
         const checks = [], dataFindings = [];
         async function countCheck(key,severity,description,sql,required) {
             if (required.some(name=>!tableNames.has(name))) {
@@ -214,6 +245,21 @@ async function main() {
             await countCheck("ORGANISATION_WITHOUT_TENANT:"+name,"HIGH",
                 name+" : organisation renseignée mais tenant_id NULL.",
                 "SELECT COUNT(*)::bigint AS count FROM "+table+" WHERE organisation_id IS NOT NULL AND tenant_id IS NULL",[name]);
+        }
+
+        // Verify actual tenant mismatches for every FK gap. Only aggregate counts are returned.
+        for (const fk of tenantFkGaps) {
+            const join = fk.child_columns.map((column, index) =>
+                "c." + quote(column) + " = p." + quote(fk.parent_columns[index])
+            ).join(" AND ");
+            const severity = crossTenantReviewTables.has(fk.child) ? "REVIEW" : "HIGH";
+            await countCheck(
+                "TENANT_FK_MISMATCH:" + fk.child + ":" + fk.name, severity,
+                fk.child + "." + fk.name + " : référence vers une ligne d'un autre tenant.",
+                "SELECT COUNT(*)::bigint AS count FROM " + quote(fk.child) + " c JOIN " + quote(fk.parent) + " p ON " + join +
+                " WHERE c.tenant_id IS DISTINCT FROM p.tenant_id",
+                [fk.child, fk.parent]
+            );
         }
 
         await countCheck("UNIT_PARENT_CROSS_ORGANISATION","CRITICAL","Unités dont le parent appartient à une autre organisation.",
@@ -254,6 +300,7 @@ async function main() {
             direct_tenant:inventory.filter(t=>t.scope==="DIRECT_TENANT").length,
             direct_organisation:inventory.filter(t=>t.scope==="DIRECT_ORGANISATION").length,
             inherited_reference:inventory.filter(t=>t.scope==="INHERITED_REFERENCE").length,
+            tenant_registry:inventory.filter(t=>t.scope==="TENANT_REGISTRY").length,
             global_identity:inventory.filter(t=>t.scope==="GLOBAL_IDENTITY").length,
             global_catalog:inventory.filter(t=>t.scope==="GLOBAL_CATALOG").length,
             unclassified_review:inventory.filter(t=>t.scope==="UNCLASSIFIED_REVIEW").length,
@@ -262,7 +309,7 @@ async function main() {
             rls_enabled_tables:inventory.filter(t=>t.rls_enabled).length,
             rls_forced_tables:inventory.filter(t=>t.rls_forced).length,
             rls_policies:policies.length,triggers:triggers.length,
-            structural_findings:structural.length,data_checks:checks.length,
+            structural_findings:structural.length,tenant_scoped_fk_gaps:tenantFkGaps.length,data_checks:checks.length,
             data_anomalies:dataFindings.length,
             critical_data_anomalies:dataFindings.filter(x=>x.severity==="CRITICAL").length,
             high_data_anomalies:dataFindings.filter(x=>x.severity==="HIGH").length
@@ -309,6 +356,7 @@ async function main() {
     for (const c of report.data_checks) md.push("| "+c.key+" | "+c.severity+" | "+c.status+" | "+(c.count===null?"—":c.count)+" |");
     md.push("","## Interprétation","");
     md.push("- GLOBAL_IDENTITY : identité et authentification canoniques, non dupliquées par institution.");
+    md.push("- TENANT_REGISTRY : registre central qui définit les espaces tenant ; il ne doit pas être confondu avec les données d’un tenant.");
     md.push("- GLOBAL_CATALOG : référentiels partagés ; leur portée reste un choix métier explicite.");
     md.push("- DIRECT_TENANT / DIRECT_ORGANISATION : rattachement structurel, sans preuve d'autorisation.");
     md.push("- INHERITED_REFERENCE : chemin de FK vers une table rattachée ; cela ne prouve pas l'isolation des requêtes.");

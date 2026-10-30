@@ -16,9 +16,9 @@ const EXPECTED_DATABASE = "sateer_test";
 const OUT = path.join(process.cwd(), "AUDIT");
 const GLOBAL = new Set([
     "tenants", "countries", "territories", "capabilities", "permissions",
-    "metric_definitions", "language_configurations"
+    "metric_definitions", "language_configurations", "personnes", "auth_accounts", "auth_sessions", "experiences"
 ]);
-const SENSITIVE = /(email|mail|telephone|phone|adresse|address|nom|prenom|name|message|contenu|content|document|fichier|file|token|secret|password|mot_de_passe|identifiant|identity|passeport|passport|piece|numero|number|date_naissance|birth)/i;
+const SENSITIVE = /(email|mail|telephone|phone|adresse|address|nom|prenom|name|message|contenu|content|document|fichier|file|token|jeton|empreinte|hash|secret|password|mot_de_passe|identifiant|identity|passeport|passport|piece|numero|number|date_naissance|birth)/i;
 
 function scopeOf(table, columns, inherited) {
     const names = new Set(columns.map(c => c.column_name));
