@@ -285,7 +285,7 @@ async function main() {
             const join = fk.child_columns.map((column, index) =>
                 "c." + quote(column) + " = p." + quote(fk.parent_columns[index])
             ).join(" AND ");
-            const severity = crossTenantReviewTables.has(fk.child) ? "REVIEW" : "HIGH";
+            const severity = intentionalCrossTenantOrGlobalFks.has(fk.name) ? "REVIEW" : "HIGH";
             await countCheck(
                 "TENANT_FK_MISMATCH:" + fk.child + ":" + fk.name, severity,
                 fk.child + "." + fk.name + " : référence vers une ligne d'un autre tenant.",
