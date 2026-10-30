@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Dashboard stratégique - SATEER</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .strategic-note { margin-top: 1rem; padding: 1rem; border-radius: 12px; background: rgba(80, 110, 150, .08); }
+        .strategic-bars { display: grid; gap: .8rem; }
+        .strategic-bar-row { display: grid; grid-template-columns: minmax(90px, 120px) 1fr auto; gap: .75rem; align-items: center; }
+        .strategic-bar-label, .strategic-bar-value { font-size: .9rem; }
+        .strategic-bar-track { height: 10px; background: rgba(120, 130, 145, .18); border-radius: 999px; overflow: hidden; }
+        .strategic-bar-fill { height: 100%; border-radius: inherit; background: #466b9b; min-width: 2px; }
+        .strategic-secondary-fill { background: #76a18c; }
+        .strategic-access { margin-top: 1.5rem; }
+        @media (max-width: 600px) { .strategic-bar-row { grid-template-columns: 1fr auto; } .strategic-bar-track { grid-column: 1 / -1; grid-row: 2; } }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <div class="hero-content">
+            <p class="eyebrow">SATEER • PILOTAGE INSTITUTIONNEL</p>
+            <h1>Dashboard stratégique</h1>
+            <p id="organisationNom">Chargement du Consulat...</p>
+            <p class="muted">Vue de pilotage du Chef de mission</p>
+        </div>
+    </section>
+
+    <section class="section" id="dashboardErreur" hidden>
+        <article class="panel">
+            <h2>Dashboard indisponible</h2>
+            <p id="dashboardErreurMessage" role="alert">Impossible de charger les indicateurs.</p>
+            <a class="button button-secondary" href="/consulat.html">Retour à Mon Consulat</a>
+        </article>
+    </section>
+
+    <div id="dashboardContenu" hidden>
+        <section class="section">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">SYNTHÈSE INSTITUTIONNELLE</p>
+                    <h2>Résultats et activité du Consulat</h2>
+                    <p class="muted">Indicateurs agrégés pour suivre la situation générale et les résultats de l'action consulaire.</p>
+                </div>
+            </div>
+            <div class="dashboard-kpis">
+                <article class="dashboard-kpi"><span>Demandes reçues</span><strong id="kpiDemandesTotal">—</strong></article>
+                <article class="dashboard-kpi"><span>Taux de traitement</span><strong id="kpiTauxTraitement">—</strong></article>
+                <article class="dashboard-kpi"><span>Délai moyen</span><strong id="kpiDelaiMoyen">—</strong></article>
+                <article class="dashboard-kpi"><span>Dossiers urgents ouverts</span><strong id="kpiUrgentes">—</strong></article>
+                <article class="dashboard-kpi"><span>Usagers liés</span><strong id="kpiUsagers">—</strong></article>
+                <article class="dashboard-kpi"><span>Territoires couverts</span><strong id="kpiTerritoires">—</strong></article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="dashboard-columns">
+                <article class="panel">
+                    <div class="compact-panel-header">
+                        <div><p class="eyebrow">ÉVOLUTION</p><h3>Demandes reçues et clôturées</h3><p class="muted">Six derniers mois calendaires</p></div>
+                    </div>
+                    <div id="evolutionMensuelle" class="strategic-bars"></div>
+                </article>
+                <article class="panel">
+                    <div class="compact-panel-header">
+                        <div><p class="eyebrow">POINTS D'ATTENTION</p><h3>Situation des dossiers</h3></div>
+                    </div>
+                    <div class="list">
+                        <div class="dashboard-list-item"><span>Dossiers nouveaux</span><strong id="kpiNouvelles">—</strong></div>
+                        <div class="dashboard-list-item"><span>Dossiers en cours</span><strong id="kpiEnCours">—</strong></div>
+                        <div class="dashboard-list-item"><span>Dossiers traités</span><strong id="kpiTraites">—</strong></div>
+                        <div class="dashboard-list-item"><span>Dossiers importants ouverts</span><strong id="kpiImportantes">—</strong></div>
+                    </div>
+                    <div class="strategic-note"><strong>Lecture institutionnelle</strong><p class="muted">Ces indicateurs donnent une vue consolidée. Le détail des dossiers et leur traitement restent dans le dashboard opérationnel.</p></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="dashboard-columns">
+                <article class="panel">
+                    <div class="compact-panel-header"><div><p class="eyebrow">BESOINS</p><h3>Demandes par catégorie</h3></div></div>
+                    <div id="categoriesDemandes" class="list"></div>
+                </article>
+                <article class="panel">
+                    <div class="compact-panel-header"><div><p class="eyebrow">RAYONNEMENT</p><h3>Couverture territoriale</h3><p class="muted">Répartition des usagers connus</p></div></div>
+                    <div id="couvertureTerritoriale" class="list"></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <article class="panel">
+                <div class="compact-panel-header"><div><p class="eyebrow">COMMUNICATION INSTITUTIONNELLE</p><h3>Publications et diffusion</h3></div></div>
+                <div class="dashboard-kpis">
+                    <article class="dashboard-kpi"><span>Publications</span><strong id="kpiPublications">—</strong></article>
+                    <article class="dashboard-kpi"><span>Publiées</span><strong id="kpiPublicationsPubliees">—</strong></article>
+                    <article class="dashboard-kpi"><span>Soumises à la diaspora</span><strong id="kpiPublicationsSoumises">—</strong></article>
+                    <article class="dashboard-kpi"><span>Diffusées à la diaspora</span><strong id="kpiPublicationsDiffusees">—</strong></article>
+                </div>
+            </article>
+        </section>
+
+        <section class="section strategic-access" id="accesOperationnelSection" hidden>
+            <a class="button button-secondary" id="accesOperationnelLien" href="/dashboard-vice-consul.html">Consulter le dashboard opérationnel</a>
+            <p class="muted">Accès accordé en consultation selon les permissions de l'organisation.</p>
+        </section>
+
+        <section class="section">
+            <a class="button button-secondary" href="/consulat.html">← Retour à Mon Consulat</a>
+        </section>
+    </div>
+</main>
+<script src="/dashboard-consul.js"></script>
+<script src="/auth-client.js"></script>
+</body>
+</html>

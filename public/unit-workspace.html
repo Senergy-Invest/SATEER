@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#17324d">
+    <title>Workspace d'unité • SATEER</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="unit-workspace-page">
+        <header class="unit-workspace-header">
+            <div class="unit-workspace-brand">
+                <a id="workspaceBackLink" class="unit-workspace-back" href="#" aria-label="Retour">←</a>
+                <div>
+                    <p class="eyebrow">SATEER CORE · ESPACE DE TRAVAIL</p>
+                    <h1 id="workspaceUnitName">Chargement de l'unité…</h1>
+                    <p id="workspaceUnitContext" class="muted">Initialisation du contexte institutionnel</p>
+                </div>
+            </div>
+            <div class="unit-workspace-user">
+                <span id="workspaceCurrentUser"></span>
+            </div>
+        </header>
+
+        <section id="workspaceError" class="unit-workspace-error" hidden role="alert">
+            <h2>Workspace indisponible</h2>
+            <p id="workspaceErrorMessage"></p>
+        </section>
+
+        <div id="workspaceMain" hidden>
+            <section class="unit-workspace-overview">
+                <div class="unit-workspace-stats" id="workspaceStats"></div>
+                <div class="unit-workspace-capabilities">
+                    <h2>Capacités actives</h2>
+                    <div id="workspaceCapabilities" class="unit-workspace-tags"></div>
+                </div>
+            </section>
+
+            <nav id="workspaceTabs" class="unit-workspace-tabs" aria-label="Fonctionnalités de l'unité"></nav>
+
+            <section id="workspaceInboxSection" class="unit-workspace-section" hidden>
+                <div class="unit-workspace-section-header">
+                    <div>
+                        <p class="eyebrow">ACTIVITÉ</p>
+                        <h2>Boîte de réception</h2>
+                        <p class="muted">Les dossiers sont affichés selon les capacités de l'unité et les permissions de l'utilisateur connecté.</p>
+                    </div>
+                    <label class="unit-workspace-filter">
+                        <span>Filtrer</span>
+                        <select id="workspaceStatusFilter">
+                            <option value="">Tous les statuts</option>
+                            <option value="NOUVELLE">Nouvelle</option>
+                            <option value="EN_COURS">En cours</option>
+                            <option value="TRAITEE">Traitée</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="unit-workspace-inbox-layout">
+                    <section class="unit-workspace-case-list" aria-label="Liste des dossiers">
+                        <div id="workspaceInboxList" class="unit-workspace-list">
+                            <p class="muted">Chargement des dossiers…</p>
+                        </div>
+                    </section>
+
+                    <section class="unit-workspace-case-detail" aria-label="Détail du dossier">
+                        <div id="workspaceCasePlaceholder" class="unit-workspace-placeholder">
+                            <span class="unit-workspace-placeholder-icon">▤</span>
+                            <h3>Sélectionne un dossier</h3>
+                            <p class="muted">Son contenu et les actions autorisées apparaîtront ici.</p>
+                        </div>
+                        <div id="workspaceCaseDetail" hidden></div>
+                    </section>
+                </div>
+            </section>
+
+            <section id="workspaceMembersSection" class="unit-workspace-section" hidden>
+                <div class="unit-workspace-section-header">
+                    <div>
+                        <p class="eyebrow">ÉQUIPE</p>
+                        <h2>Membres de l'unité</h2>
+                    </div>
+                </div>
+                <div id="workspaceMembers" class="unit-workspace-members"></div>
+            </section>
+
+            <section id="workspaceAnalyticsSection" class="unit-workspace-section" hidden>
+                <div class="unit-workspace-section-header">
+                    <div>
+                        <p class="eyebrow">ACTIVITÉ</p>
+                        <h2>Indicateurs de l'unité</h2>
+                    </div>
+                </div>
+                <div id="workspaceAnalytics" class="unit-workspace-stats"></div>
+            </section>
+        </div>
+
+        <div id="workspaceToast" class="unit-workspace-toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script src="/auth-client.js"></script>
+    <script src="/unit-workspace.js"></script>
+</body>
+</html>

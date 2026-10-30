@@ -288,6 +288,71 @@ function afficherNotifications(
 }
 
 
+async function chargerEspacesInstitutionnels() {
+    const container = document.getElementById("experiencesContainer");
+    if (!container) return;
+
+    try {
+        const response = await fetch(
+            `/api/organisations/1/dashboards/acces?tenant=${TENANT}`,
+            { credentials: "same-origin", cache: "no-store" }
+        );
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const dashboards = data.dashboards || {};
+        const espaces = [];
+
+        if (dashboards.strategique) {
+            espaces.push({
+                titre: "Dashboard stratégique",
+                description: "Pilotage institutionnel, résultats et vision globale du Consulat.",
+                url: `/dashboard-consul.html?organisation=1&tenant=${TENANT}`,
+                icone: "◆"
+            });
+        }
+
+        if (dashboards.operationnel) {
+            espaces.push({
+                titre: "Dashboard opérationnel",
+                description: "Suivi de l'activité, des unités et des opérations du Consulat.",
+                url: `/dashboard-vice-consul.html?organisation=1&tenant=${TENANT}`,
+                icone: "◈"
+            });
+        }
+
+        espaces.forEach(espace => {
+            const card = document.createElement("article");
+            card.className = "experience-card";
+            card.tabIndex = 0;
+            card.setAttribute("role", "link");
+
+            const icon = document.createElement("div");
+            icon.className = "experience-icon";
+            icon.textContent = espace.icone;
+
+            const title = document.createElement("h3");
+            title.textContent = espace.titre;
+
+            const description = document.createElement("p");
+            description.textContent = espace.description;
+
+            card.append(icon, title, description);
+            card.addEventListener("click", () => { window.location.href = espace.url; });
+            card.addEventListener("keydown", event => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    window.location.href = espace.url;
+                }
+            });
+            container.appendChild(card);
+        });
+    } catch (erreur) {
+        console.error("Erreur chargement des espaces institutionnels :", erreur);
+    }
+}
+
+
 async function chargerMonSateer() {
 
     try {
@@ -332,6 +397,8 @@ async function chargerMonSateer() {
             data.experiences || []
         );
 
+        // Les espaces institutionnels sont affichés selon les permissions effectives.
+        await chargerEspacesInstitutionnels();
 
         afficherDemandes(
             data.demandes || []

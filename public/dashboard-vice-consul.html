@@ -10,7 +10,7 @@
     >
 
     <title>
-        Dashboard Vice-Consul - SATEER
+        Dashboard opérationnel - SATEER
     </title>
 
     <link
@@ -36,11 +36,15 @@
                 </p>
 
                 <h1>
-                    Dashboard Vice-Consul
+                    Dashboard opérationnel
                 </h1>
 
                 <p id="organisationNom">
                     Chargement...
+                </p>
+
+                <p id="dashboardModeAcces" class="muted" hidden>
+                    Accès en consultation seule accordé par délégation.
                 </p>
 
             </div>
@@ -468,182 +472,45 @@
 
 
        <!-- ============================================= -->
-<!-- PILOTAGE DES SERVICES -->
+<!-- PILOTAGE DES UNITÉS -->
 <!-- ============================================= -->
 
 <section class="section">
 
     <div class="section-header">
-
         <div>
-
-            <p class="eyebrow">
-                PILOTAGE
-            </p>
-
-            <h2>
-                Services supervisés
-            </h2>
-
+            <p class="eyebrow">PILOTAGE</p>
+            <h2>Unités supervisées</h2>
             <p class="muted">
-                Le Vice-Consul supervise les unités opérationnelles
-                sans se substituer à leur travail quotidien.
+                Les unités et leurs activités sont affichées à partir de l'organisation configurée.
+                Le pilotage ne se substitue pas au traitement quotidien des équipes.
             </p>
-
         </div>
-
     </div>
 
-
-    <div class="supervision-grid">
-
-        <!-- ========================================= -->
-        <!-- SECRÉTARIAT -->
-        <!-- ========================================= -->
-
-        <article class="supervision-card">
-
-            <div class="supervision-card-top">
-
-                <span class="supervision-icon">
-                    ✉
-                </span>
-
-                <span class="supervision-status">
-                    Actif
-                </span>
-
-            </div>
-
-
-            <h3>
-                Secrétariat
-            </h3>
-
-
-            <p>
-                Réception, tri, orientation
-                et suivi des demandes entrantes.
-            </p>
-
-
-            <div class="supervision-capability">
-                ✦ Assistant secrétariat disponible
-            </div>
-
-
-            <a
-    class="button button-secondary"
-    href="/secretariat.html?organisation=1&tenant=SN"
->
-    Voir le Secrétariat
-</a>
-
-
-        <!-- ========================================= -->
-        <!-- SERVICE CONSULAIRE -->
-        <!-- ========================================= -->
-
-        <article class="supervision-card">
-
-            <div class="supervision-card-top">
-
-                <span class="supervision-icon">
-                    📄
-                </span>
-
-                <span class="supervision-status">
-                    Actif
-                </span>
-
-            </div>
-
-
-            <h3>
-                Service consulaire
-            </h3>
-
-
-            <p>
-                Traitement opérationnel
-                des démarches consulaires.
-            </p>
-
-
-            <div class="supervision-detail">
-                Awa Fall • Agent
-            </div>
-
-
-            <button
-                class="button button-secondary"
-                onclick="
-                    window.location.href =
-                    '/agent-demandes.html?organisation=1&source=MON_CONSULAT'
-                "
-            >
-                Voir les demandes
-            </button>
-
-        </article>
-
-
-        <!-- ========================================= -->
-        <!-- BUREAU DE PROJET -->
-        <!-- ========================================= -->
-
-        <article class="supervision-card">
-
-            <div class="supervision-card-top">
-
-                <span class="supervision-icon">
-                    ◇
-                </span>
-
-                <span class="supervision-status">
-                    Actif
-                </span>
-
-            </div>
-
-
-            <h3>
-                Bureau de projet
-            </h3>
-
-
-            <p>
-                Suivi des projets, initiatives
-                et actions transversales.
-            </p>
-
-
-            <div class="supervision-detail">
-                Pilotage des projets institutionnels
-            </div>
-
-
-            <button
-                class="button button-secondary"
-                disabled
-            >
-                Voir les projets
-            </button>
-
-        </article>
-
+    <div
+        id="supervisionUnitsGrid"
+        class="supervision-grid"
+        aria-live="polite"
+    >
+        <div class="dashboard-empty">Chargement des unités…</div>
     </div>
 
+    <p
+        id="supervisionUnitsMessage"
+        class="muted"
+        role="status"
+        aria-live="polite"
+    ></p>
 
     <div class="dashboard-section-actions">
-
         <a
+            id="organisationStructureLink"
             class="button button-secondary"
-            href="/organisation-consulat.html?organisation=1&tenant=SN"
+            href="/organisation-consulat.html"
         >
             Voir l'organisation interne
         </a>
-
     </div>
 
 </section>
@@ -785,6 +652,46 @@
         </section>
 
 
+        <section id="gestionAccesDashboard" class="section" hidden>
+
+            <article class="panel">
+
+                <div class="compact-panel-header">
+                    <div>
+                        <p class="eyebrow">DÉLÉGATION DES ACCÈS</p>
+                        <h2>Consultation du dashboard opérationnel</h2>
+                        <p class="muted">
+                            Autorisez un membre actif du Consulat à consulter cette vue.
+                            La délégation est strictement en lecture seule : elle ne donne
+                            aucun droit de gestion des unités ou de traitement des dossiers.
+                        </p>
+                    </div>
+                </div>
+
+                <form id="delegationForm" class="form-grid">
+                    <label for="personneDelegation">Membre du Consulat</label>
+                    <select id="personneDelegation" required>
+                        <option value="">Chargement des membres...</option>
+                    </select>
+
+                    <label for="motifDelegation">Motif (facultatif)</label>
+                    <input id="motifDelegation" type="text" maxlength="500"
+                        placeholder="Ex. : consultation des indicateurs opérationnels">
+
+                    <button class="button button-primary" type="submit" id="accorderDelegation">
+                        Autoriser la consultation
+                    </button>
+                </form>
+
+                <p id="delegationMessage" class="muted" role="status" aria-live="polite"></p>
+
+                <div id="delegationsDashboardListe" class="list"></div>
+
+            </article>
+
+        </section>
+
+
         <section class="section">
 
             <a
@@ -801,6 +708,7 @@
 
     <script src="/dashboard-vice-consul.js"></script>
 
+  <script src="/auth-client.js"></script>
 </body>
 
 </html>

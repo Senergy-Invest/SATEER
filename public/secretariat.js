@@ -1,941 +1,116 @@
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+// Compatibilité de l'ancien point d'entrée Secrétariat.
+// La sélection de l'unité est désormais pilotée par les capacités configurées.
+(function () {
+    "use strict";
 
+    const params = new URLSearchParams(window.location.search);
+    const organisationId = Number(params.get("organisation"));
+    const tenantCode = String(params.get("tenant") || "").trim();
+    const unitId = Number(params.get("unit") || 0);
 
-const organisationId =
-    Number(
-        params.get("organisation")
-        || 1
-    );
+    const loading = document.getElementById("secretariatLoading");
+    const error = document.getElementById("secretariatErreur");
+    const container = document.getElementById("secretariatDemandes");
 
+    function showError(message) {
+        if (loading) loading.hidden = true;
+        if (error) {
+            error.hidden = false;
+            error.textContent = message;
+        }
+    }
 
-const tenant =
-    params.get("tenant")
-    || "SN";
+    function openWorkspace(id) {
+        const query = new URLSearchParams({
+            organisation: String(organisationId),
+            unit: String(id),
+            tenant: tenantCode
+        });
+        window.location.replace(`/unit-workspace.html?${query.toString()}`);
+    }
 
-
-const loading =
-    document.getElementById(
-        "secretariatLoading"
-    );
-
-
-const erreur =
-    document.getElementById(
-        "secretariatErreur"
-    );
-
-
-const demandesContainer =
-    document.getElementById(
-        "secretariatDemandes"
-    );
-
-
-let unitesOrientation =
-    [];
-
-
-// =========================================================
-// CHARGEMENT
-// =========================================================
-
-async function chargerSecretariat() {
-
-    try {
-
-        loading.hidden =
-            false;
-
-        erreur.hidden =
-            true;
-
-        demandesContainer.hidden =
-            true;
-
-
-        const [
-    reponseDemandes,
-    reponseStructure
-] =
-    await Promise.all([
-
-        fetch(
-            `/api/secretariat/demandes?organisationId=${organisationId}&tenant=${tenant}`
-        ),
-
-        fetch(
-            `/api/organisations/${organisationId}/structure?tenant=${tenant}`
-        )
-
-    ]);
-
-
-        const donneesDemandes =
-            await reponseDemandes.json();
-
-
-        const donneesStructure =
-            await reponseStructure.json();
-
-
-        if (!reponseDemandes.ok) {
-
-            throw new Error(
-                donneesDemandes.erreur
-                || "Impossible de charger les demandes."
-            );
+    async function init() {
+        if (
+            !Number.isSafeInteger(organisationId) || organisationId <= 0
+            || !tenantCode
+        ) {
+            showError("Le contexte organisation / tenant est incomplet.");
+            return;
         }
 
-
-        if (!reponseStructure.ok) {
-
-            throw new Error(
-                donneesStructure.erreur
-                || "Impossible de charger l'organisation."
-            );
+        if (Number.isSafeInteger(unitId) && unitId > 0) {
+            openWorkspace(unitId);
+            return;
         }
 
-
-        const demandes =
-            extraireDemandes(
-                donneesDemandes
-            );
-
-
-        preparerUnitesOrientation(
-            donneesStructure.units || []
-        );
-
-
-        afficherStatistiques(
-            demandes
-        );
-
-
-        afficherDemandes(
-            demandes
-        );
-
-
-        loading.hidden =
-            true;
-
-        demandesContainer.hidden =
-            false;
-
-    } catch (exception) {
-
-        console.error(
-            "Erreur Secrétariat :",
-            exception
-        );
-
-
-        loading.hidden =
-            true;
-
-        demandesContainer.hidden =
-            true;
-
-        erreur.hidden =
-            false;
-
-        erreur.textContent =
-            exception.message;
-    }
-}
-
-
-// =========================================================
-// UNITÉS AUTORISÉES POUR L'ORIENTATION
-// =========================================================
-
-function preparerUnitesOrientation(
-    units
-) {
-
-    const codesAutorises =
-        new Set([
-            "CONSULAR_SERVICE",
-            "PROJECT_OFFICE",
-            "OPERATIONAL_DEPUTY"
-        ]);
-
-
-    unitesOrientation =
-        units.filter(
-            (unit) =>
-                codesAutorises.has(
-                    unit.code
-                )
-        );
-}
-
-
-// =========================================================
-// EXTRACTION
-// =========================================================
-
-function extraireDemandes(
-    donnees
-) {
-
-    if (
-        Array.isArray(
-            donnees
-        )
-    ) {
-
-        return donnees;
-    }
-
-
-    if (
-        Array.isArray(
-            donnees.demandes
-        )
-    ) {
-
-        return donnees.demandes;
-    }
-
-
-    return [];
-}
-
-
-// =========================================================
-// STATISTIQUES
-// =========================================================
-
-function afficherStatistiques(
-    demandes
-) {
-
-    const nouvelles =
-        demandes.filter(
-            (demande) =>
-                normaliserStatut(
-                    demande.statut
-                ) === "NOUVELLE"
-        ).length;
-
-
-    const enCours =
-        demandes.filter(
-            (demande) =>
-                normaliserStatut(
-                    demande.statut
-                ) === "EN_COURS"
-        ).length;
-
-
-    const traitees =
-        demandes.filter(
-            (demande) =>
-                normaliserStatut(
-                    demande.statut
-                ) === "TRAITEE"
-        ).length;
-
-
-    const prioritaires =
-        demandes.filter(
-            (demande) =>
-                normaliserPriorite(
-                    demande.priorite
-                ) !== "NORMALE"
-        ).length;
-
-
-    document.getElementById(
-        "secretariatNouvelles"
-    ).textContent =
-        nouvelles;
-
-
-    document.getElementById(
-        "secretariatEnCours"
-    ).textContent =
-        enCours;
-
-
-    document.getElementById(
-        "secretariatTraitees"
-    ).textContent =
-        traitees;
-
-
-    document.getElementById(
-        "secretariatPrioritaires"
-    ).textContent =
-        prioritaires;
-}
-
-
-// =========================================================
-// DEMANDES
-// =========================================================
-
-function afficherDemandes(
-    demandes
-) {
-
-    demandesContainer.innerHTML =
-        "";
-
-
-    if (
-        demandes.length === 0
-    ) {
-
-        const vide =
-            document.createElement(
-                "div"
-            );
-
-
-        vide.className =
-            "dashboard-empty";
-
-
-        vide.textContent =
-            "Aucune demande reçue.";
-
-
-        demandesContainer.appendChild(
-            vide
-        );
-
-
-        return;
-    }
-
-
-    demandes.forEach(
-        (demande) => {
-
-            const card =
-                document.createElement(
-                    "article"
-                );
-
-
-            card.className =
-                "secretariat-request-card";
-
-
-            // =============================================
-            // EN-TÊTE
-            // =============================================
-
-            const lignePrincipale =
-                document.createElement(
-                    "div"
-                );
-
-
-            lignePrincipale.className =
-                "secretariat-request-row";
-
-
-            const contenu =
-                document.createElement(
-                    "div"
-                );
-
-
-            contenu.className =
-                "secretariat-request-main";
-
-
-            const titre =
-                document.createElement(
-                    "h3"
-                );
-
-
-            titre.textContent =
-                demande.objet
-                || demande.titre
-                || demande.sujet
-                || `Demande #${demande.id}`;
-
-
-            const auteur =
-                document.createElement(
-                    "p"
-                );
-
-
-            auteur.className =
-                "muted";
-
-
-            auteur.textContent =
-                obtenirNomDemandeur(
-                    demande
-                );
-
-
-            contenu.appendChild(
-                titre
-            );
-
-
-            contenu.appendChild(
-                auteur
-            );
-
-
-            const droite =
-                document.createElement(
-                    "div"
-                );
-
-
-            droite.className =
-                "secretariat-request-side";
-
-
-            const statut =
-                document.createElement(
-                    "span"
-                );
-
-
-            statut.className =
-                "dashboard-status";
-
-
-            statut.textContent =
-                normaliserStatut(
-                    demande.statut
-                );
-
-
-            droite.appendChild(
-                statut
-            );
-
-
-            const voir =
-                document.createElement(
-                    "a"
-                );
-
-
-            voir.className =
-                "button button-secondary";
-
-
-            voir.href =
-                `/demande-detail.html?demande=${demande.id}&organisation=${organisationId}&tenant=${tenant}`;
-
-
-            voir.textContent =
-                "Voir";
-
-
-            droite.appendChild(
-                voir
-            );
-
-
-            const orienter =
-                document.createElement(
-                    "button"
-                );
-
-
-            orienter.type =
-                "button";
-
-
-            orienter.className =
-                "button button-secondary";
-
-
-            orienter.textContent =
-                "Orienter";
-
-
-            droite.appendChild(
-                orienter
-            );
-
-
-            lignePrincipale.appendChild(
-                contenu
-            );
-
-
-            lignePrincipale.appendChild(
-                droite
-            );
-
-
-            card.appendChild(
-                lignePrincipale
-            );
-
-
-            // =============================================
-            // FORMULAIRE D'ORIENTATION
-            // =============================================
-
-            const formulaire =
-                creerFormulaireOrientation(
-                    demande
-                );
-
-
-            formulaire.hidden =
-                true;
-
-
-            card.appendChild(
-                formulaire
-            );
-
-
-            orienter.addEventListener(
-                "click",
-                () => {
-
-                    formulaire.hidden =
-                        !formulaire.hidden;
-
-
-                    orienter.textContent =
-                        formulaire.hidden
-                            ? "Orienter"
-                            : "Fermer";
+        try {
+            const response = await fetch(
+                `/api/organisations/${organisationId}/units/overview?tenant=${encodeURIComponent(tenantCode)}`,
+                {
+                    credentials: "same-origin",
+                    cache: "no-store",
+                    headers: { "Accept": "application/json" }
                 }
             );
 
-
-            demandesContainer.appendChild(
-                card
-            );
-        }
-    );
-}
-
-
-// =========================================================
-// FORMULAIRE D'ORIENTATION
-// =========================================================
-
-function creerFormulaireOrientation(
-    demande
-) {
-
-    const formulaire =
-        document.createElement(
-            "form"
-        );
-
-
-    formulaire.className =
-        "secretariat-routing-form";
-
-
-    // =============================================
-    // DESTINATION
-    // =============================================
-
-    const groupeDestination =
-        document.createElement(
-            "div"
-        );
-
-
-    groupeDestination.className =
-        "secretariat-form-group";
-
-
-    const labelDestination =
-        document.createElement(
-            "label"
-        );
-
-
-    labelDestination.textContent =
-        "Service de destination";
-
-
-    const selectDestination =
-        document.createElement(
-            "select"
-        );
-
-
-    selectDestination.required =
-        true;
-
-
-    const optionVide =
-        document.createElement(
-            "option"
-        );
-
-
-    optionVide.value =
-        "";
-
-
-    optionVide.textContent =
-        "Choisir une destination";
-
-
-    selectDestination.appendChild(
-        optionVide
-    );
-
-
-    unitesOrientation.forEach(
-        (unit) => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                unit.id;
-
-
-            option.textContent =
-                unit.nom;
-
-
-            selectDestination.appendChild(
-                option
-            );
-        }
-    );
-
-
-    groupeDestination.appendChild(
-        labelDestination
-    );
-
-
-    groupeDestination.appendChild(
-        selectDestination
-    );
-
-
-    // =============================================
-    // MOTIF
-    // =============================================
-
-    const groupeMotif =
-        document.createElement(
-            "div"
-        );
-
-
-    groupeMotif.className =
-        "secretariat-form-group";
-
-
-    const labelMotif =
-        document.createElement(
-            "label"
-        );
-
-
-    labelMotif.textContent =
-        "Motif de l'orientation";
-
-
-    const motif =
-        document.createElement(
-            "textarea"
-        );
-
-
-    motif.rows =
-        3;
-
-
-    motif.required =
-        true;
-
-
-    motif.placeholder =
-        "Ex. Demande de passeport à traiter par le service consulaire";
-
-
-    groupeMotif.appendChild(
-        labelMotif
-    );
-
-
-    groupeMotif.appendChild(
-        motif
-    );
-
-
-    // =============================================
-    // MESSAGE
-    // =============================================
-
-    const message =
-        document.createElement(
-            "div"
-        );
-
-
-    message.className =
-        "secretariat-routing-message";
-
-
-    // =============================================
-    // BOUTON
-    // =============================================
-
-    const bouton =
-        document.createElement(
-            "button"
-        );
-
-
-    bouton.type =
-        "submit";
-
-
-    bouton.className =
-        "button";
-
-
-    bouton.textContent =
-        "Confirmer l'orientation";
-
-
-    formulaire.appendChild(
-        groupeDestination
-    );
-
-
-    formulaire.appendChild(
-        groupeMotif
-    );
-
-
-    formulaire.appendChild(
-        bouton
-    );
-
-
-    formulaire.appendChild(
-        message
-    );
-
-
-    // =============================================
-    // ENVOI
-    // =============================================
-
-    formulaire.addEventListener(
-        "submit",
-        async (event) => {
-
-            event.preventDefault();
-
-
-            bouton.disabled =
-                true;
-
-
-            bouton.textContent =
-                "Orientation...";
-
-
-            message.textContent =
-                "";
-
-
-            try {
-
-                const reponse =
-                    await fetch(
-                        `/api/secretariat/demandes/${demande.id}/orientation`,
-                        {
-                            method:
-                                "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify({
-
-                                    organisationId:
-                                        organisationId,
-
-                                    tenantCode:
-                                        tenant,
-
-                                    destinationUnitId:
-                                        Number(
-                                            selectDestination.value
-                                        ),
-
-                                    motif:
-                                        motif.value.trim()
-                                })
-                        }
-                    );
-
-
-                const resultat =
-                    await reponse.json();
-
-
-                if (!reponse.ok) {
-
-                    throw new Error(
-                        resultat.erreur
-                        || "Orientation impossible."
-                    );
-                }
-
-
-                message.className =
-                    "secretariat-routing-message success";
-
-
-                message.textContent =
-                    `✓ Orientée vers ${resultat.destination.nom}`;
-
-
-                bouton.textContent =
-                    "Orientation enregistrée";
-
-
-                selectDestination.disabled =
-                    true;
-
-
-                motif.disabled =
-                    true;
-
-            } catch (exception) {
-
-                console.error(
-                    "Erreur orientation :",
-                    exception
-                );
-
-
-                message.className =
-                    "secretariat-routing-message error";
-
-
-                message.textContent =
-                    exception.message;
-
-
-                bouton.disabled =
-                    false;
-
-
-                bouton.textContent =
-                    "Confirmer l'orientation";
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data.statut || "Impossible de charger les unités accessibles.");
             }
+
+            const intakeUnits = (data.unites || []).filter(unit => {
+                const codes = new Set(unit.capabilities || []);
+                return codes.has("RECEIVE_INCOMING")
+                    && codes.has("ROUTE_CASES")
+                    && unit.canOpenWorkspace;
+            });
+
+            if (intakeUnits.length === 1) {
+                openWorkspace(intakeUnits[0].id);
+                return;
+            }
+
+            if (loading) loading.hidden = true;
+            if (!container) return;
+            container.replaceChildren();
+
+            if (!intakeUnits.length) {
+                showError("Aucune unité accessible ne possède les capacités de réception et d'orientation.");
+                return;
+            }
+
+            const intro = document.createElement("p");
+            intro.className = "muted";
+            intro.textContent = "Plusieurs unités peuvent recevoir et orienter les entrées. Sélectionne le Workspace à ouvrir.";
+            container.appendChild(intro);
+
+            intakeUnits.forEach(unit => {
+                const card = document.createElement("article");
+                card.className = "supervision-card";
+
+                const title = document.createElement("h3");
+                title.textContent = unit.nom;
+
+                const detail = document.createElement("p");
+                detail.textContent = `${unit.type || "Unité"} · ${unit.members_count || 0} membre(s)`;
+
+                const link = document.createElement("a");
+                link.className = "button button-secondary";
+                link.textContent = "Ouvrir le Workspace";
+                const query = new URLSearchParams({
+                    organisation: String(organisationId),
+                    unit: String(unit.id),
+                    tenant: tenantCode
+                });
+                link.href = `/unit-workspace.html?${query.toString()}`;
+
+                card.append(title, detail, link);
+                container.appendChild(card);
+            });
+        } catch (err) {
+            showError(err.message || "Impossible d'ouvrir le Workspace.");
         }
-    );
-
-
-    return formulaire;
-}
-
-
-// =========================================================
-// OUTILS
-// =========================================================
-
-function obtenirNomDemandeur(
-    demande
-) {
-
-    if (
-        demande.personne_prenom
-        ||
-        demande.personne_nom
-    ) {
-
-        return [
-            demande.personne_prenom,
-            demande.personne_nom
-        ]
-            .filter(Boolean)
-            .join(" ");
     }
 
-
-    if (
-        demande.prenom
-        ||
-        demande.nom
-    ) {
-
-        return [
-            demande.prenom,
-            demande.nom
-        ]
-            .filter(Boolean)
-            .join(" ");
-    }
-
-
-    if (
-        demande.demandeur
-    ) {
-
-        return demande.demandeur;
-    }
-
-
-    return "Demandeur";
-}
-
-
-function normaliserStatut(
-    statut
-) {
-
-    return String(
-        statut || "NOUVELLE"
-    )
-        .trim()
-        .toUpperCase();
-}
-
-
-function normaliserPriorite(
-    priorite
-) {
-
-    return String(
-        priorite || "NORMALE"
-    )
-        .trim()
-        .toUpperCase();
-}
-
-
-// =========================================================
-// DÉMARRAGE
-// =========================================================
-
-chargerSecretariat();
+    init();
+})();

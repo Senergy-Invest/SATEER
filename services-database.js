@@ -2166,7 +2166,8 @@ async function prendreEnChargeDemandeDatabase(
     demandeId,
     agentPersonneId,
     organisationId,
-    tenantCode
+    tenantCode,
+    unitId = null
 ) {
 
     const resultat =
@@ -2195,17 +2196,10 @@ async function prendreEnChargeDemandeDatabase(
                 INNER JOIN organisation_units destination
                     ON destination.id = d.destination_unit_id
                     AND destination.organisation_id = o.id
+                    AND destination.actif = TRUE
 
                 INNER JOIN personnes agent
                     ON agent.id = $2
-
-                INNER JOIN relations_personne_organisation r
-                    ON r.personne_id = agent.id
-                    AND r.organisation_id = o.id
-                    AND r.type IN (
-                        'AGENT',
-                        'RESPONSABLE'
-                    )
 
                 WHERE
                     d.id = $1
@@ -2216,8 +2210,10 @@ async function prendreEnChargeDemandeDatabase(
 
                     AND d.statut = 'NOUVELLE'
 
-                    AND destination.code =
-                        'CONSULAR_SERVICE'
+                    AND (
+                        $5::integer IS NULL
+                        OR d.destination_unit_id = $5::integer
+                    )
             ),
 
 
@@ -2276,7 +2272,7 @@ async function prendreEnChargeDemandeDatabase(
                     contexte.ancien_statut,
                     'EN_COURS',
                     'PRISE_EN_CHARGE',
-                    'Demande prise en charge par un agent du service consulaire.'
+                    'Dossier pris en charge par un membre de l unité destinataire.'
 
                 FROM demande_modifiee dm
 
@@ -2314,7 +2310,8 @@ async function prendreEnChargeDemandeDatabase(
                 demandeId,
                 agentPersonneId,
                 organisationId,
-                tenantCode
+                tenantCode,
+                unitId
             ]
         );
 
@@ -2334,7 +2331,8 @@ async function repondreDemandeDatabase(
     agentPersonneId,
     organisationId,
     tenantCode,
-    contenu
+    contenu,
+    unitId = null
 ) {
 
     const resultat =
@@ -2361,16 +2359,13 @@ async function repondreDemandeDatabase(
                     ON o.id = d.organisation_id
                     AND o.tenant_id = t.id
 
+                INNER JOIN organisation_units destination
+                    ON destination.id = d.destination_unit_id
+                    AND destination.organisation_id = o.id
+                    AND destination.actif = TRUE
+
                 INNER JOIN personnes agent
                     ON agent.id = $2
-
-                INNER JOIN relations_personne_organisation r
-                    ON r.personne_id = agent.id
-                    AND r.organisation_id = o.id
-                    AND r.type IN (
-                        'AGENT',
-                        'RESPONSABLE'
-                    )
 
                 WHERE
                     d.id = $1
@@ -2379,9 +2374,11 @@ async function repondreDemandeDatabase(
 
                     AND t.code = $4
 
-                    AND d.statut IN (
-                        'EN_COURS',
-                        'NOUVELLE'
+                    AND d.statut = 'EN_COURS'
+
+                    AND (
+                        $6::integer IS NULL
+                        OR d.destination_unit_id = $6::integer
                     )
             ),
 
@@ -2568,7 +2565,8 @@ async function repondreDemandeDatabase(
                 agentPersonneId,
                 organisationId,
                 tenantCode,
-                contenu
+                contenu,
+                unitId
             ]
         );
 
@@ -5044,9 +5042,37 @@ async function obtenirStructureOrganisationDatabase(
             ]
         );
 
+    const capabilitiesResultat =
+        await executerRequete(
+            `
+            SELECT
+                uc.organisation_unit_id,
+                c.id,
+                c.code,
+                c.nom,
+                c.description,
+                uc.configuration
+            FROM organisation_unit_capabilities uc
+            INNER JOIN capabilities c
+                ON c.id = uc.capability_id
+            INNER JOIN organisation_units u
+                ON u.id = uc.organisation_unit_id
+            WHERE
+                u.organisation_id = $1
+                AND u.actif = TRUE
+                AND uc.actif = TRUE
+                AND c.actif = TRUE
+            ORDER BY
+                uc.organisation_unit_id,
+                c.nom,
+                c.code
+            `,
+            [organisationId]
+        );
+
 
     // -----------------------------------------------------
-    // 4. Ajouter les membres à leur unité
+    // 4. Ajouter les membres et capacités à leur unité
     // -----------------------------------------------------
 
     const units =
@@ -5057,7 +5083,7 @@ async function obtenirStructureOrganisationDatabase(
                     membresResultat.rows
                         .filter(
                             (membre) =>
-                                membre.organisation_unit_id === unit.id
+                                Number(membre.organisation_unit_id) === Number(unit.id)
                         )
                         .map(
                             (membre) => ({
@@ -5081,10 +5107,27 @@ async function obtenirStructureOrganisationDatabase(
                             })
                         );
 
+                const capabilities =
+                    capabilitiesResultat.rows
+                        .filter(
+                            (capability) =>
+                                Number(capability.organisation_unit_id) === Number(unit.id)
+                        )
+                        .map(
+                            (capability) => ({
+                                id: capability.id,
+                                code: capability.code,
+                                nom: capability.nom,
+                                description: capability.description,
+                                configuration: capability.configuration
+                            })
+                        );
+
 
                 return {
                     ...unit,
-                    membres
+                    membres,
+                    capabilities
                 };
             }
         );
@@ -7231,6 +7274,45 @@ async function desactiverCapabilityOrganisationUnitDatabase(
 // LISTER LES RÔLES D'UNE ORGANISATION
 // =========================================================
 
+async function roleOrganisationEstProtegeDatabase(
+    organisationId,
+    roleId,
+    tenantCode
+) {
+    const resultat = await executerRequete(
+        `
+        SELECT
+            r.id,
+            r.code,
+            r.nom,
+            r.metadata,
+            (r.metadata @> '{"systemProtected": true}'::jsonb) AS protege
+        FROM organisation_roles r
+        INNER JOIN organisations o
+            ON o.id = r.organisation_id
+        INNER JOIN tenants t
+            ON t.id = o.tenant_id
+        WHERE
+            r.id = $1
+            AND r.organisation_id = $2
+            AND t.code = $3
+        LIMIT 1
+        `,
+        [roleId, organisationId, tenantCode]
+    );
+
+    if (resultat.rows.length === 0) {
+        return { succes: false, code: "ROLE_INTROUVABLE" };
+    }
+
+    return {
+        succes: true,
+        protege: resultat.rows[0].protege === true,
+        role: resultat.rows[0]
+    };
+}
+
+
 async function listerRolesOrganisationDatabase(
     organisationId,
     tenantCode
@@ -8248,6 +8330,338 @@ async function desactiverPermissionRoleOrganisationDatabase(
         affectation: resultat.rows[0]
     };
 }
+
+// =========================================================
+// PERMISSIONS EFFECTIVES D'UNE PERSONNE
+// =========================================================
+//
+// Cette fonction récupère les permissions réellement
+// accordées par les rôles configurés en base.
+//
+// Elle distingue :
+// - les permissions organisationnelles
+// - les permissions propres à chaque unité
+//
+// Elle ne réalise aucune authentification.
+// Elle ne prend aucune décision d'autorisation HTTP.
+//
+// =========================================================
+
+async function obtenirPermissionsEffectivesDatabase(
+    personneId,
+    organisationId,
+    tenantCode
+) {
+
+    // -----------------------------------------------------
+    // 1. Vérifier les identifiants
+    // -----------------------------------------------------
+
+    const personne =
+        Number(personneId);
+
+    const organisation =
+        Number(organisationId);
+
+    if (
+        !Number.isInteger(personne)
+        || personne <= 0
+        || !Number.isInteger(organisation)
+        || organisation <= 0
+        || !tenantCode
+    ) {
+
+        return {
+            succes: false,
+            code: "PARAMETRES_INVALIDES"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 2. Vérifier l'appartenance à l'organisation
+    // -----------------------------------------------------
+
+    const appartenance =
+        await executerRequete(
+            `
+            SELECT
+                rpo.personne_id,
+                rpo.organisation_id
+
+            FROM relations_personne_organisation rpo
+
+            INNER JOIN organisations o
+                ON o.id = rpo.organisation_id
+
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+
+            WHERE
+                rpo.personne_id = $1
+                AND rpo.organisation_id = $2
+                AND t.code = $3
+
+            LIMIT 1
+            `,
+            [
+                personne,
+                organisation,
+                tenantCode
+            ]
+        );
+
+
+    if (appartenance.rows.length === 0) {
+
+        return {
+            succes: false,
+            code: "PERSONNE_HORS_ORGANISATION"
+        };
+    }
+
+
+    // -----------------------------------------------------
+    // 3. Permissions des rôles organisationnels
+    // -----------------------------------------------------
+
+    const resultatOrganisation =
+        await executerRequete(
+            `
+            SELECT DISTINCT
+                p.code
+
+            FROM relations_personne_organisation_roles rel
+
+            INNER JOIN organisation_roles r
+                ON r.id = rel.role_id
+                AND r.organisation_id = rel.organisation_id
+
+            INNER JOIN role_permissions rp
+                ON rp.role_id = r.id
+
+            INNER JOIN permissions p
+                ON p.id = rp.permission_id
+
+            WHERE
+                rel.personne_id = $1
+                AND rel.organisation_id = $2
+
+                AND rel.actif = TRUE
+                AND r.actif = TRUE
+                AND rp.actif = TRUE
+                AND p.actif = TRUE
+
+                AND r.scope IN (
+                    'ORGANISATION',
+                    'BOTH'
+                )
+
+                AND rel.date_debut <= CURRENT_TIMESTAMP
+
+                AND (
+                    rel.date_fin IS NULL
+                    OR rel.date_fin > CURRENT_TIMESTAMP
+                )
+
+            ORDER BY
+                p.code
+            `,
+            [
+                personne,
+                organisation
+            ]
+        );
+
+
+    // -----------------------------------------------------
+    // 4. Accès opérationnel délégué nominativement
+    // -----------------------------------------------------
+    // Une délégation ne confère que la consultation du
+    // dashboard opérationnel. Elle ne crée aucun rôle et
+    // n'accorde aucune permission de traitement.
+
+    const resultatDelegations =
+        await executerRequete(
+            `
+            SELECT EXISTS (
+                SELECT 1
+                FROM organisation_dashboard_access_delegations d
+                WHERE
+                    d.personne_id = $1
+                    AND d.organisation_id = $2
+                    AND d.actif = TRUE
+                    AND d.date_debut <= CURRENT_TIMESTAMP
+                    AND (
+                        d.date_fin IS NULL
+                        OR d.date_fin > CURRENT_TIMESTAMP
+                    )
+                    AND EXISTS (
+                        SELECT 1
+                        FROM relations_personne_organisation_roles rel
+                        INNER JOIN organisation_roles r
+                            ON r.id = rel.role_id
+                            AND r.organisation_id = rel.organisation_id
+                        WHERE
+                            rel.personne_id = d.personne_id
+                            AND rel.organisation_id = d.organisation_id
+                            AND rel.actif = TRUE
+                            AND r.actif = TRUE
+                            AND r.scope IN ('ORGANISATION', 'BOTH')
+                            AND rel.date_debut <= d.date_debut
+                            AND rel.date_debut <= CURRENT_TIMESTAMP
+                            AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+                    )
+            ) AS acces_actif
+            `,
+            [
+                personne,
+                organisation
+            ]
+        );
+
+
+    // -----------------------------------------------------
+    // 5. Permissions des rôles affectés aux unités
+    // -----------------------------------------------------
+
+    const resultatUnites =
+        await executerRequete(
+            `
+            SELECT DISTINCT
+
+                u.id AS unite_id,
+                u.code AS unite_code,
+                u.nom AS unite_nom,
+
+                p.code AS permission_code
+
+            FROM relations_personne_organisation_unit rel
+
+            INNER JOIN organisation_units u
+                ON u.id = rel.organisation_unit_id
+
+            INNER JOIN organisation_roles r
+                ON r.id = rel.role_id
+                AND r.organisation_id = u.organisation_id
+
+            LEFT JOIN role_permissions rp
+                ON rp.role_id = r.id
+                AND rp.actif = TRUE
+
+            LEFT JOIN permissions p
+                ON p.id = rp.permission_id
+                AND p.actif = TRUE
+
+            WHERE
+                rel.personne_id = $1
+                AND u.organisation_id = $2
+
+                AND rel.actif = TRUE
+                AND u.actif = TRUE
+                AND r.actif = TRUE
+
+                AND r.scope IN (
+                    'UNIT',
+                    'BOTH'
+                )
+
+                AND rel.date_debut <= CURRENT_TIMESTAMP
+
+                AND (
+                    rel.date_fin IS NULL
+                    OR rel.date_fin > CURRENT_TIMESTAMP
+                )
+
+            ORDER BY
+                u.id,
+                p.code
+            `,
+            [
+                personne,
+                organisation
+            ]
+        );
+
+
+    // -----------------------------------------------------
+    // 5. Organiser les permissions par unité
+    // -----------------------------------------------------
+
+    const unitesMap =
+        new Map();
+
+
+    for (
+        const ligne of resultatUnites.rows
+    ) {
+
+        if (
+            !unitesMap.has(ligne.unite_id)
+        ) {
+
+            unitesMap.set(
+                ligne.unite_id,
+                {
+                    uniteId: ligne.unite_id,
+                    code: ligne.unite_code,
+                    nom: ligne.unite_nom,
+                    permissions: []
+                }
+            );
+        }
+
+
+        if (
+            ligne.permission_code !== null
+        ) {
+
+            unitesMap
+                .get(ligne.unite_id)
+                .permissions
+                .push(ligne.permission_code);
+        }
+    }
+
+
+    // -----------------------------------------------------
+    // 6. Résultat
+    // -----------------------------------------------------
+
+    return {
+
+        succes: true,
+
+        personneId: personne,
+
+        organisationId: organisation,
+
+        permissionsOrganisation: Array.from(
+            new Set([
+                ...resultatOrganisation.rows.map(
+                    ligne => ligne.code
+                ),
+                ...(resultatDelegations.rows[0]?.acces_actif
+                    ? ["VIEW_OPERATIONAL_DASHBOARD"]
+                    : [])
+            ])
+        ).sort(),
+
+        permissionsOrganisationRole:
+            resultatOrganisation.rows.map(
+                ligne => ligne.code
+            ),
+
+        permissionsDelegueesOrganisation:
+            resultatDelegations.rows[0]?.acces_actif
+                ? ["VIEW_OPERATIONAL_DASHBOARD"]
+                : [],
+
+        permissionsParUnite:
+            Array.from(unitesMap.values())
+
+    };
+}
 // =========================================================
 // ÉCOSYSTÈME D'UNE ORGANISATION
 // =========================================================
@@ -8273,6 +8687,437 @@ async function desactiverPermissionRoleOrganisationDatabase(
 // La logique reste générique pour toute organisation SATEER.
 //
 // =========================================================
+
+// =========================================================
+// DASHBOARD STRATEGIQUE — VUE CONSUL
+// =========================================================
+// Cette vue ne retourne que des indicateurs agrégés.
+// Aucun nom de citoyen ni dossier individuel n'est exposé.
+
+async function obtenirDashboardStrategiqueConsulatDatabase(
+    organisationId,
+    tenantCode
+) {
+    const organisationResultat = await executerRequete(
+        `
+        SELECT o.id, o.nom, o.type, t.code AS tenant_code
+        FROM organisations o
+        INNER JOIN tenants t ON t.id = o.tenant_id
+        WHERE o.id = $1 AND t.code = $2 AND o.type = 'CONSULAT'
+        LIMIT 1
+        `,
+        [organisationId, tenantCode]
+    );
+
+    if (organisationResultat.rows.length === 0) return undefined;
+
+    const [demandesResultat, delaiResultat, evolutionResultat,
+        publicationsResultat, diasporaResultat, territoiresResultat,
+        categoriesResultat, unitesResultat] = await Promise.all([
+        executerRequete(
+            `
+            SELECT
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE statut = 'NOUVELLE')::int AS nouvelles,
+                COUNT(*) FILTER (WHERE statut = 'EN_COURS')::int AS en_cours,
+                COUNT(*) FILTER (WHERE statut = 'TRAITEE')::int AS traitees,
+                COUNT(*) FILTER (WHERE statut <> 'TRAITEE' AND priorite = 'URGENTE')::int AS urgentes_ouvertes,
+                COUNT(*) FILTER (WHERE statut <> 'TRAITEE' AND priorite = 'IMPORTANTE')::int AS importantes_ouvertes,
+                COALESCE(
+                    ROUND(
+                        100.0 * COUNT(*) FILTER (WHERE statut = 'TRAITEE')
+                        / NULLIF(COUNT(*), 0),
+                        1
+                    ),
+                    0
+                ) AS taux_traitement
+            FROM demandes d
+            INNER JOIN tenants t ON t.id = d.tenant_id
+            WHERE d.organisation_id = $1 AND t.code = $2
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            SELECT
+                ROUND(
+                    AVG(EXTRACT(EPOCH FROM (d.date_cloture - d.date_creation)) / 3600)::numeric,
+                    1
+                ) AS heures_moyennes,
+                COUNT(*)::int AS demandes_mesurees
+            FROM demandes d
+            INNER JOIN tenants t ON t.id = d.tenant_id
+            WHERE
+                d.organisation_id = $1
+                AND t.code = $2
+                AND d.statut = 'TRAITEE'
+                AND d.date_cloture IS NOT NULL
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            WITH mois AS (
+                SELECT generate_series(
+                    date_trunc('month', CURRENT_DATE) - INTERVAL '5 months',
+                    date_trunc('month', CURRENT_DATE),
+                    INTERVAL '1 month'
+                ) AS debut
+            )
+            SELECT
+                to_char(m.debut, 'YYYY-MM') AS periode,
+                COALESCE(recues.total, 0)::int AS demandes_recues,
+                COALESCE(cloturees.total, 0)::int AS demandes_cloturees
+            FROM mois m
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS total
+                FROM demandes d
+                INNER JOIN tenants t ON t.id = d.tenant_id
+                WHERE d.organisation_id = $1 AND t.code = $2
+                    AND d.date_creation >= m.debut
+                    AND d.date_creation < m.debut + INTERVAL '1 month'
+            ) recues ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS total
+                FROM demandes d
+                INNER JOIN tenants t ON t.id = d.tenant_id
+                WHERE d.organisation_id = $1 AND t.code = $2
+                    AND d.statut = 'TRAITEE'
+                    AND d.date_cloture >= m.debut
+                    AND d.date_cloture < m.debut + INTERVAL '1 month'
+            ) cloturees ON TRUE
+            ORDER BY m.debut
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            SELECT
+                COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE statut = 'PUBLIEE')::int AS publiees,
+                COUNT(*) FILTER (WHERE statut_diffusion_diaspora = 'SOUMISE')::int AS soumises_diaspora,
+                COUNT(*) FILTER (WHERE statut_diffusion_diaspora = 'DIFFUSEE')::int AS diffusees_diaspora
+            FROM publications p
+            INNER JOIN tenants t ON t.id = p.tenant_id
+            WHERE p.organisation_id = $1 AND t.code = $2
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            SELECT COUNT(DISTINCT r.personne_id)::int AS total_usagers
+            FROM relations_personne_organisation r
+            INNER JOIN organisations o ON o.id = r.organisation_id
+            INNER JOIN tenants t ON t.id = o.tenant_id
+            WHERE r.organisation_id = $1 AND t.code = $2 AND r.type = 'USAGER'
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            SELECT
+                COALESCE(tr.nom, p.departement, 'Non renseigné') AS territoire,
+                COUNT(DISTINCT p.id)::int AS personnes
+            FROM relations_personne_organisation r
+            INNER JOIN organisations o ON o.id = r.organisation_id
+            INNER JOIN tenants t ON t.id = o.tenant_id
+            INNER JOIN personnes p ON p.id = r.personne_id
+            LEFT JOIN territories tr ON tr.id = p.residence_territory_id
+            WHERE r.organisation_id = $1 AND t.code = $2 AND r.type = 'USAGER'
+            GROUP BY COALESCE(tr.nom, p.departement, 'Non renseigné')
+            ORDER BY personnes DESC, territoire ASC
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            SELECT
+                COALESCE(d.categorie, 'Non renseignée') AS categorie,
+                COUNT(*)::int AS total
+            FROM demandes d
+            INNER JOIN tenants t ON t.id = d.tenant_id
+            WHERE d.organisation_id = $1 AND t.code = $2
+            GROUP BY COALESCE(d.categorie, 'Non renseignée')
+            ORDER BY total DESC, categorie ASC
+            LIMIT 6
+            `,
+            [organisationId, tenantCode]
+        ),
+        executerRequete(
+            `
+            SELECT COUNT(*)::int AS unites_actives
+            FROM organisation_units u
+            INNER JOIN organisations o ON o.id = u.organisation_id
+            INNER JOIN tenants t ON t.id = o.tenant_id
+            WHERE u.organisation_id = $1 AND t.code = $2 AND u.actif = TRUE
+            `,
+            [organisationId, tenantCode]
+        )
+    ]);
+
+    return {
+        organisation: organisationResultat.rows[0],
+        indicateurs: {
+            ...demandesResultat.rows[0],
+            delai_moyen_heures: delaiResultat.rows[0].heures_moyennes,
+            demandes_mesurees: delaiResultat.rows[0].demandes_mesurees,
+            usagers: diasporaResultat.rows[0].total_usagers,
+            territoires_couverts: territoiresResultat.rows.length,
+            publications_total: publicationsResultat.rows[0].total,
+            publications_publiees: publicationsResultat.rows[0].publiees,
+            publications_soumises_diaspora: publicationsResultat.rows[0].soumises_diaspora,
+            publications_diffusees_diaspora: publicationsResultat.rows[0].diffusees_diaspora,
+            unites_actives: unitesResultat.rows[0].unites_actives
+        },
+        evolution_mensuelle: evolutionResultat.rows,
+        demandes_par_categorie: categoriesResultat.rows,
+        couverture_territoriale: territoiresResultat.rows
+    };
+}
+
+
+// =========================================================
+// DELEGATIONS D'ACCES AU DASHBOARD OPERATIONNEL
+// =========================================================
+
+async function listerDelegationsDashboardOperationnelDatabase(
+    organisationId,
+    tenantCode
+) {
+    const resultat = await executerRequete(
+        `
+        SELECT
+            p.id AS personne_id,
+            p.prenom,
+            p.nom,
+            string_agg(DISTINCT r.nom, ' · ' ORDER BY r.nom) AS roles,
+            BOOL_OR(EXISTS (
+                SELECT 1
+                FROM role_permissions rp
+                INNER JOIN permissions perm ON perm.id = rp.permission_id
+                WHERE rp.role_id = r.id
+                    AND rp.actif = TRUE
+                    AND perm.actif = TRUE
+                    AND perm.code = 'VIEW_OPERATIONAL_DASHBOARD'
+            )) AS via_role,
+            EXISTS (
+                SELECT 1
+                FROM organisation_dashboard_access_delegations d
+                WHERE d.organisation_id = $1
+                    AND d.personne_id = p.id
+                    AND d.actif = TRUE
+                    AND d.date_debut <= CURRENT_TIMESTAMP
+                    AND (d.date_fin IS NULL OR d.date_fin > CURRENT_TIMESTAMP)
+                    AND EXISTS (
+                        SELECT 1
+                        FROM relations_personne_organisation_roles rel_cible
+                        INNER JOIN organisation_roles r_cible
+                            ON r_cible.id = rel_cible.role_id
+                            AND r_cible.organisation_id = rel_cible.organisation_id
+                        WHERE rel_cible.personne_id = d.personne_id
+                            AND rel_cible.organisation_id = d.organisation_id
+                            AND rel_cible.actif = TRUE
+                            AND r_cible.actif = TRUE
+                            AND r_cible.scope IN ('ORGANISATION', 'BOTH')
+                            AND rel_cible.date_debut <= d.date_debut
+                            AND rel_cible.date_debut <= CURRENT_TIMESTAMP
+                            AND (rel_cible.date_fin IS NULL OR rel_cible.date_fin > CURRENT_TIMESTAMP)
+                    )
+            ) AS via_delegation
+        FROM relations_personne_organisation_roles rel
+        INNER JOIN personnes p ON p.id = rel.personne_id
+        INNER JOIN organisation_roles r
+            ON r.id = rel.role_id AND r.organisation_id = rel.organisation_id
+        INNER JOIN organisations o ON o.id = rel.organisation_id
+        INNER JOIN tenants t ON t.id = o.tenant_id
+        WHERE rel.organisation_id = $1
+            AND t.code = $2
+            AND rel.actif = TRUE
+            AND r.actif = TRUE
+            AND rel.date_debut <= CURRENT_TIMESTAMP
+            AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+        GROUP BY p.id, p.prenom, p.nom
+        ORDER BY p.nom, p.prenom, p.id
+        `,
+        [organisationId, tenantCode]
+    );
+
+    return {
+        succes: true,
+        membres: resultat.rows.map(ligne => {
+            const viaRole = ligne.via_role === true;
+            const viaDelegation = ligne.via_delegation === true;
+            return {
+                ...ligne,
+                peutConsulter: viaRole || viaDelegation,
+                sourceAcces: viaRole ? "ROLE" : (viaDelegation ? "DELEGATION" : "AUCUN")
+            };
+        })
+    };
+}
+
+
+async function accorderAccesDashboardOperationnelDatabase(
+    organisationId,
+    personneId,
+    accordeParPersonneId,
+    tenantCode,
+    motif = null
+) {
+    const cible = await executerRequete(
+        `
+        SELECT p.id
+        FROM personnes p
+        INNER JOIN relations_personne_organisation_roles rel
+            ON rel.personne_id = p.id
+        INNER JOIN organisation_roles r
+            ON r.id = rel.role_id AND r.organisation_id = rel.organisation_id
+        INNER JOIN organisations o ON o.id = rel.organisation_id
+        INNER JOIN tenants t ON t.id = o.tenant_id
+        WHERE p.id = $1
+            AND rel.organisation_id = $2
+            AND t.code = $3
+            AND rel.actif = TRUE
+            AND r.actif = TRUE
+            AND r.scope IN ('ORGANISATION', 'BOTH')
+            AND rel.date_debut <= CURRENT_TIMESTAMP
+            AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+        LIMIT 1
+        `,
+        [personneId, organisationId, tenantCode]
+    );
+
+    if (cible.rows.length === 0) {
+        return { succes: false, code: "PERSONNE_NON_AFFECTEE_A_L_ORGANISATION" };
+    }
+
+    const dejaAutoriseParRole = await executerRequete(
+        `
+        SELECT EXISTS (
+            SELECT 1
+            FROM relations_personne_organisation_roles rel
+            INNER JOIN organisation_roles r ON r.id = rel.role_id
+            INNER JOIN role_permissions rp ON rp.role_id = r.id AND rp.actif = TRUE
+            INNER JOIN permissions p ON p.id = rp.permission_id AND p.actif = TRUE
+            WHERE rel.personne_id = $1
+                AND rel.organisation_id = $2
+                AND rel.actif = TRUE
+                AND r.actif = TRUE
+                AND p.code = 'VIEW_OPERATIONAL_DASHBOARD'
+                AND rel.date_debut <= CURRENT_TIMESTAMP
+                AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+        ) AS deja_autorise
+        `,
+        [personneId, organisationId]
+    );
+
+    if (dejaAutoriseParRole.rows[0].deja_autorise) {
+        return { succes: true, dejaAutorise: true, source: "ROLE" };
+    }
+
+    await executerRequete(
+        `
+        UPDATE organisation_dashboard_access_delegations d
+        SET
+            actif = FALSE,
+            date_fin = CURRENT_TIMESTAMP,
+            revoked_by_personne_id = $3,
+            date_modification = CURRENT_TIMESTAMP
+        WHERE d.organisation_id = $1
+            AND d.personne_id = $2
+            AND d.actif = TRUE
+            AND NOT EXISTS (
+                SELECT 1
+                FROM relations_personne_organisation_roles rel
+                INNER JOIN organisation_roles r
+                    ON r.id = rel.role_id
+                    AND r.organisation_id = rel.organisation_id
+                WHERE rel.personne_id = d.personne_id
+                    AND rel.organisation_id = d.organisation_id
+                    AND rel.actif = TRUE
+                    AND r.actif = TRUE
+                    AND r.scope IN ('ORGANISATION', 'BOTH')
+                    AND rel.date_debut <= d.date_debut
+                    AND rel.date_debut <= CURRENT_TIMESTAMP
+                    AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+            )
+        `,
+        [organisationId, personneId, accordeParPersonneId]
+    );
+
+    const resultat = await executerRequete(
+        `
+        INSERT INTO organisation_dashboard_access_delegations (
+            organisation_id,
+            personne_id,
+            granted_by_personne_id,
+            actif,
+            date_debut,
+            motif
+        )
+        VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, $4)
+        ON CONFLICT (organisation_id, personne_id) WHERE actif = TRUE
+        DO NOTHING
+        RETURNING id, organisation_id, personne_id,
+            granted_by_personne_id, actif, date_debut, date_fin, motif
+        `,
+        [organisationId, personneId, accordeParPersonneId, motif]
+    );
+
+    if (resultat.rows.length > 0) {
+        return { succes: true, delegation: resultat.rows[0] };
+    }
+
+    const delegationExistante = await executerRequete(
+        `
+        SELECT id, organisation_id, personne_id,
+            granted_by_personne_id, actif, date_debut, date_fin, motif
+        FROM organisation_dashboard_access_delegations
+        WHERE organisation_id = $1 AND personne_id = $2 AND actif = TRUE
+        LIMIT 1
+        `,
+        [organisationId, personneId]
+    );
+
+    return { succes: true, dejaAutorise: true, source: "DELEGATION", delegation: delegationExistante.rows[0] || null };
+}
+
+
+async function revoquerAccesDashboardOperationnelDatabase(
+    organisationId,
+    personneId,
+    retireParPersonneId,
+    tenantCode
+) {
+    const resultat = await executerRequete(
+        `
+        UPDATE organisation_dashboard_access_delegations d
+        SET
+            actif = FALSE,
+            date_fin = CURRENT_TIMESTAMP,
+            revoked_by_personne_id = $3,
+            date_modification = CURRENT_TIMESTAMP
+        FROM organisations o
+        INNER JOIN tenants t ON t.id = o.tenant_id
+        WHERE d.organisation_id = $1
+            AND d.personne_id = $2
+            AND o.id = d.organisation_id
+            AND t.code = $4
+            AND d.actif = TRUE
+        RETURNING d.id, d.organisation_id, d.personne_id,
+            d.granted_by_personne_id, d.revoked_by_personne_id,
+            d.actif, d.date_debut, d.date_fin, d.motif
+        `,
+        [organisationId, personneId, retireParPersonneId, tenantCode]
+    );
+
+    if (resultat.rows.length === 0) {
+        return { succes: false, code: "DELEGATION_ACTIVE_INTROUVABLE" };
+    }
+
+    return { succes: true, delegation: resultat.rows[0] };
+}
+
 
 async function obtenirEcosystemeOrganisationDatabase(
     organisationId,
@@ -8655,6 +9500,480 @@ async function obtenirEcosystemeOrganisationDatabase(
 // EXPORTS
 // =========================================================
 
+
+// =========================================================
+// SATEER CORE - DONNEES GENERIQUES DU UNIT WORKSPACE
+// =========================================================
+
+async function obtenirUnitesWorkspaceOverviewDatabase(
+    organisationId,
+    tenantCode
+) {
+    const resultat = await executerRequete(
+        `
+        SELECT
+            u.id,
+            u.organisation_id,
+            u.parent_unit_id,
+            u.code,
+            u.nom,
+            u.type,
+            u.metadata,
+
+            COALESCE(m.members_count, 0)::integer AS members_count,
+
+            COALESCE(cases.total_cases, 0)::integer AS total_cases,
+            COALESCE(cases.new_cases, 0)::integer AS new_cases,
+            COALESCE(cases.in_progress_cases, 0)::integer AS in_progress_cases,
+            COALESCE(cases.treated_cases, 0)::integer AS treated_cases,
+            COALESCE(cases.urgent_cases, 0)::integer AS urgent_cases,
+
+            COALESCE(capabilities.codes, ARRAY[]::text[]) AS capabilities
+
+        FROM organisation_units u
+
+        INNER JOIN organisations o
+            ON o.id = u.organisation_id
+
+        INNER JOIN tenants t
+            ON t.id = o.tenant_id
+
+        LEFT JOIN LATERAL (
+            SELECT COUNT(*)::integer AS members_count
+            FROM relations_personne_organisation_unit relation
+            WHERE relation.organisation_unit_id = u.id
+                AND relation.actif = TRUE
+                AND relation.date_debut <= CURRENT_TIMESTAMP
+                AND (
+                    relation.date_fin IS NULL
+                    OR relation.date_fin > CURRENT_TIMESTAMP
+                )
+        ) m ON TRUE
+
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(*) AS total_cases,
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'NOUVELLE'
+                ) AS new_cases,
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'EN_COURS'
+                ) AS in_progress_cases,
+                COUNT(*) FILTER (
+                    WHERE d.statut = 'TRAITEE'
+                ) AS treated_cases,
+                COUNT(*) FILTER (
+                    WHERE d.priorite = 'URGENTE'
+                        AND d.statut IN ('NOUVELLE', 'EN_COURS')
+                ) AS urgent_cases
+            FROM demandes d
+            INNER JOIN tenants demande_tenant
+                ON demande_tenant.id = d.tenant_id
+            WHERE d.organisation_id = u.organisation_id
+                AND d.destination_unit_id = u.id
+                AND demande_tenant.code = $2
+        ) cases ON TRUE
+
+        LEFT JOIN LATERAL (
+            SELECT ARRAY_AGG(c.code::text ORDER BY c.code) AS codes
+            FROM organisation_unit_capabilities uc
+            INNER JOIN capabilities c
+                ON c.id = uc.capability_id
+            WHERE uc.organisation_unit_id = u.id
+                AND uc.actif = TRUE
+                AND c.actif = TRUE
+        ) capabilities ON TRUE
+
+        WHERE
+            u.organisation_id = $1
+            AND t.code = $2
+            AND u.actif = TRUE
+
+        ORDER BY
+            u.parent_unit_id NULLS FIRST,
+            u.id
+        `,
+        [Number(organisationId), tenantCode]
+    );
+
+    return resultat.rows;
+}
+
+
+async function listerDemandesWorkspaceUnitDatabase(
+    organisationId,
+    tenantCode,
+    unitId,
+    includeUnassigned = false,
+    statut = null
+) {
+    const resultat = await executerRequete(
+        `
+        SELECT
+            d.id,
+            d.categorie,
+            d.objet,
+            d.description,
+            d.statut,
+            d.priorite,
+            d.canal,
+            d.date_creation,
+            d.date_modification,
+            d.destination_unit_id,
+
+            destination.code AS destination_code,
+            destination.nom AS destination_nom,
+
+            citoyen.id AS personne_id,
+            citoyen.prenom,
+            citoyen.nom,
+
+            pays.nom AS pays,
+            territoire.nom AS territoire,
+
+            agent.id AS assignee_id,
+            agent.prenom AS assignee_prenom,
+            agent.nom AS assignee_nom,
+
+            o.nom AS organisation
+
+        FROM demandes d
+
+        INNER JOIN tenants t
+            ON t.id = d.tenant_id
+
+        INNER JOIN organisations o
+            ON o.id = d.organisation_id
+            AND o.tenant_id = t.id
+
+        INNER JOIN personnes citoyen
+            ON citoyen.id = d.personne_id
+
+        LEFT JOIN countries pays
+            ON pays.id = citoyen.residence_country_id
+
+        LEFT JOIN territories territoire
+            ON territoire.id = citoyen.residence_territory_id
+
+        LEFT JOIN personnes agent
+            ON agent.id = d.assignee_a
+
+        LEFT JOIN organisation_units destination
+            ON destination.id = d.destination_unit_id
+            AND destination.organisation_id = d.organisation_id
+
+        WHERE
+            d.organisation_id = $1
+            AND t.code = $2
+            AND (
+                d.destination_unit_id = $3
+                OR (
+                    $4::boolean = TRUE
+                    AND d.destination_unit_id IS NULL
+                    AND d.statut = 'NOUVELLE'
+                )
+            )
+            AND (
+                $5::text IS NULL
+                OR d.statut = $5::text
+            )
+
+        ORDER BY
+            CASE d.priorite
+                WHEN 'URGENTE' THEN 1
+                WHEN 'IMPORTANTE' THEN 2
+                ELSE 3
+            END,
+            d.date_creation ASC
+        `,
+        [
+            Number(organisationId),
+            tenantCode,
+            Number(unitId),
+            includeUnassigned === true,
+            statut || null
+        ]
+    );
+
+    return resultat.rows;
+}
+
+
+async function orienterDemandeWorkspaceUnitDatabase(
+    demandeId,
+    organisationId,
+    tenantCode,
+    sourceUnitId,
+    destinationUnitId,
+    motif,
+    orienteePar
+) {
+    const client = await obtenirClientDatabase();
+
+    try {
+        await client.query("BEGIN");
+
+        const demandeResult = await client.query(
+            `
+            SELECT
+                d.id,
+                d.destination_unit_id,
+                d.statut,
+                d.tenant_id
+            FROM demandes d
+            INNER JOIN organisations o
+                ON o.id = d.organisation_id
+                AND o.tenant_id = d.tenant_id
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                d.id = $1
+                AND d.organisation_id = $2
+                AND t.code = $3
+            FOR UPDATE
+            `,
+            [
+                Number(demandeId),
+                Number(organisationId),
+                tenantCode
+            ]
+        );
+
+        if (demandeResult.rowCount === 0) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "DEMANDE_INTROUVABLE" };
+        }
+
+        const demande = demandeResult.rows[0];
+
+        if (!["NOUVELLE", "EN_COURS"].includes(demande.statut)) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "DOSSIER_NON_ORIENTABLE" };
+        }
+
+        const sourceResult = await client.query(
+            `
+            SELECT
+                u.id,
+                u.nom,
+                EXISTS (
+                    SELECT 1
+                    FROM organisation_unit_capabilities uc
+                    INNER JOIN capabilities c
+                        ON c.id = uc.capability_id
+                    WHERE uc.organisation_unit_id = u.id
+                        AND uc.actif = TRUE
+                        AND c.actif = TRUE
+                        AND c.code = 'RECEIVE_INCOMING'
+                ) AS peut_recevoir_non_oriente,
+                COALESCE((
+                    SELECT uc.configuration
+                    FROM organisation_unit_capabilities uc
+                    INNER JOIN capabilities c
+                        ON c.id = uc.capability_id
+                    WHERE uc.organisation_unit_id = u.id
+                        AND uc.actif = TRUE
+                        AND c.actif = TRUE
+                        AND c.code = 'ROUTE_CASES'
+                    LIMIT 1
+                ), '{}'::jsonb) AS routing_configuration
+            FROM organisation_units u
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+            LIMIT 1
+            `,
+            [
+                Number(sourceUnitId),
+                Number(organisationId),
+                tenantCode
+            ]
+        );
+
+        if (sourceResult.rowCount === 0) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "UNITE_SOURCE_INTROUVABLE" };
+        }
+
+        const source = sourceResult.rows[0];
+        const allowedDestinationUnitIds =
+            source.routing_configuration
+            && source.routing_configuration.allowedDestinationUnitIds;
+
+        if (
+            Array.isArray(allowedDestinationUnitIds)
+            && !allowedDestinationUnitIds.map(Number).includes(Number(destinationUnitId))
+        ) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "DESTINATION_NON_AUTORISEE" };
+        }
+
+        if (
+            demande.destination_unit_id !== null
+            && Number(demande.destination_unit_id) !== Number(sourceUnitId)
+        ) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "DOSSIER_HORS_UNITE_SOURCE" };
+        }
+
+        if (
+            demande.destination_unit_id === null
+            && !source.peut_recevoir_non_oriente
+        ) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "UNITE_SOURCE_NON_HABILITEE_A_RECEVOIR" };
+        }
+
+        const destinationResult = await client.query(
+            `
+            SELECT
+                u.id,
+                u.code,
+                u.nom,
+                u.type
+            FROM organisation_units u
+            INNER JOIN organisations o
+                ON o.id = u.organisation_id
+            INNER JOIN tenants t
+                ON t.id = o.tenant_id
+            WHERE
+                u.id = $1
+                AND u.organisation_id = $2
+                AND t.code = $3
+                AND u.actif = TRUE
+                AND u.id <> $4
+                AND EXISTS (
+                    SELECT 1
+                    FROM organisation_unit_capabilities uc
+                    INNER JOIN capabilities c
+                        ON c.id = uc.capability_id
+                    WHERE uc.organisation_unit_id = u.id
+                        AND uc.actif = TRUE
+                        AND c.actif = TRUE
+                        AND c.code IN (
+                            'RECEIVE_INCOMING',
+                            'TAKE_CASES',
+                            'PROCESS_CASES',
+                            'RESPOND_CASES'
+                        )
+                )
+            LIMIT 1
+            `,
+            [
+                Number(destinationUnitId),
+                Number(organisationId),
+                tenantCode,
+                Number(sourceUnitId)
+            ]
+        );
+
+        if (destinationResult.rowCount === 0) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "DESTINATION_INVALIDE" };
+        }
+
+        const updateResult = await client.query(
+            `
+            UPDATE demandes
+            SET
+                destination_unit_id = $1,
+                assignee_a = NULL,
+                statut = CASE
+                    WHEN statut = 'EN_COURS' THEN 'NOUVELLE'
+                    ELSE statut
+                END,
+                orientee_par = $2,
+                motif_orientation = $3,
+                date_orientation = CURRENT_TIMESTAMP,
+                date_modification = CURRENT_TIMESTAMP
+            WHERE
+                id = $4
+                AND organisation_id = $5
+            RETURNING
+                id,
+                objet,
+                statut,
+                priorite,
+                destination_unit_id,
+                orientee_par,
+                motif_orientation,
+                date_orientation
+            `,
+            [
+                Number(destinationUnitId),
+                Number(orienteePar),
+                motif ? String(motif).trim() : null,
+                Number(demandeId),
+                Number(organisationId)
+            ]
+        );
+
+        await client.query(
+            `
+            INSERT INTO demande_history (
+                tenant_id,
+                demande_id,
+                auteur_personne_id,
+                ancien_statut,
+                nouveau_statut,
+                action,
+                commentaire
+            )
+            VALUES ($1, $2, $3, $4, $5, 'DOSSIER_REORIENTE', $6)
+            `,
+            [
+                demande.tenant_id,
+                Number(demandeId),
+                Number(orienteePar),
+                demande.statut,
+                updateResult.rows[0].statut,
+                `Dossier réorienté vers l unité ${destinationResult.rows[0].nom}.`
+                    + (motif ? ` Motif : ${String(motif).trim()}` : "")
+            ]
+        );
+
+        await client.query(
+            `
+            INSERT INTO demande_orientations (
+                demande_id,
+                ancienne_unit_id,
+                nouvelle_unit_id,
+                orientee_par,
+                motif
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            `,
+            [
+                Number(demandeId),
+                demande.destination_unit_id,
+                Number(destinationUnitId),
+                Number(orienteePar),
+                motif ? String(motif).trim() : null
+            ]
+        );
+
+        await client.query("COMMIT");
+
+        return {
+            succes: true,
+            demande: updateResult.rows[0],
+            destination: destinationResult.rows[0]
+        };
+    } catch (erreur) {
+        await client.query("ROLLBACK");
+        throw erreur;
+    } finally {
+        client.release();
+    }
+}
+
+
 module.exports = {
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
@@ -8716,6 +10035,7 @@ module.exports = {
     desactiverCapabilityOrganisationUnitDatabase,
 
     // Administration générique des rôles et permissions
+    roleOrganisationEstProtegeDatabase,
     listerRolesOrganisationDatabase,
     creerRoleOrganisationDatabase,
     modifierRoleOrganisationDatabase,
@@ -8727,6 +10047,20 @@ module.exports = {
     modifierPermissionRoleOrganisationDatabase,
     desactiverPermissionRoleOrganisationDatabase,
 
+    // Calcul générique des permissions effectives
+    obtenirPermissionsEffectivesDatabase,
+
+    // Dashboards et délégations d'accès
+    obtenirDashboardStrategiqueConsulatDatabase,
+    listerDelegationsDashboardOperationnelDatabase,
+    accorderAccesDashboardOperationnelDatabase,
+    revoquerAccesDashboardOperationnelDatabase,
+
     // Réseau / écosystème
-    obtenirEcosystemeOrganisationDatabase
+    obtenirEcosystemeOrganisationDatabase,
+
+    // Unit Workspace Engine
+    obtenirUnitesWorkspaceOverviewDatabase,
+    listerDemandesWorkspaceUnitDatabase,
+    orienterDemandeWorkspaceUnitDatabase
 };

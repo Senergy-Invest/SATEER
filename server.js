@@ -1,3 +1,4 @@
+
 const express = require("express");
 const path = require("path");
 
@@ -13,7 +14,6 @@ const {
     listerDemandesOrganisationDatabase,
     prendreEnChargeDemandeDatabase,
     repondreDemandeDatabase,
-    orienterDemandeDatabase,
 
     obtenirStructureOrganisationDatabase,
 
@@ -43,9 +43,18 @@ const {
     ajouterPermissionRoleOrganisationDatabase,
     modifierPermissionRoleOrganisationDatabase,
     desactiverPermissionRoleOrganisationDatabase,
+    roleOrganisationEstProtegeDatabase,
 
     obtenirDashboardConsulatDatabase,
-    obtenirEcosystemeOrganisationDatabase
+    obtenirDashboardStrategiqueConsulatDatabase,
+    listerDelegationsDashboardOperationnelDatabase,
+    accorderAccesDashboardOperationnelDatabase,
+    revoquerAccesDashboardOperationnelDatabase,
+    obtenirEcosystemeOrganisationDatabase,
+    obtenirPermissionsEffectivesDatabase,
+    obtenirUnitesWorkspaceOverviewDatabase,
+    listerDemandesWorkspaceUnitDatabase,
+    orienterDemandeWorkspaceUnitDatabase
 } = require("./services-database");
 
 const {
@@ -56,6 +65,20 @@ const {
     controlerQuestionAssistant
 } = require("./assistant-guard");
 
+// =========================================================
+// AUTHENTIFICATION SATEER
+// =========================================================
+
+const {
+    authRouter,
+    exigerSession
+} = require("./auth-http");
+
+
+// AUTORISATIONS GENERIQUES SATEER
+const {
+    exigerPermission
+} = require("./auth-authorization");
 
 const app = express();
 
@@ -66,6 +89,14 @@ app.use(
     express.json()
 );
 
+// =========================================================
+// ROUTES D'AUTHENTIFICATION
+// =========================================================
+
+app.use(
+    "/api/auth",
+    authRouter
+);
 
 app.use(
     express.static(
@@ -76,6 +107,237 @@ app.use(
     )
 );
 
+// =========================================================
+// CONTROLES D'AUTORISATION DU CIRCUIT METIER
+// =========================================================
+// Les décisions utilisent exclusivement req.auth.personneId.
+// Les identifiants envoyes par le navigateur ne definissent
+// jamais l'identite de l'acteur.
+
+async function chargerDroitsActeur(req, organisationId, tenantCode) {
+    if (!req.auth || !req.auth.personneId) {
+        return { succes: false, code: "SESSION_REQUISE" };
+    }
+
+    const organisation = Number(organisationId);
+    if (!Number.isSafeInteger(organisation) || organisation <= 0
+        || typeof tenantCode !== "string" || !tenantCode.trim()) {
+        return { succes: false, code: "CONTEXTE_AUTORISATION_INVALIDE" };
+    }
+
+    return obtenirPermissionsEffectivesDatabase(
+        req.auth.personneId,
+        organisation,
+        tenantCode
+    );
+}
+
+function acteurPossedePermission(droits, permissionCode, uniteId = null) {
+    if (!droits || !droits.succes) return false;
+    if ((droits.permissionsOrganisation || []).includes(permissionCode)) return true;
+    if (uniteId === null || uniteId === undefined) return false;
+    const unite = (droits.permissionsParUnite || []).find(
+        item => Number(item.uniteId) === Number(uniteId)
+    );
+    return Boolean(unite && (unite.permissions || []).includes(permissionCode));
+}
+
+function unitesAvecPermission(droits, permissionCodes) {
+    if (!droits || !droits.succes) return [];
+    return (droits.permissionsParUnite || [])
+        .filter(item => (item.permissions || []).some(code => permissionCodes.includes(code)))
+        .map(item => Number(item.uniteId));
+}
+
+
+function capabilityActive(capabilities, code) {
+    return (capabilities || []).some(
+        capability => capability.code === code && capability.actif !== false
+    );
+}
+
+async function chargerContexteWorkspaceUnite(
+    req,
+    organisationId,
+    unitId,
+    tenantCode
+) {
+    const droits = await chargerDroitsActeur(
+        req,
+        organisationId,
+        tenantCode
+    );
+
+    if (!droits.succes) {
+        return { succes: false, code: droits.code || "ACCES_REFUSE" };
+    }
+
+    const permissionsUnite = (droits.permissionsParUnite || []).find(
+        item => Number(item.uniteId) === Number(unitId)
+    );
+
+    const permissionsEffectives = new Set([
+        ...(droits.permissionsOrganisation || []),
+        ...((permissionsUnite && permissionsUnite.permissions) || [])
+    ]);
+
+    const peutAcceder =
+        permissionsEffectives.has("VIEW_UNIT")
+        || permissionsEffectives.has("VIEW_INCOMING")
+        || permissionsEffectives.has("VIEW_CASE")
+        || permissionsEffectives.has("TAKE_CASE")
+        || permissionsEffectives.has("PROCESS_CASE")
+        || permissionsEffectives.has("RESPOND_CASE")
+        || permissionsEffectives.has("ROUTE_CASE")
+        || permissionsEffectives.has("VIEW_SUPERVISED_UNITS")
+        || permissionsEffectives.has("VIEW_ORGANISATION");
+
+    if (!peutAcceder) {
+        return { succes: false, code: "ACCES_UNITE_REFUSE" };
+    }
+
+    const resultatCapacites =
+        await listerCapabilitiesOrganisationUnitDatabase(
+            Number(organisationId),
+            Number(unitId),
+            tenantCode
+        );
+
+    if (!resultatCapacites.succes) {
+        return { succes: false, code: resultatCapacites.code || "UNITE_INTROUVABLE" };
+    }
+
+    const capabilities = resultatCapacites.capabilities || [];
+    const permission = code => permissionsEffectives.has(code);
+
+    const features = {
+        canViewInbox:
+            capabilityActive(capabilities, "VIEW_INBOX")
+            && (permission("VIEW_INCOMING") || permission("VIEW_CASE")),
+
+        canReceiveIncoming:
+            capabilityActive(capabilities, "RECEIVE_INCOMING")
+            && permission("VIEW_INCOMING"),
+
+        canRouteCases:
+            capabilityActive(capabilities, "ROUTE_CASES")
+            && permission("ROUTE_CASE"),
+
+        canTakeCases:
+            capabilityActive(capabilities, "TAKE_CASES")
+            && permission("TAKE_CASE"),
+
+        canProcessCases:
+            capabilityActive(capabilities, "PROCESS_CASES")
+            && permission("PROCESS_CASE"),
+
+        canRespondCases:
+            capabilityActive(capabilities, "RESPOND_CASES")
+            && permission("RESPOND_CASE"),
+
+        canViewMembers:
+            permission("VIEW_UNIT_MEMBERS")
+            || permission("ASSIGN_MEMBER")
+            || permission("CHANGE_MEMBER_ROLE")
+            || permission("REMOVE_MEMBER"),
+
+        canManageMembers:
+            capabilityActive(capabilities, "MANAGE_UNIT_MEMBERS")
+            && (
+                permission("ASSIGN_MEMBER")
+                || permission("CHANGE_MEMBER_ROLE")
+                || permission("REMOVE_MEMBER")
+            ),
+
+        canViewAnalytics:
+            capabilityActive(capabilities, "VIEW_UNIT_ANALYTICS")
+            && (
+                permission("VIEW_UNIT_ANALYTICS")
+                || permission("VIEW_ORGANISATION_ANALYTICS")
+            ),
+
+        canUseAi:
+            capabilityActive(capabilities, "USE_AI_ASSISTANT")
+            && permission("USE_AI_ASSISTANT"),
+
+        canManageProjects:
+            capabilityActive(capabilities, "MANAGE_PROJECTS")
+            && permission("MANAGE_PROJECTS"),
+
+        canManagePublications:
+            capabilityActive(capabilities, "MANAGE_PUBLICATIONS")
+            && permission("MANAGE_PUBLICATIONS"),
+
+        canTargetCommunication:
+            capabilityActive(capabilities, "TARGET_COMMUNICATION")
+            && permission("TARGET_COMMUNICATION"),
+
+        canSuperviseUnits:
+            capabilityActive(capabilities, "SUPERVISE_UNITS")
+            && permission("VIEW_SUPERVISED_UNITS")
+    };
+
+    features.canOpenWorkspace = true;
+    features.readOnly = !(
+        features.canRouteCases
+        || features.canTakeCases
+        || features.canProcessCases
+        || features.canRespondCases
+        || features.canManageMembers
+        || features.canManageProjects
+        || features.canManagePublications
+        || features.canTargetCommunication
+        || features.canUseAi
+    );
+
+    return {
+        succes: true,
+        droits,
+        permissions: Array.from(permissionsEffectives).sort(),
+        unite: resultatCapacites.unite,
+        capabilities,
+        features
+    };
+}
+
+
+// Les rôles institutionnels protégés ne peuvent pas être
+// modifiés par l'administration opérationnelle.
+async function exigerRoleNonProtege(req, res, next) {
+    try {
+        const organisationId = Number(req.params.organisationId);
+        const roleId = Number(req.params.roleId);
+        const tenantCode = req.body?.tenantCode || req.query?.tenant || "SN";
+
+        if (!Number.isSafeInteger(organisationId) || organisationId <= 0
+            || !Number.isSafeInteger(roleId) || roleId <= 0) {
+            return res.status(400).json({ statut: "CONTEXTE_ROLE_INVALIDE" });
+        }
+
+        const resultat = await roleOrganisationEstProtegeDatabase(
+            organisationId,
+            roleId,
+            tenantCode
+        );
+
+        if (!resultat.succes) {
+            return res.status(404).json({ statut: resultat.code });
+        }
+
+        if (resultat.protege) {
+            return res.status(403).json({
+                statut: "ROLE_INSTITUTIONNEL_PROTEGE",
+                role: resultat.role.code
+            });
+        }
+
+        return next();
+    } catch (erreur) {
+        console.error("Erreur vérification rôle protégé :", erreur);
+        return res.status(500).json({ statut: "ERREUR_CONTROLE_ROLE" });
+    }
+}
+
 
 // =========================================================
 // API - MON SATEER
@@ -83,14 +345,13 @@ app.use(
 
 app.get(
     "/api/mon-sateer/:personneId",
+    exigerSession,
     async (req, res) => {
 
         try {
 
-            const personneId =
-                Number(
-                    req.params.personneId
-                );
+            // L'identite vient de la session, jamais de l'URL.
+            const personneId = Number(req.auth.personneId);
 
 
             const tenantCode =
@@ -142,14 +403,13 @@ app.get(
 
 app.get(
     "/api/mon-consulat/:personneId",
+    exigerSession,
     async (req, res) => {
 
         try {
 
-            const personneId =
-                Number(
-                    req.params.personneId
-                );
+            // L'identite vient de la session, jamais de l'URL.
+            const personneId = Number(req.auth.personneId);
 
 
             const tenantCode =
@@ -250,12 +510,12 @@ app.get(
 
 app.post(
     "/api/ia-citoyen",
+    exigerSession,
     async (req, res) => {
 
         try {
 
             const {
-                personneId,
                 organisationId,
                 tenantCode,
                 question
@@ -263,7 +523,6 @@ app.post(
 
 
             if (
-                !personneId ||
                 !organisationId ||
                 !tenantCode ||
                 !question
@@ -280,7 +539,7 @@ app.post(
 
             const resultat =
                 await repondreAvecIACitoyen(
-                    Number(personneId),
+                    Number(req.auth.personneId),
                     Number(organisationId),
                     tenantCode,
                     question
@@ -318,12 +577,12 @@ app.post(
 
 app.post(
     "/api/assistant/message",
+    exigerSession,
     async (req, res) => {
 
         try {
 
             const {
-                personneId,
                 organisationId,
                 tenantCode,
                 useCase,
@@ -336,7 +595,6 @@ app.post(
             // =================================================
 
             if (
-                !personneId ||
                 !organisationId ||
                 !tenantCode ||
                 !useCase ||
@@ -387,9 +645,7 @@ app.post(
 
                 const resultat =
                     await repondreAvecIACitoyen(
-                        Number(
-                            personneId
-                        ),
+                        Number(req.auth.personneId),
                         Number(
                             organisationId
                         ),
@@ -447,12 +703,12 @@ app.post(
 
 app.post(
     "/api/demandes",
+    exigerSession,
     async (req, res) => {
 
         try {
 
             const {
-                personneId,
                 organisationId,
                 tenantCode,
                 categorie,
@@ -468,7 +724,6 @@ app.post(
             // =================================================
 
             if (
-                !personneId ||
                 !organisationId ||
                 !tenantCode ||
                 !categorie ||
@@ -496,9 +751,7 @@ app.post(
             const demande =
                 await creerDemandeDatabase(
 
-                    Number(
-                        personneId
-                    ),
+                    Number(req.auth.personneId),
 
                     Number(
                         organisationId
@@ -570,6 +823,7 @@ app.post(
 
 app.get(
     "/api/demandes/:demandeId",
+    exigerSession,
     async (req, res) => {
 
         try {
@@ -580,10 +834,7 @@ app.get(
                 );
 
 
-            const personneId =
-                Number(
-                    req.query.personneId
-                );
+            const personneId = Number(req.auth.personneId);
 
 
             const organisationId =
@@ -601,9 +852,8 @@ app.get(
             // =================================================
 
             if (
-                !demandeId ||
-                !personneId ||
-                !organisationId ||
+                !Number.isSafeInteger(demandeId) || demandeId <= 0 ||
+                !Number.isSafeInteger(organisationId) || organisationId <= 0 ||
                 !tenantCode
             ) {
 
@@ -746,6 +996,7 @@ app.get(
 
 app.get(
     "/api/organisations/:organisationId/structure",
+    ...exigerPermission("VIEW_ORGANISATION", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -822,6 +1073,7 @@ app.get(
 
 app.post(
     "/api/organisations/:organisationId/units",
+    ...exigerPermission("CREATE_UNIT", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -936,6 +1188,7 @@ app.post(
 
 app.patch(
     "/api/organisations/:organisationId/units/:unitId",
+    ...exigerPermission("UPDATE_UNIT", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1026,6 +1279,7 @@ app.patch(
 
 app.post(
     "/api/organisations/:organisationId/units/:unitId/move",
+    ...exigerPermission("MOVE_UNIT", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1143,6 +1397,7 @@ app.post(
 
 app.post(
     "/api/organisations/:organisationId/units/:unitId/disable",
+    ...exigerPermission("DISABLE_UNIT", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1231,6 +1486,7 @@ app.post(
 
 app.get(
     "/api/organisations/:organisationId/units/:unitId/members",
+    ...exigerPermission("VIEW_UNIT_MEMBERS", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1314,6 +1570,7 @@ app.get(
 
 app.post(
     "/api/organisations/:organisationId/units/:unitId/members",
+    ...exigerPermission("ASSIGN_MEMBER", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1437,6 +1694,7 @@ app.post(
 
 app.patch(
     "/api/organisations/:organisationId/units/:unitId/members/:relationId",
+    ...exigerPermission("CHANGE_MEMBER_ROLE", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1571,6 +1829,7 @@ app.patch(
 
 app.post(
     "/api/organisations/:organisationId/units/:unitId/members/:relationId/disable",
+    ...exigerPermission("REMOVE_MEMBER", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1647,6 +1906,7 @@ app.post(
 
 app.get(
     "/api/organisations/:organisationId/unit-capabilities",
+    ...exigerPermission("VIEW_ORGANISATION", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -1709,6 +1969,7 @@ app.get(
 
 app.get(
     "/api/organisations/:organisationId/units/:unitId/capabilities",
+    ...exigerPermission("VIEW_UNIT", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1778,6 +2039,7 @@ app.get(
 
 app.post(
     "/api/organisations/:organisationId/units/:unitId/capabilities",
+    ...exigerPermission("CONFIGURE_UNIT_CAPABILITIES", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1871,6 +2133,7 @@ app.post(
 
 app.patch(
     "/api/organisations/:organisationId/units/:unitId/capabilities/:capabilityId",
+    ...exigerPermission("CONFIGURE_UNIT_CAPABILITIES", "UNIT"),
     async (req, res) => {
 
         try {
@@ -1957,6 +2220,7 @@ app.patch(
 
 app.post(
     "/api/organisations/:organisationId/units/:unitId/capabilities/:capabilityId/disable",
+    ...exigerPermission("CONFIGURE_UNIT_CAPABILITIES", "UNIT"),
     async (req, res) => {
 
         try {
@@ -2022,6 +2286,566 @@ app.post(
     }
 );
 // =========================================================
+// SATEER CORE - UNIT WORKSPACE ENGINE
+// =========================================================
+
+// Synthèse dynamique des unités pour les dashboards institutionnels.
+app.get(
+    "/api/organisations/:organisationId/units/overview",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const tenantCode = String(req.query.tenant || "").trim();
+
+            if (
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !tenantCode
+            ) {
+                return res.status(400).json({
+                    statut: "CONTEXTE_ORGANISATION_INVALIDE"
+                });
+            }
+
+            const droits = await chargerDroitsActeur(
+                req,
+                organisationId,
+                tenantCode
+            );
+
+            if (!droits.succes) {
+                return res.status(403).json({ statut: "ACCES_REFUSE" });
+            }
+
+            const peutVoirToutes =
+                acteurPossedePermission(droits, "VIEW_ORGANISATION")
+                || acteurPossedePermission(droits, "VIEW_SUPERVISED_UNITS");
+
+            const unites = await obtenirUnitesWorkspaceOverviewDatabase(
+                organisationId,
+                tenantCode
+            );
+
+            const visibles = (unites || [])
+                .filter(unite =>
+                    peutVoirToutes
+                    || acteurPossedePermission(droits, "VIEW_UNIT", unite.id)
+                    || acteurPossedePermission(droits, "VIEW_INCOMING", unite.id)
+                    || acteurPossedePermission(droits, "VIEW_CASE", unite.id)
+                )
+                .map(unite => {
+                    const canViewMembers =
+                        acteurPossedePermission(droits, "VIEW_UNIT_MEMBERS", unite.id)
+                        || acteurPossedePermission(droits, "ASSIGN_MEMBER", unite.id)
+                        || acteurPossedePermission(droits, "CHANGE_MEMBER_ROLE", unite.id)
+                        || acteurPossedePermission(droits, "REMOVE_MEMBER", unite.id);
+
+                    const canViewAnalytics =
+                        acteurPossedePermission(droits, "VIEW_UNIT_ANALYTICS", unite.id)
+                        || acteurPossedePermission(droits, "VIEW_ORGANISATION_ANALYTICS");
+
+                    return {
+                        id: unite.id,
+                        organisation_id: unite.organisation_id,
+                        parent_unit_id: unite.parent_unit_id,
+                        code: unite.code,
+                        nom: unite.nom,
+                        type: unite.type,
+                        capabilities: unite.capabilities || [],
+                        members_count: canViewMembers ? unite.members_count : null,
+                        total_cases: canViewAnalytics ? unite.total_cases : null,
+                        new_cases: canViewAnalytics ? unite.new_cases : null,
+                        in_progress_cases: canViewAnalytics ? unite.in_progress_cases : null,
+                        treated_cases: canViewAnalytics ? unite.treated_cases : null,
+                        urgent_cases: canViewAnalytics ? unite.urgent_cases : null,
+                        canViewMembers,
+                        canViewAnalytics,
+                        canOpenWorkspace:
+                            peutVoirToutes
+                            || acteurPossedePermission(droits, "VIEW_UNIT", unite.id)
+                            || acteurPossedePermission(droits, "VIEW_INCOMING", unite.id)
+                            || acteurPossedePermission(droits, "VIEW_CASE", unite.id)
+                    };
+                });
+
+            return res.json({
+                statut: "UNITES_WORKSPACE_CHARGEES",
+                organisationId,
+                tenantCode,
+                unites: visibles
+            });
+        } catch (erreur) {
+            console.error("Erreur synthèse unités Workspace :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_SYNTHESE_UNITES"
+            });
+        }
+    }
+);
+
+
+// Contexte fonctionnel d'une unité : capacités + permissions + membres + charge.
+app.get(
+    "/api/organisations/:organisationId/units/:unitId/workspace",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const unitId = Number(req.params.unitId);
+            const tenantCode = String(req.query.tenant || "").trim();
+
+            if (
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !tenantCode
+            ) {
+                return res.status(400).json({
+                    statut: "CONTEXTE_WORKSPACE_INVALIDE"
+                });
+            }
+
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes) {
+                const status = contexte.code === "UNITE_INTROUVABLE" ? 404 : 403;
+                return res.status(status).json({
+                    statut: contexte.code || "ACCES_REFUSE"
+                });
+            }
+
+            const synthese = await obtenirUnitesWorkspaceOverviewDatabase(
+                organisationId,
+                tenantCode
+            );
+
+            const statsBrutes = (synthese || []).find(
+                unite => Number(unite.id) === unitId
+            ) || null;
+
+            const stats = statsBrutes
+                ? {
+                    members_count: contexte.features.canViewMembers
+                        ? statsBrutes.members_count
+                        : null,
+                    total_cases: contexte.features.canViewAnalytics
+                        ? statsBrutes.total_cases
+                        : null,
+                    new_cases: contexte.features.canViewAnalytics
+                        ? statsBrutes.new_cases
+                        : null,
+                    in_progress_cases: contexte.features.canViewAnalytics
+                        ? statsBrutes.in_progress_cases
+                        : null,
+                    treated_cases: contexte.features.canViewAnalytics
+                        ? statsBrutes.treated_cases
+                        : null,
+                    urgent_cases: contexte.features.canViewAnalytics
+                        ? statsBrutes.urgent_cases
+                        : null
+                }
+                : null;
+
+            let membres = [];
+            let currentMembership = null;
+
+            // L'utilisateur peut toujours connaître son propre rôle dans l'unité.
+            // La liste complète des membres reste réservée aux permissions dédiées.
+            const resultatMembres = await listerMembresOrganisationUnitDatabase(
+                organisationId,
+                unitId,
+                tenantCode
+            );
+
+            if (resultatMembres.succes) {
+                const membresUnite = resultatMembres.membres || [];
+                const membreConnecte = membresUnite.find(
+                    membre => Number(membre.personne_id) === Number(req.auth.personneId)
+                ) || null;
+
+                const membrePublic = membre => ({
+                    personne_id: membre.personne_id,
+                    prenom: membre.prenom,
+                    nom: membre.nom,
+                    role_code: membre.role_code,
+                    role_nom: membre.role_nom,
+                    role_legacy: membre.role_legacy,
+                    principal: membre.principal
+                });
+
+                currentMembership = membreConnecte
+                    ? membrePublic(membreConnecte)
+                    : null;
+
+                if (contexte.features.canViewMembers) {
+                    membres = membresUnite.map(membrePublic);
+                }
+            }
+
+            let routingTargets = [];
+            if (contexte.features.canRouteCases) {
+                const routeCapability = contexte.capabilities.find(
+                    capability => capability.code === "ROUTE_CASES"
+                );
+                const allowedIds = routeCapability?.configuration
+                    && Array.isArray(routeCapability.configuration.allowedDestinationUnitIds)
+                    ? new Set(routeCapability.configuration.allowedDestinationUnitIds.map(Number))
+                    : null;
+
+                routingTargets = (synthese || [])
+                    .filter(unite =>
+                        Number(unite.id) !== unitId
+                        && (!allowedIds || allowedIds.has(Number(unite.id)))
+                        && (unite.capabilities || []).some(code =>
+                            [
+                                "RECEIVE_INCOMING",
+                                "TAKE_CASES",
+                                "PROCESS_CASES",
+                                "RESPOND_CASES"
+                            ].includes(code)
+                        )
+                    )
+                    .map(unite => ({
+                        id: unite.id,
+                        code: unite.code,
+                        nom: unite.nom,
+                        type: unite.type
+                    }));
+            }
+
+            return res.json({
+                statut: "WORKSPACE_UNITE_CHARGE",
+                organisationId,
+                tenantCode,
+                unit: contexte.unite,
+                capabilities: contexte.capabilities.map(capability => ({
+                    id: capability.capability_id,
+                    code: capability.code,
+                    nom: capability.nom,
+                    description: capability.description,
+                    scope: capability.scope,
+                    actif: capability.actif
+                })),
+                permissions: contexte.permissions,
+                features: contexte.features,
+                stats,
+                members: membres,
+                currentMembership,
+                routingTargets,
+                currentUser: {
+                    id: req.auth.personneId,
+                    prenom: req.auth.prenom,
+                    nom: req.auth.nom
+                }
+            });
+        } catch (erreur) {
+            console.error("Erreur chargement Unit Workspace :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_WORKSPACE_UNITE"
+            });
+        }
+    }
+);
+
+
+// Boîte de réception générique d'une unité.
+app.get(
+    "/api/organisations/:organisationId/units/:unitId/inbox",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const unitId = Number(req.params.unitId);
+            const tenantCode = String(req.query.tenant || "").trim();
+            const statut = req.query.statut
+                ? String(req.query.statut).trim()
+                : null;
+
+            if (
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !tenantCode
+            ) {
+                return res.status(400).json({
+                    statut: "CONTEXTE_INBOX_INVALIDE"
+                });
+            }
+
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes) {
+                return res.status(403).json({
+                    statut: contexte.code || "ACCES_REFUSE"
+                });
+            }
+
+            if (!contexte.features.canViewInbox) {
+                return res.status(403).json({
+                    statut: "CAPACITE_OU_PERMISSION_INBOX_REQUISE"
+                });
+            }
+
+            const demandes = await listerDemandesWorkspaceUnitDatabase(
+                organisationId,
+                tenantCode,
+                unitId,
+                contexte.features.canReceiveIncoming,
+                statut
+            );
+
+            return res.json({
+                statut: "INBOX_WORKSPACE_CHARGEE",
+                unitId,
+                demandes: demandes || []
+            });
+        } catch (erreur) {
+            console.error("Erreur inbox Workspace :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_INBOX_WORKSPACE"
+            });
+        }
+    }
+);
+
+
+// Orienter ou réorienter un dossier depuis le contexte de l'unité.
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/route",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const unitId = Number(req.params.unitId);
+            const demandeId = Number(req.params.demandeId);
+            const tenantCode = String(req.body?.tenantCode || "").trim();
+            const destinationUnitId = Number(req.body?.destinationUnitId);
+            const motif = req.body?.motif == null ? null : String(req.body.motif).trim();
+
+            if (
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !Number.isSafeInteger(demandeId) || demandeId <= 0
+                || !Number.isSafeInteger(destinationUnitId) || destinationUnitId <= 0
+                || !tenantCode
+                || (motif && motif.length > 2000)
+            ) {
+                return res.status(400).json({
+                    statut: "PARAMETRES_ORIENTATION_INVALIDES"
+                });
+            }
+
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes) {
+                return res.status(403).json({
+                    statut: contexte.code || "ACCES_REFUSE"
+                });
+            }
+
+            if (!contexte.features.canRouteCases) {
+                return res.status(403).json({
+                    statut: "CAPACITE_OU_PERMISSION_ROUTAGE_REQUISE"
+                });
+            }
+
+            const resultat = await orienterDemandeWorkspaceUnitDatabase(
+                demandeId,
+                organisationId,
+                tenantCode,
+                unitId,
+                destinationUnitId,
+                motif,
+                Number(req.auth.personneId)
+            );
+
+            if (!resultat.succes) {
+                const status = resultat.code === "DEMANDE_INTROUVABLE"
+                    || resultat.code === "UNITE_SOURCE_INTROUVABLE"
+                    ? 404
+                    : (resultat.code === "DESTINATION_INVALIDE"
+                        ? 400
+                        : (resultat.code === "DESTINATION_NON_AUTORISEE" ? 403 : 409));
+
+                return res.status(status).json({
+                    statut: resultat.code
+                });
+            }
+
+            return res.json({
+                statut: "DOSSIER_ORIENTE",
+                demande: resultat.demande,
+                destination: resultat.destination
+            });
+        } catch (erreur) {
+            console.error("Erreur routage Workspace :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_ROUTAGE_WORKSPACE"
+            });
+        }
+    }
+);
+
+
+// Prendre en charge un dossier dans son unité de destination.
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/take",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const unitId = Number(req.params.unitId);
+            const demandeId = Number(req.params.demandeId);
+            const tenantCode = String(req.body?.tenantCode || "").trim();
+
+            if (
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !Number.isSafeInteger(demandeId) || demandeId <= 0
+                || !tenantCode
+            ) {
+                return res.status(400).json({
+                    statut: "PARAMETRES_PRISE_EN_CHARGE_INVALIDES"
+                });
+            }
+
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes) {
+                return res.status(403).json({
+                    statut: contexte.code || "ACCES_REFUSE"
+                });
+            }
+
+            if (!contexte.features.canTakeCases) {
+                return res.status(403).json({
+                    statut: "CAPACITE_OU_PERMISSION_PRISE_EN_CHARGE_REQUISE"
+                });
+            }
+
+            const resultat = await prendreEnChargeDemandeDatabase(
+                demandeId,
+                Number(req.auth.personneId),
+                organisationId,
+                tenantCode,
+                unitId
+            );
+
+            if (!resultat) {
+                return res.status(409).json({
+                    statut: "PRISE_EN_CHARGE_IMPOSSIBLE"
+                });
+            }
+
+            return res.json({
+                statut: "DOSSIER_PRISE_EN_CHARGE",
+                demande: resultat
+            });
+        } catch (erreur) {
+            console.error("Erreur prise en charge Workspace :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_PRISE_EN_CHARGE_WORKSPACE"
+            });
+        }
+    }
+);
+
+
+// Répondre à un dossier depuis son unité de destination.
+app.post(
+    "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/respond",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const unitId = Number(req.params.unitId);
+            const demandeId = Number(req.params.demandeId);
+            const tenantCode = String(req.body?.tenantCode || "").trim();
+            const contenu = typeof req.body?.contenu === "string"
+                ? req.body.contenu.trim()
+                : "";
+
+            if (
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !Number.isSafeInteger(demandeId) || demandeId <= 0
+                || !tenantCode
+                || !contenu
+                || contenu.length > 20000
+            ) {
+                return res.status(400).json({
+                    statut: "PARAMETRES_REPONSE_INVALIDES"
+                });
+            }
+
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes) {
+                return res.status(403).json({
+                    statut: contexte.code || "ACCES_REFUSE"
+                });
+            }
+
+            if (!contexte.features.canRespondCases) {
+                return res.status(403).json({
+                    statut: "CAPACITE_OU_PERMISSION_REPONSE_REQUISE"
+                });
+            }
+
+            const resultat = await repondreDemandeDatabase(
+                demandeId,
+                Number(req.auth.personneId),
+                organisationId,
+                tenantCode,
+                contenu,
+                unitId
+            );
+
+            if (!resultat) {
+                return res.status(409).json({
+                    statut: "REPONSE_IMPOSSIBLE",
+                    erreur: "Le dossier doit être en cours dans cette unité."
+                });
+            }
+
+            return res.json({
+                statut: "REPONSE_ENVOYEE",
+                resultat
+            });
+        } catch (erreur) {
+            console.error("Erreur réponse Workspace :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_REPONSE_WORKSPACE"
+            });
+        }
+    }
+);
+
+
+// =========================================================
 // API - ADMINISTRATION GÉNÉRIQUE DES RÔLES ET PERMISSIONS
 // =========================================================
 
@@ -2032,6 +2856,7 @@ app.post(
 
 app.get(
     "/api/organisations/:organisationId/roles",
+    ...exigerPermission("VIEW_ORGANISATION", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -2083,6 +2908,7 @@ app.get(
 
 app.post(
     "/api/organisations/:organisationId/roles",
+    ...exigerPermission("MANAGE_ROLES", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -2157,6 +2983,8 @@ app.post(
 
 app.patch(
     "/api/organisations/:organisationId/roles/:roleId",
+    ...exigerPermission("MANAGE_ROLES", "ORGANISATION"),
+    exigerRoleNonProtege,
     async (req, res) => {
 
         try {
@@ -2231,6 +3059,8 @@ app.patch(
 
 app.post(
     "/api/organisations/:organisationId/roles/:roleId/disable",
+    ...exigerPermission("MANAGE_ROLES", "ORGANISATION"),
+    exigerRoleNonProtege,
     async (req, res) => {
 
         try {
@@ -2316,6 +3146,8 @@ app.post(
 
 app.post(
     "/api/organisations/:organisationId/roles/:roleId/activate",
+    ...exigerPermission("MANAGE_ROLES", "ORGANISATION"),
+    exigerRoleNonProtege,
     async (req, res) => {
 
         try {
@@ -2384,6 +3216,7 @@ app.post(
 
 app.get(
     "/api/permissions",
+    exigerSession,
     async (req, res) => {
 
         try {
@@ -2425,6 +3258,7 @@ app.get(
 
 app.get(
     "/api/organisations/:organisationId/roles/:roleId/permissions",
+    ...exigerPermission("VIEW_ORGANISATION", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -2494,6 +3328,8 @@ app.get(
 
 app.post(
     "/api/organisations/:organisationId/roles/:roleId/permissions",
+    ...exigerPermission("MANAGE_ROLE_PERMISSIONS", "ORGANISATION"),
+    exigerRoleNonProtege,
     async (req, res) => {
 
         try {
@@ -2583,6 +3419,8 @@ app.post(
 
 app.patch(
     "/api/organisations/:organisationId/roles/:roleId/permissions/:permissionId",
+    ...exigerPermission("MANAGE_ROLE_PERMISSIONS", "ORGANISATION"),
+    exigerRoleNonProtege,
     async (req, res) => {
 
         try {
@@ -2669,6 +3507,8 @@ app.patch(
 
 app.post(
     "/api/organisations/:organisationId/roles/:roleId/permissions/:permissionId/disable",
+    ...exigerPermission("MANAGE_ROLE_PERMISSIONS", "ORGANISATION"),
+    exigerRoleNonProtege,
     async (req, res) => {
 
         try {
@@ -2734,11 +3574,188 @@ app.post(
     }
 );
 // =========================================================
+// ACCÈS AU DASHBOARD OPÉRATIONNEL
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/dashboard-operationnel/acces",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const tenantCode = req.query.tenant || "SN";
+            const droits = await chargerDroitsActeur(req, organisationId, tenantCode);
+
+            if (!droits.succes) {
+                return res.status(403).json({ statut: "ACCES_REFUSE" });
+            }
+
+            const rolePermissions = droits.permissionsOrganisationRole || [];
+            const delegatedPermissions = droits.permissionsDelegueesOrganisation || [];
+
+            return res.json({
+                statut: "ACCES_DASHBOARD_OPERATIONNEL",
+                peutConsulter: acteurPossedePermission(droits, "VIEW_OPERATIONAL_DASHBOARD"),
+                peutGererAcces: acteurPossedePermission(droits, "MANAGE_OPERATIONAL_DASHBOARD_ACCESS"),
+                sourceAcces: rolePermissions.includes("VIEW_OPERATIONAL_DASHBOARD")
+                    ? "ROLE"
+                    : (delegatedPermissions.includes("VIEW_OPERATIONAL_DASHBOARD") ? "DELEGATION" : "AUCUN")
+            });
+        } catch (erreur) {
+            console.error("Erreur vérification accès dashboard opérationnel :", erreur);
+            return res.status(500).json({ statut: "ERREUR_ACCES_DASHBOARD" });
+        }
+    }
+);
+
+
+// =========================================================
+// ESPACES INSTITUTIONNELS DISPONIBLES POUR LA SESSION
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/dashboards/acces",
+    exigerSession,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const tenantCode = req.query.tenant || "SN";
+            const droits = await chargerDroitsActeur(req, organisationId, tenantCode);
+
+            if (!droits.succes) {
+                return res.status(403).json({ statut: "ACCES_REFUSE" });
+            }
+
+            return res.json({
+                statut: "ESPACES_INSTITUTIONNELS_CHARGES",
+                dashboards: {
+                    strategique: acteurPossedePermission(droits, "VIEW_STRATEGIC_DASHBOARD"),
+                    operationnel: acteurPossedePermission(droits, "VIEW_OPERATIONAL_DASHBOARD"),
+                    gererAccesOperationnel: acteurPossedePermission(droits, "MANAGE_OPERATIONAL_DASHBOARD_ACCESS")
+                }
+            });
+        } catch (erreur) {
+            console.error("Erreur chargement espaces institutionnels :", erreur);
+            return res.status(500).json({ statut: "ERREUR_ESPACES_INSTITUTIONNELS" });
+        }
+    }
+);
+
+
+// =========================================================
+// GESTION DES DÉLÉGATIONS DE CONSULTATION OPÉRATIONNELLE
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/dashboard-operationnel/delegations",
+    ...exigerPermission("MANAGE_OPERATIONAL_DASHBOARD_ACCESS", "ORGANISATION"),
+    async (req, res) => {
+        try {
+            const resultat = await listerDelegationsDashboardOperationnelDatabase(
+                Number(req.params.organisationId),
+                req.query.tenant || "SN"
+            );
+            return res.json({ statut: "DELEGATIONS_DASHBOARD_CHARGEES", membres: resultat.membres });
+        } catch (erreur) {
+            console.error("Erreur chargement délégations dashboard :", erreur);
+            return res.status(500).json({ statut: "ERREUR_DELEGATIONS_DASHBOARD" });
+        }
+    }
+);
+
+app.post(
+    "/api/organisations/:organisationId/dashboard-operationnel/delegations",
+    ...exigerPermission("MANAGE_OPERATIONAL_DASHBOARD_ACCESS", "ORGANISATION"),
+    async (req, res) => {
+        try {
+            const personneId = Number(req.body.personneId);
+            if (!Number.isSafeInteger(personneId) || personneId <= 0) {
+                return res.status(400).json({ statut: "PERSONNE_ID_INVALIDE" });
+            }
+
+            const resultat = await accorderAccesDashboardOperationnelDatabase(
+                Number(req.params.organisationId),
+                personneId,
+                Number(req.auth.personneId),
+                req.body.tenantCode || req.query.tenant || "SN",
+                typeof req.body.motif === "string" ? req.body.motif.trim().slice(0, 500) : null
+            );
+
+            if (!resultat.succes) {
+                return res.status(400).json({ statut: resultat.code });
+            }
+
+            return res.status(resultat.dejaAutorise ? 200 : 201).json({
+                statut: resultat.dejaAutorise ? "ACCES_DEJA_HERITE_DU_ROLE" : "ACCES_OPERATIONNEL_DELEGUE",
+                source: resultat.source || "DELEGATION",
+                delegation: resultat.delegation || null
+            });
+        } catch (erreur) {
+            console.error("Erreur attribution accès dashboard :", erreur);
+            return res.status(500).json({ statut: "ERREUR_ATTRIBUTION_ACCES" });
+        }
+    }
+);
+
+app.delete(
+    "/api/organisations/:organisationId/dashboard-operationnel/delegations/:personneId",
+    ...exigerPermission("MANAGE_OPERATIONAL_DASHBOARD_ACCESS", "ORGANISATION"),
+    async (req, res) => {
+        try {
+            const resultat = await revoquerAccesDashboardOperationnelDatabase(
+                Number(req.params.organisationId),
+                Number(req.params.personneId),
+                Number(req.auth.personneId),
+                req.query.tenant || "SN"
+            );
+
+            if (!resultat.succes) {
+                return res.status(404).json({ statut: resultat.code });
+            }
+
+            return res.json({ statut: "ACCES_OPERATIONNEL_REVOQUE", delegation: resultat.delegation });
+        } catch (erreur) {
+            console.error("Erreur révocation accès dashboard :", erreur);
+            return res.status(500).json({ statut: "ERREUR_REVOCATION_ACCES" });
+        }
+    }
+);
+
+
+// =========================================================
+// API - DASHBOARD STRATÉGIQUE DU CHEF DE MISSION
+// =========================================================
+
+app.get(
+    "/api/organisations/:organisationId/dashboard-strategique",
+    ...exigerPermission("VIEW_STRATEGIC_DASHBOARD", "ORGANISATION"),
+    async (req, res) => {
+        try {
+            const dashboard = await obtenirDashboardStrategiqueConsulatDatabase(
+                Number(req.params.organisationId),
+                req.query.tenant || "SN"
+            );
+
+            if (!dashboard) {
+                return res.status(404).json({ statut: "DASHBOARD_STRATEGIQUE_INTROUVABLE" });
+            }
+
+            return res.json(dashboard);
+        } catch (erreur) {
+            console.error("Erreur dashboard stratégique :", erreur);
+            return res.status(500).json({ statut: "ERREUR_DASHBOARD_STRATEGIQUE" });
+        }
+    }
+);
+
+
+// =========================================================
 // API - DASHBOARD OPÉRATIONNEL D'UNE ORGANISATION
 // =========================================================
 
 app.get(
     "/api/organisations/:organisationId/dashboard-operationnel",
+    ...exigerPermission("VIEW_OPERATIONAL_DASHBOARD", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -2810,6 +3827,7 @@ app.get(
 
 app.get(
     "/api/organisations/:organisationId/ecosysteme",
+    ...exigerPermission("VIEW_ORGANISATION", "ORGANISATION"),
     async (req, res) => {
 
         try {
@@ -2880,89 +3898,62 @@ app.get(
 
 app.get(
     "/api/agent/demandes",
+    exigerSession,
     async (req, res) => {
-
         try {
-
-            const organisationId =
-                Number(
-                    req.query.organisationId
-                );
-
-
-            const tenantCode =
-                req.query.tenant;
-
-
-            const statut =
-                req.query.statut ||
-                null;
-
+            const organisationId = Number(req.query.organisationId);
+            const unitId = Number(req.query.unitId);
+            const tenantCode = String(req.query.tenant || "").trim();
+            const statut = req.query.statut
+                ? String(req.query.statut).trim()
+                : null;
 
             if (
-                !organisationId ||
-                !tenantCode
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !tenantCode
             ) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        statut:
-                            "REQUETE_INVALIDE",
-
-                        erreur:
-                            "Organisation ou tenant manquant."
-                    });
+                return res.status(400).json({
+                    statut: "CONTEXTE_INBOX_INVALIDE"
+                });
             }
 
-
-            const demandes =
-    await listerDemandesOrganisationDatabase(
-
-        organisationId,
-
-        tenantCode,
-
-        statut,
-
-        "CONSULAR_SERVICE",
-
-        false
-    );
-
-
-            return res.json({
-
-                statut:
-                    "DEMANDES_CHARGEES",
-
-                demandes:
-                    demandes || []
-            });
-
-
-        } catch (erreur) {
-
-            console.error(
-                "Erreur chargement demandes agent :",
-                erreur
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
             );
 
-
-            return res
-                .status(500)
-                .json({
-
-                    statut:
-                        "ERREUR_DEMANDES_AGENT",
-
-                    erreur:
-                        "Impossible de charger les demandes."
+            if (!contexte.succes || !contexte.features.canViewInbox) {
+                return res.status(403).json({
+                    statut: "ACCES_REFUSE",
+                    permissionRequise: "VIEW_INBOX + VIEW_INCOMING"
                 });
+            }
+
+            const demandes = await listerDemandesWorkspaceUnitDatabase(
+                organisationId,
+                tenantCode,
+                unitId,
+                contexte.features.canReceiveIncoming,
+                statut
+            );
+
+            return res.json({
+                statut: "DEMANDES_CHARGEES",
+                unitId,
+                demandes: demandes || []
+            });
+        } catch (erreur) {
+            console.error("Erreur chargement demandes agent :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_DEMANDES_AGENT"
+            });
         }
     }
 );
+
 
 // =========================================================
 // API - SECRÉTARIAT - DEMANDES À ORIENTER
@@ -2970,249 +3961,145 @@ app.get(
 
 app.get(
     "/api/secretariat/demandes",
+    exigerSession,
     async (req, res) => {
-
         try {
-
-            const organisationId =
-                Number(
-                    req.query.organisationId
-                );
-
-
-            const tenantCode =
-                req.query.tenant;
-
+            const organisationId = Number(req.query.organisationId);
+            const unitId = Number(req.query.unitId);
+            const tenantCode = String(req.query.tenant || "").trim();
 
             if (
-                !organisationId
-                ||
-                !tenantCode
+                !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !tenantCode
             ) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        statut:
-                            "REQUETE_INVALIDE",
-
-                        erreur:
-                            "Organisation ou tenant manquant."
-                    });
+                return res.status(400).json({
+                    statut: "CONTEXTE_INBOX_INVALIDE"
+                });
             }
 
-
-            const demandes =
-                await listerDemandesOrganisationDatabase(
-
-                    organisationId,
-
-                    tenantCode,
-
-                    "NOUVELLE",
-
-                    null,
-
-                    true
-                );
-
-
-            return res.json({
-
-                statut:
-                    "DEMANDES_SECRETARIAT_CHARGEES",
-
-                demandes:
-                    demandes || []
-            });
-
-
-        } catch (erreur) {
-
-            console.error(
-                "Erreur demandes secrétariat :",
-                erreur
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                organisationId,
+                unitId,
+                tenantCode
             );
 
-
-            return res
-                .status(500)
-                .json({
-
-                    statut:
-                        "ERREUR_DEMANDES_SECRETARIAT",
-
-                    erreur:
-                        "Impossible de charger les demandes du Secrétariat."
+            if (
+                !contexte.succes
+                || !contexte.features.canViewInbox
+                || !contexte.features.canReceiveIncoming
+                || !contexte.features.canRouteCases
+            ) {
+                return res.status(403).json({
+                    statut: "ACCES_REFUSE",
+                    permissionRequise: "VIEW_INCOMING + ROUTE_CASE"
                 });
+            }
+
+            const demandes = await listerDemandesWorkspaceUnitDatabase(
+                organisationId,
+                tenantCode,
+                unitId,
+                true,
+                "NOUVELLE"
+            );
+
+            return res.json({
+                statut: "DEMANDES_SECRETARIAT_CHARGEES",
+                unitId,
+                demandes: demandes || []
+            });
+        } catch (erreur) {
+            console.error("Erreur demandes secrétariat :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_DEMANDES_SECRETARIAT"
+            });
         }
     }
 );
 
+
 // =========================================================
-// API - SECRÉTARIAT - ORIENTER UNE DEMANDE
+// API - COMPATIBILITÉ SECRÉTARIAT - ORIENTER UN DOSSIER
 // =========================================================
 
 app.post(
     "/api/secretariat/demandes/:demandeId/orientation",
+    exigerSession,
     async (req, res) => {
-
         try {
+            const demandeId = Number(req.params.demandeId);
+            const organisationId = Number(req.body?.organisationId);
+            const unitId = Number(req.body?.unitId);
+            const destinationUnitId = Number(req.body?.destinationUnitId);
+            const tenantCode = String(req.body?.tenantCode || "").trim();
+            const motif = req.body?.motif == null ? null : String(req.body.motif).trim();
 
-            const demandeId =
-                Number(
-                    req.params.demandeId
-                );
+            if (
+                !Number.isSafeInteger(demandeId) || demandeId <= 0
+                || !Number.isSafeInteger(organisationId) || organisationId <= 0
+                || !Number.isSafeInteger(unitId) || unitId <= 0
+                || !Number.isSafeInteger(destinationUnitId) || destinationUnitId <= 0
+                || !tenantCode
+                || (motif && motif.length > 2000)
+            ) {
+                return res.status(400).json({
+                    statut: "PARAMETRES_ORIENTATION_INVALIDES"
+                });
+            }
 
-
-            const {
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
                 organisationId,
-                tenantCode,
-                destinationUnitId,
-                motif,
-                orienteePar
-            } = req.body;
-
-
-            if (
-                !demandeId
-                ||
-                !organisationId
-                ||
-                !tenantCode
-                ||
-                !destinationUnitId
-            ) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        statut:
-                            "REQUETE_INVALIDE",
-
-                        erreur:
-                            "Paramètres d'orientation manquants."
-                    });
-            }
-
-
-            const resultat =
-                await orienterDemandeDatabase(
-
-                    demandeId,
-
-                    Number(
-                        organisationId
-                    ),
-
-                    tenantCode,
-
-                    Number(
-                        destinationUnitId
-                    ),
-
-                    motif
-                        ? String(motif).trim()
-                        : null,
-
-                    orienteePar
-                        ? Number(orienteePar)
-                        : null
-                );
-
-
-            if (
-                !resultat.succes
-            ) {
-
-                if (
-                    resultat.raison ===
-                    "DEMANDE_INTROUVABLE"
-                ) {
-
-                    return res
-                        .status(404)
-                        .json({
-
-                            statut:
-                                "DEMANDE_INTROUVABLE",
-
-                            erreur:
-                                "La demande n'existe pas dans cette organisation."
-                        });
-                }
-
-
-                if (
-                    resultat.raison ===
-                    "DESTINATION_INVALIDE"
-                ) {
-
-                    return res
-                        .status(400)
-                        .json({
-
-                            statut:
-                                "DESTINATION_INVALIDE",
-
-                            erreur:
-                                "Le service de destination est invalide."
-                        });
-                }
-
-
-                return res
-                    .status(409)
-                    .json({
-
-                        statut:
-                            "ORIENTATION_IMPOSSIBLE",
-
-                        erreur:
-                            "Impossible d'orienter cette demande."
-                    });
-            }
-
-
-            return res.json({
-
-                statut:
-                    "DEMANDE_ORIENTEE",
-
-                message:
-                    "La demande a été orientée.",
-
-                demande:
-                    resultat.demande,
-
-                destination:
-                    resultat.destination
-            });
-
-
-        } catch (erreur) {
-
-            console.error(
-                "Erreur orientation demande :",
-                erreur
+                unitId,
+                tenantCode
             );
 
-
-            return res
-                .status(500)
-                .json({
-
-                    statut:
-                        "ERREUR_ORIENTATION",
-
-                    erreur:
-                        "Impossible d'orienter la demande."
+            if (!contexte.succes || !contexte.features.canRouteCases) {
+                return res.status(403).json({
+                    statut: "ACCES_REFUSE",
+                    permissionRequise: "ROUTE_CASE"
                 });
+            }
+
+            const resultat = await orienterDemandeWorkspaceUnitDatabase(
+                demandeId,
+                organisationId,
+                tenantCode,
+                unitId,
+                destinationUnitId,
+                motif,
+                Number(req.auth.personneId)
+            );
+
+            if (!resultat.succes) {
+                const status = resultat.code === "DEMANDE_INTROUVABLE"
+                    || resultat.code === "UNITE_SOURCE_INTROUVABLE"
+                    ? 404
+                    : (resultat.code === "DESTINATION_INVALIDE"
+                        ? 400
+                        : (resultat.code === "DESTINATION_NON_AUTORISEE" ? 403 : 409));
+
+                return res.status(status).json({
+                    statut: resultat.code || "ORIENTATION_IMPOSSIBLE"
+                });
+            }
+
+            return res.json({
+                statut: "DEMANDE_ORIENTEE",
+                demande: resultat.demande,
+                destination: resultat.destination
+            });
+        } catch (erreur) {
+            console.error("Erreur orientation demande :", erreur);
+            return res.status(500).json({
+                statut: "ERREUR_ORIENTATION"
+            });
         }
     }
 );
+
 
 // =========================================================
 // API - ESPACE AGENT - PRISE EN CHARGE
@@ -3220,6 +4107,7 @@ app.post(
 
 app.post(
     "/api/agent/demandes/:demandeId/prise-en-charge",
+    exigerSession,
     async (req, res) => {
 
         try {
@@ -3231,15 +4119,13 @@ app.post(
 
 
             const {
-                agentPersonneId,
                 organisationId,
                 tenantCode
             } = req.body;
 
 
             if (
-                !demandeId ||
-                !agentPersonneId ||
+                !Number.isSafeInteger(demandeId) || demandeId <= 0 ||
                 !organisationId ||
                 !tenantCode
             ) {
@@ -3257,20 +4143,44 @@ app.post(
             }
 
 
+            const demandesContexte = await listerDemandesOrganisationDatabase(
+                Number(organisationId), tenantCode, null
+            );
+            const demandeCible = (demandesContexte || []).find(
+                item => Number(item.id) === demandeId
+            );
+            if (!demandeCible || !demandeCible.destination_unit_id) {
+                return res.status(404).json({ statut: "DEMANDE_INTROUVABLE" });
+            }
+
+            const unitId = Number(demandeCible.destination_unit_id);
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                Number(organisationId),
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes || !contexte.features.canTakeCases) {
+                return res.status(403).json({
+                    statut: "ACCES_REFUSE",
+                    permissionRequise: "TAKE_CASES + TAKE_CASE"
+                });
+            }
+
             const resultat =
                 await prendreEnChargeDemandeDatabase(
 
                     demandeId,
 
-                    Number(
-                        agentPersonneId
-                    ),
+                    Number(req.auth.personneId),
 
                     Number(
                         organisationId
                     ),
 
-                    tenantCode
+                    tenantCode,
+                    unitId
                 );
 
 
@@ -3337,6 +4247,7 @@ app.post(
 
 app.post(
     "/api/agent/demandes/:demandeId/reponse",
+    exigerSession,
     async (req, res) => {
 
         try {
@@ -3348,7 +4259,6 @@ app.post(
 
 
             const {
-                agentPersonneId,
                 organisationId,
                 tenantCode,
                 contenu
@@ -3360,8 +4270,7 @@ app.post(
             // =================================================
 
             if (
-                !demandeId ||
-                !agentPersonneId ||
+                !Number.isSafeInteger(demandeId) || demandeId <= 0 ||
                 !organisationId ||
                 !tenantCode ||
                 !contenu ||
@@ -3424,6 +4333,27 @@ app.post(
             }
 
 
+            if (!demande.destination_unit_id) {
+                return res.status(404).json({
+                    statut: "DEMANDE_SANS_UNITE_DESTINATAIRE"
+                });
+            }
+
+            const unitId = Number(demande.destination_unit_id);
+            const contexte = await chargerContexteWorkspaceUnite(
+                req,
+                Number(organisationId),
+                unitId,
+                tenantCode
+            );
+
+            if (!contexte.succes || !contexte.features.canRespondCases) {
+                return res.status(403).json({
+                    statut: "ACCES_REFUSE",
+                    permissionRequise: "RESPOND_CASES + RESPOND_CASE"
+                });
+            }
+
             if (
                 demande.statut !==
                 "EN_COURS"
@@ -3451,9 +4381,7 @@ app.post(
 
                     demandeId,
 
-                    Number(
-                        agentPersonneId
-                    ),
+                    Number(req.auth.personneId),
 
                     Number(
                         organisationId
@@ -3463,7 +4391,8 @@ app.post(
 
                     String(
                         contenu
-                    ).trim()
+                    ).trim(),
+                    unitId
                 );
 
 
