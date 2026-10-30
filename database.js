@@ -173,6 +173,29 @@ async function executerTransactionDatabase(contexteEntree, callback) {
 }
 
 
+// Met a jour le tenant uniquement apres resolution et verification
+ // de l'appartenance dans la transaction courante.
+ async function definirTenantContexteDatabaseCourant(tenantId) {
+     const actif = contexteDatabaseAsync.getStore();
+     if (!actif || !actif.actif) {
+         throw new Error("CONTEXTE_DATABASE_TRANSACTION_REQUIS");
+     }
+
+     const tenantNormalise = entierPositifOuNull(tenantId, "tenant_id");
+     await actif.client.query(
+         "SELECT set_config('sateer.tenant_id', $1, TRUE)",
+         [tenantNormalise === null ? "" : String(tenantNormalise)]
+     );
+
+     actif.contexte = Object.freeze({
+         ...actif.contexte,
+         tenantId: tenantNormalise
+     });
+
+     return tenantNormalise;
+ }
+
+
 // =========================================================
 // CONTEXTE COURANT — OBSERVABILITE / TESTS
 // =========================================================
@@ -205,6 +228,7 @@ module.exports = {
     executerRequete,
     executerTransactionDatabase,
     obtenirContexteDatabaseCourant,
+    definirTenantContexteDatabaseCourant,
     obtenirClientDatabase,
     fermerDatabase
 };
