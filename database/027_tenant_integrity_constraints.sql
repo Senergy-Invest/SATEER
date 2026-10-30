@@ -17,6 +17,17 @@
 
 BEGIN;
 
+-- Ajouter d'abord les colonnes de contexte utilisées par les contrôles
+-- préalables ; elles sont remplies ensuite depuis leurs parents canoniques.
+ALTER TABLE relations_personne_organisation_unit
+    ADD COLUMN IF NOT EXISTS organisation_id INTEGER;
+
+ALTER TABLE demande_orientations
+    ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+
+ALTER TABLE demande_orientations
+    ADD COLUMN IF NOT EXISTS organisation_id INTEGER;
+
 -- ---------------------------------------------------------
 -- 1. PRÉCONDITIONS ET CONTEXTES MANQUANTS
 -- ---------------------------------------------------------
