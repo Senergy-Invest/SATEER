@@ -156,15 +156,15 @@ async function main() {
         "",
         "| Indicateur | Nombre |",
         "|---|---:|",
-        "| Tables | " + summary.tables + " |",
-        "| Portée tenant/organisation directe | " + summary.direct_scope + " |",
-        "| Portée héritée par clé étrangère | " + summary.indirect_scope + " |",
-        "| Référentiels globaux candidats | " + summary.global_reference_candidates + " |",
-        "| Tables sans rattachement détecté à examiner | " + summary.unscoped_review + " |",
-        "| Tables non rattachées avec colonnes sensibles | " + summary.unscoped_with_sensitive_columns + " |",
-        "| Tables avec RLS | " + summary.rls_enabled + " |",
-        "| Politiques RLS | " + summary.rls_policies + " |",
-        "| Clés étrangères | " + summary.foreign_keys + " |",
+        "| Tables | " + report.summary.tables + " |",
+        "| Portée tenant/organisation directe | " + report.summary.direct_scope + " |",
+        "| Portée héritée par clé étrangère | " + report.summary.indirect_scope + " |",
+        "| Référentiels globaux candidats | " + report.summary.global_reference_candidates + " |",
+        "| Tables sans rattachement détecté à examiner | " + report.summary.unscoped_review + " |",
+        "| Tables non rattachées avec colonnes sensibles | " + report.summary.unscoped_with_sensitive_columns + " |",
+        "| Tables avec RLS | " + report.summary.rls_enabled + " |",
+        "| Politiques RLS | " + report.summary.rls_policies + " |",
+        "| Clés étrangères | " + report.summary.foreign_keys + " |",
         "",
         "> L'absence de RLS n'est pas automatiquement une vulnérabilité : l'application peut contrôler les accès. Elle signifie néanmoins que PostgreSQL n'ajoute pas cette défense en profondeur.",
         "> Le rattachement par clé étrangère est un indice structurel, pas une preuve que toutes les routes HTTP appliquent correctement le cloisonnement.",
@@ -175,17 +175,17 @@ async function main() {
         "|---|---|---|---|---|---|"
     ];
 
-    for (const t of inventory) {
+    for (const t of report.tables) {
         md.push("| " + t.table + " | " + t.scope + " | " + (t.scope_columns.join(", ") || "—")
             + " | " + (t.sensitive_columns.join(", ") || "—") + " | " + (t.rls_enabled ? "oui" : "non")
             + " | " + (t.review_required ? "OUI" : "non") + " |");
     }
 
     md.push("", "## Relations par clés étrangères", "");
-    for (const fk of fks) md.push("- " + fk.child + " (" + fk.child_columns.join(", ") + ") → " + fk.parent + " (" + fk.parent_columns.join(", ") + ")");
+    for (const fk of report.foreign_keys) md.push("- " + fk.child + " (" + fk.child_columns.join(", ") + ") → " + fk.parent + " (" + fk.parent_columns.join(", ") + ")");
 
     md.push("", "## Tables à examiner", "");
-    const review = inventory.filter(t => t.review_required);
+    const review = report.tables.filter(t => t.review_required);
     if (!review.length) md.push("Aucune table non rattachée détectée automatiquement ; une validation métier reste requise.");
     for (const t of review) md.push("- " + t.table + " : " + t.reason + ". Colonnes potentiellement sensibles : " + (t.sensitive_columns.join(", ") || "aucune détectée") + ".");
 
@@ -202,7 +202,7 @@ async function main() {
     fs.writeFileSync(path.join(OUT, "multitenant-schema-audit-latest.md"), md.join("\n"));
 
     console.log("AUDIT TERMINE — PostgreSQL en lecture seule.");
-    console.log(JSON.stringify(summary, null, 2));
+    console.log(JSON.stringify(report.summary, null, 2));
     console.log("Rapports : AUDIT/multitenant-schema-audit-latest.md et .json");
 }
 
