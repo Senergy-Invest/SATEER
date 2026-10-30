@@ -147,7 +147,7 @@ async function executerTransactionDatabase(contexte, callback) {
 
         const resultat = await contexteDatabaseAsync.run(
             contexteActif,
-            () => callback(client, contexte)
+            () => callback(client, contexteNormalise)
         );
 
         await client.query("COMMIT");
