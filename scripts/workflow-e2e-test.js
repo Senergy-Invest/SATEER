@@ -466,6 +466,27 @@ async function main() {
     check(agentInbox.body.demandes.some(item => Number(item.id) === demandId),
         "La demande orientée apparaît dans l'inbox de l'agent");
 
+    const workspace = await api(
+        `/api/organisations/${orgId}/units/${serviceUnitId}/workspace?tenant=${TENANT}`,
+        {},
+        cookies.agent
+    );
+    expectStatus(workspace, 200, "L'agent ouvre le Unit Workspace du service consulaire");
+    check(workspace.body.features.canViewInbox
+        && workspace.body.features.canTakeCases
+        && workspace.body.features.canRespondCases,
+        "Le Unit Workspace expose uniquement les capacités et permissions effectives de l'agent");
+
+    const overview = await api(
+        `/api/organisations/${orgId}/units/overview?tenant=${TENANT}`,
+        {},
+        cookies.viceConsul
+    );
+    expectStatus(overview, 200, "Le Vice-Consul consulte la synthèse dynamique des unités");
+    check(overview.body.unites.some(unit => unit.code === "SECRETARIAT")
+        && overview.body.unites.some(unit => unit.code === "CONSULAR_SERVICE"),
+        "La supervision retrouve les unités depuis l'organigramme, sans cartes codées en dur");
+
     const secretariatCannotTake = await api(
         `/api/organisations/${orgId}/units/${serviceUnitId}/cases/${demandId}/take`,
         { method: "POST", body: JSON.stringify({ tenantCode: TENANT }) },
