@@ -1,5 +1,4 @@
-const PERSONNE_ID = 1;
-const TENANT = "SN";
+
 
 
 // =========================================================
@@ -12,12 +11,7 @@ const params =
     );
 
 
-const ORGANISATION_ID =
-    Number(
-        params.get(
-            "organisation"
-        ) || 1
-    );
+let ORGANISATION_ID = Number(params.get("organisation")) || null;
 
 
 const SOURCE =
@@ -209,6 +203,13 @@ demandeForm.addEventListener(
 
         event.preventDefault();
 
+        const contexte = await window.SATEER_CONTEXT_READY;
+        const organisation = await window.SATEER_choisirOrganisation(ORGANISATION_ID);
+        if (!organisation) {
+            afficherErreur("Aucune organisation unique n’est associée à votre demande. Sélectionnez d’abord une organisation dans votre espace SATEER.");
+            return;
+        }
+        ORGANISATION_ID = Number(organisation.id);
 
         erreurContainer.hidden =
             true;
@@ -283,14 +284,11 @@ demandeForm.addEventListener(
                         body:
                             JSON.stringify({
 
-                                personneId:
-                                    PERSONNE_ID,
-
                                 organisationId:
                                     ORGANISATION_ID,
 
                                 tenantCode:
-                                    TENANT,
+                                    contexte.tenantCode,
 
                                 categorie:
                                     categorie,

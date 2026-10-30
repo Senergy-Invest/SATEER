@@ -11,6 +11,23 @@
     const loading = document.getElementById("secretariatLoading");
     const error = document.getElementById("secretariatErreur");
     const container = document.getElementById("secretariatDemandes");
+    const assistantLink = document.getElementById("assistantSecretariatLink");
+    if (assistantLink) {
+        assistantLink.addEventListener("click", event => {
+            event.preventDefault();
+            const query = new URLSearchParams({
+                organisation: String(organisationId),
+                tenant: tenantCode,
+                useCase: "SECRETARIAT",
+                source: "SECRETARIAT"
+            });
+            window.location.href = `/assistant.html?${query.toString()}`;
+        });
+    }
+    const dashboardLink = document.getElementById("dashboardViceConsulLink");
+    if (dashboardLink) {
+        dashboardLink.href = `/dashboard-vice-consul.html?organisation=${encodeURIComponent(organisationId)}&tenant=${encodeURIComponent(tenantCode)}`;
+    }
 
     function showError(message) {
         if (loading) loading.hidden = true;

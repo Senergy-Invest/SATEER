@@ -91,42 +91,11 @@ ON organisation_dashboard_access_delegations (personne_id, organisation_id)
 WHERE actif = TRUE;
 
 
--- 3. Accorder les permissions aux rôles initiaux du pilote.
--- Les codes de rôle sont des données de configuration du Consulat de Bordeaux.
-INSERT INTO role_permissions (role_id, permission_id, actif)
-SELECT r.id, p.id, TRUE
-FROM organisation_roles r
-CROSS JOIN permissions p
-WHERE
-    r.organisation_id = 1
-    AND (
-        (r.code = 'HEAD_OF_MISSION' AND p.code = 'VIEW_STRATEGIC_DASHBOARD')
-        OR
-        (r.code = 'OPERATIONAL_DEPUTY' AND p.code IN (
-            'VIEW_OPERATIONAL_DASHBOARD',
-            'MANAGE_OPERATIONAL_DASHBOARD_ACCESS'
-        ))
-    )
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+-- Les permissions et protections des rôles initiaux sont des données
+-- de configuration du pilote et sont gérées dans une migration séparée.
 
 
--- 4. Protéger les deux rôles institutionnels du pilote.
--- Le Vice-Consul conserve l'administration des rôles métier,
--- mais ne peut pas modifier le rôle du Consul ni son propre rôle système.
-UPDATE organisation_roles
-SET
-    metadata = metadata || jsonb_build_object(
-        'systemProtected', TRUE,
-        'systemProtectionReason', 'INSTITUTIONAL_AUTHORITY'
-    ),
-    date_modification = CURRENT_TIMESTAMP
-WHERE
-    organisation_id = 1
-    AND code IN ('HEAD_OF_MISSION', 'OPERATIONAL_DEPUTY')
-    AND NOT (metadata @> '{"systemProtected": true}'::jsonb);
-
-
--- 5. Protection SQL des rôles institutionnels.
+-- 3. Protection SQL des rôles institutionnels.
 CREATE OR REPLACE FUNCTION sateer_refuser_modification_role_protege()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -157,7 +126,7 @@ FOR EACH ROW
 EXECUTE FUNCTION sateer_refuser_modification_role_protege();
 
 
--- 6. Protection SQL des permissions associées aux rôles protégés.
+-- 4. Protection SQL des permissions associées aux rôles protégés.
 CREATE OR REPLACE FUNCTION sateer_refuser_modification_permissions_role_protege()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -225,7 +194,7 @@ FOR EACH ROW
 EXECUTE FUNCTION sateer_refuser_modification_permissions_role_protege();
 
 
--- 7. Vérifier la légitimité du délégant et l'affectation du bénéficiaire.
+-- 5. Vérifier la légitimité du délégant et l'affectation du bénéficiaire.
 CREATE OR REPLACE FUNCTION sateer_verifier_delegation_dashboard_operationnel()
 RETURNS TRIGGER AS $$
 BEGIN

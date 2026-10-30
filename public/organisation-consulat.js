@@ -4,16 +4,10 @@ const params =
     );
 
 
-const organisationId =
-    Number(
-        params.get("organisation")
-        || 1
-    );
+let organisationId = Number(params.get("organisation")) || null;
 
 
-const tenant =
-    params.get("tenant")
-    || "SN";
+let tenant = params.get("tenant") || "SN";
 
 
 const organisationNom =
@@ -47,6 +41,11 @@ const organisationTree =
 async function chargerOrganisation() {
 
     try {
+        const contexte = await window.SATEER_CONTEXT_READY;
+        tenant = contexte.tenantCode;
+        const organisation = await window.SATEER_choisirOrganisation(organisationId);
+        if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
+        organisationId = Number(organisation.id);
 
         organisationLoading.hidden =
             false;

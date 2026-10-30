@@ -195,8 +195,8 @@ check(
 );
 check(
   'Permissions et rôles système limités au Consulat pilote',
-  /r\.organisation_id = 1/.test(fs.readFileSync(path.join(root, 'database', '024_dashboards_consul_viceconsul.sql'), 'utf8')) &&
-    /organisation_id = 1\s+AND code IN \('HEAD_OF_MISSION', 'OPERATIONAL_DEPUTY'\)/.test(fs.readFileSync(path.join(root, 'database', '024_dashboards_consul_viceconsul.sql'), 'utf8'))
+  /r\.organisation_id = 1/.test(fs.readFileSync(path.join(root, 'database', '025_pilot_dashboard_role_configuration.sql'), 'utf8')) &&
+    /organisation_id = 1\s+AND code IN \('HEAD_OF_MISSION', 'OPERATIONAL_DEPUTY'\)/.test(fs.readFileSync(path.join(root, 'database', '025_pilot_dashboard_role_configuration.sql'), 'utf8'))
 );
 check(
   'Dashboard stratégique Consul présent',

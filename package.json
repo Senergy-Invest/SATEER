@@ -4,7 +4,7 @@
   "description": "",
   "main": "data.js",
   "scripts": {
-    "test": "node scripts/security-static-check.js"
+    "test": "node scripts/security-static-check.js && node scripts/generic-context-static-check.js"
   },
   "repository": {
     "type": "git",

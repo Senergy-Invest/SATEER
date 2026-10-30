@@ -1,6 +1,5 @@
-const PERSONNE_ID = 1;
-const TENANT = "SN";
-const CONSULAT_ID = 1;
+const params = new URLSearchParams(window.location.search);
+let CONSULAT_ID = Number(params.get("organisation")) || null;
 
 
 // =========================================================
@@ -364,10 +363,13 @@ if (
 
     nouvelleDemandeButton.addEventListener(
         "click",
-        () => {
-
+        async () => {
+            const contexte = await window.SATEER_CONTEXT_READY;
+            const organisation = await window.SATEER_choisirOrganisation(CONSULAT_ID, "CONSULAT");
+            if (!organisation) return;
+            CONSULAT_ID = Number(organisation.id);
             window.location.href =
-                "/demande.html?organisation=1&source=MON_CONSULAT";
+                `/demande.html?organisation=${CONSULAT_ID}&tenant=${encodeURIComponent(contexte.tenantCode)}&source=MON_CONSULAT`;
         }
     );
 }
@@ -421,10 +423,23 @@ if (
 async function chargerMonConsulat() {
 
     try {
+        const contexte = await window.SATEER_CONTEXT_READY;
+        const organisation = await window.SATEER_choisirOrganisation(CONSULAT_ID, "CONSULAT");
+        if (!organisation) {
+            document.getElementById("consulatName").textContent =
+                "Sélectionnez un rattachement consulaire dans votre espace SATEER.";
+            return;
+        }
+        CONSULAT_ID = Number(organisation.id);
+        const url = new URL(window.location.href);
+        url.searchParams.set("organisation", String(CONSULAT_ID));
+        url.searchParams.set("tenant", contexte.tenantCode);
+        window.history.replaceState({}, "", url);
 
         const reponse =
             await fetch(
-                `/api/mon-consulat/${PERSONNE_ID}?tenant=${TENANT}&organisation=${CONSULAT_ID}`
+                `/api/mon-consulat/${contexte.personne.id}?tenant=${encodeURIComponent(contexte.tenantCode)}&organisation=${CONSULAT_ID}`,
+                { credentials: "same-origin", cache: "no-store" }
             );
 
 

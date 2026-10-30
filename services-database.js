@@ -9807,8 +9807,8 @@ async function orienterDemandeWorkspaceUnitDatabase(
             && source.routing_configuration.allowedDestinationUnitIds;
 
         if (
-            Array.isArray(allowedDestinationUnitIds)
-            && !allowedDestinationUnitIds.map(Number).includes(Number(destinationUnitId))
+            !Array.isArray(allowedDestinationUnitIds)
+            || !allowedDestinationUnitIds.map(Number).includes(Number(destinationUnitId))
         ) {
             await client.query("ROLLBACK");
             return { succes: false, code: "DESTINATION_NON_AUTORISEE" };
@@ -9974,7 +9974,39 @@ async function orienterDemandeWorkspaceUnitDatabase(
 }
 
 
+
+// =========================================================
+// CONTEXTE INSTITUTIONNEL DE LA PERSONNE CONNECTEE
+// =========================================================
+// Retourne uniquement les organisations auxquelles la personne
+// est explicitement rattachee dans le tenant demande.
+// L'identite provient de la session, jamais du navigateur.
+async function listerOrganisationsPersonneDatabase(personneId, tenantCode) {
+    const resultat = await executerRequete(
+        `
+        SELECT DISTINCT
+            o.id,
+            o.nom,
+            o.type,
+            t.code AS tenant_code
+        FROM relations_personne_organisation rel
+        INNER JOIN organisations o
+            ON o.id = rel.organisation_id
+        INNER JOIN tenants t
+            ON t.id = o.tenant_id
+        WHERE
+            rel.personne_id = $1
+            AND t.code = $2
+            AND t.actif = TRUE
+        ORDER BY o.nom, o.id
+        `,
+        [Number(personneId), String(tenantCode)]
+    );
+    return resultat.rows;
+}
+
 module.exports = {
+    listerOrganisationsPersonneDatabase,
     trouverOrganisationParIdDatabase,
     trouverOrganisationParIdEtTenantDatabase,
     listerOrganisationsParTenantEtTypeDatabase,

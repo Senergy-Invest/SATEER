@@ -1,7 +1,64 @@
 /* SATEER — contrôle de session côté interface.
  * La sécurité réelle reste assurée par les routes backend.
  */
-(async function verifierSessionInterface() {
+window.SATEER_choisirOrganisation = async function (organisationId, typeOrganisation) {
+    const contexte = await window.SATEER_CONTEXT_READY;
+    const candidates = (contexte.organisations || []).filter(item =>
+        !typeOrganisation || item.type === typeOrganisation
+    );
+    if (organisationId) {
+        return candidates.find(item => Number(item.id) === Number(organisationId)) || null;
+    }
+    if (candidates.length === 1) return candidates[0];
+    if (candidates.length === 0 || !document.body) return null;
+
+    return new Promise(resolve => {
+        const overlay = document.createElement("div");
+        overlay.setAttribute("role", "presentation");
+        overlay.style.cssText = "position:fixed;inset:0;z-index:2147483001;background:rgba(10,20,35,.62);display:flex;align-items:center;justify-content:center;padding:20px;";
+        const dialog = document.createElement("section");
+        dialog.setAttribute("role", "dialog");
+        dialog.setAttribute("aria-modal", "true");
+        dialog.setAttribute("aria-labelledby", "sateer-org-dialog-title");
+        dialog.style.cssText = "width:min(100%,460px);background:#fff;color:#172b3a;border-radius:16px;padding:24px;box-shadow:0 18px 60px rgba(0,0,0,.28);font:15px/1.5 system-ui,sans-serif;";
+        const title = document.createElement("h2");
+        title.id = "sateer-org-dialog-title";
+        title.textContent = "Choisir une organisation";
+        title.style.cssText = "margin:0 0 8px;font-size:20px;";
+        const description = document.createElement("p");
+        description.textContent = "Votre compte est rattaché à plusieurs organisations. Sélectionnez le contexte à ouvrir.";
+        description.style.cssText = "margin:0 0 16px;color:#536575;";
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", "Organisation");
+        select.style.cssText = "width:100%;padding:12px;border:1px solid #b9c6d0;border-radius:8px;background:#fff;color:#172b3a;";
+        candidates.forEach(item => {
+            const option = document.createElement("option");
+            option.value = String(item.id);
+            option.textContent = item.nom + " — " + item.type;
+            select.appendChild(option);
+        });
+        const actions = document.createElement("div");
+        actions.style.cssText = "display:flex;justify-content:flex-end;gap:10px;margin-top:20px;";
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.textContent = "Annuler";
+        cancel.style.cssText = "padding:10px 14px;border:1px solid #c4ced6;border-radius:8px;background:#fff;color:#172b3a;cursor:pointer;";
+        const confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.textContent = "Continuer";
+        confirm.style.cssText = "padding:10px 16px;border:0;border-radius:8px;background:#17324d;color:#fff;cursor:pointer;";
+        const close = value => { overlay.remove(); resolve(value); };
+        cancel.addEventListener("click", () => close(null));
+        confirm.addEventListener("click", () => close(candidates.find(item => Number(item.id) === Number(select.value)) || null));
+        overlay.addEventListener("click", event => { if (event.target === overlay) close(null); });
+        actions.append(cancel, confirm);
+        dialog.append(title, description, select, actions);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        select.focus();
+    });
+};
+window.SATEER_CONTEXT_READY = (async function verifierSessionInterface() {
     try {
         const response = await fetch("/api/auth/me", {
             method: "GET",
@@ -12,14 +69,26 @@
         if (!response.ok) {
             const retour = window.location.pathname + window.location.search;
             window.location.replace("/login.html?returnTo=" + encodeURIComponent(retour));
-            return;
+            throw new Error("AUTHENTIFICATION_REQUISE");
         }
         const data = await response.json();
         window.SATEER_USER = data.personne;
-        window.dispatchEvent(new CustomEvent("sateer:session-ready", { detail: data.personne }));
-    } catch (_) {
-        const retour = window.location.pathname + window.location.search;
-        window.location.replace("/login.html?returnTo=" + encodeURIComponent(retour));
+        const tenant = new URLSearchParams(window.location.search).get("tenant") || "SN";
+        const contextResponse = await fetch("/api/context?tenant=" + encodeURIComponent(tenant), {
+            credentials: "same-origin",
+            headers: { "Accept": "application/json" },
+            cache: "no-store"
+        });
+        if (!contextResponse.ok) throw new Error("CONTEXTE_INSTITUTIONNEL_INDISPONIBLE");
+        const context = await contextResponse.json();
+        window.SATEER_CONTEXT = context;
+        window.dispatchEvent(new CustomEvent("sateer:session-ready", { detail: context }));
+        return context;
+    } catch (erreur) {
+        if (erreur.message !== "AUTHENTIFICATION_REQUISE") {
+            console.error("Initialisation du contexte SATEER impossible :", erreur);
+        }
+        throw erreur;
     }
 })();
 
@@ -136,13 +205,14 @@
     // après une réponse positive de /api/auth/me.
     window.addEventListener("sateer:session-ready", function (event) {
         if (event && event.detail) {
-            window.SATEER_USER = event.detail;
+            window.SATEER_CONTEXT = event.detail;
+            window.SATEER_USER = event.detail.personne || null;
             installerBouton();
         }
     });
 
     // Cas où l'identité a déjà été chargée avant l'installation du listener.
-    if (window.SATEER_USER) {
+    if (window.SATEER_CONTEXT) {
         installerBouton();
     }
 })();
