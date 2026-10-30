@@ -18,6 +18,10 @@ const IDENTIFIANT = `integration.${process.pid}.${Date.now()}@sateer.test`;
 const MOT_DE_PASSE = randomBytes(24).toString("base64url") + "Aa1!";
 let serveur = null;
 let compteCree = false;
+let affectationRoleCreee = false;
+let personneIdTest = null;
+let organisationIdTest = null;
+let roleIdTest = null;
 
 function verifier(condition, message) {
     if (!condition) throw new Error(message);
@@ -58,10 +62,14 @@ async function main() {
     verifier(cible.rows[0].nom === "sateer_test",
         "La cible PostgreSQL est exclusivement sateer_test");
 
-    // Choisir un acteur réel du pilote : rattachement actif à une
-    // organisation SN et rôle organisationnel donnant VIEW_ORGANISATION.
+    // Préparer un acteur temporaire à partir d'une personne déjà
+    // rattachée à une organisation SN. Le rôle pilote est affecté
+    // uniquement dans sateer_test puis supprimé en fin de test.
     const personne = await executerRequete(`
-        SELECT DISTINCT p.id AS personne_id, o.id AS organisation_id
+        SELECT
+            p.id AS personne_id,
+            o.id AS organisation_id,
+            r.id AS role_id
         FROM personnes p
         INNER JOIN relations_personne_organisation rpo
             ON rpo.personne_id = p.id
@@ -69,14 +77,11 @@ async function main() {
             ON o.id = rpo.organisation_id
         INNER JOIN tenants t
             ON t.id = o.tenant_id
-        INNER JOIN relations_personne_organisation_roles rel
-            ON rel.personne_id = p.id
-            AND rel.organisation_id = o.id
-            AND rel.actif = TRUE
         INNER JOIN organisation_roles r
-            ON r.id = rel.role_id
-            AND r.organisation_id = o.id
+            ON r.organisation_id = o.id
+            AND r.code = 'OPERATIONAL_DEPUTY'
             AND r.actif = TRUE
+            AND r.scope IN ('ORGANISATION', 'BOTH')
         INNER JOIN role_permissions rp
             ON rp.role_id = r.id
             AND rp.actif = TRUE
@@ -89,14 +94,36 @@ async function main() {
         WHERE t.code = 'SN'
             AND t.actif = TRUE
             AND a.id IS NULL
+            AND NOT EXISTS (
+                SELECT 1
+                FROM relations_personne_organisation_roles existing
+                WHERE existing.personne_id = p.id
+                    AND existing.organisation_id = o.id
+                    AND existing.role_id = r.id
+            )
         ORDER BY p.id, o.id
         LIMIT 1
     `);
     verifier(personne.rows.length === 1,
-        "Un acteur pilote sans compte, rattaché à une organisation SN et doté de VIEW_ORGANISATION est disponible");
+        "Une personne rattachée au tenant SN et un rôle pilote opérationnel sont disponibles");
 
-    const personneId = personne.rows[0].personne_id;
-    const organisationId = personne.rows[0].organisation_id;
+    personneIdTest = Number(personne.rows[0].personne_id);
+    organisationIdTest = Number(personne.rows[0].organisation_id);
+    roleIdTest = Number(personne.rows[0].role_id);
+
+    const affectation = await executerRequete(`
+        INSERT INTO relations_personne_organisation_roles (
+            personne_id, organisation_id, role_id, actif
+        )
+        VALUES ($1, $2, $3, TRUE)
+        RETURNING id
+    `, [personneIdTest, organisationIdTest, roleIdTest]);
+    verifier(affectation.rows.length === 1,
+        "Affectation temporaire du rôle opérationnel créée dans sateer_test");
+    affectationRoleCreee = true;
+
+    const organisationId = organisationIdTest;
+    const personneId = personneIdTest;
 
     const creation = await creerCompteAuthentificationDatabase(
         personneId,
@@ -235,6 +262,22 @@ main()
                 console.log("Compte technique temporaire supprimé.");
             } catch (error) {
                 console.error("ATTENTION - Nettoyage du compte temporaire impossible :", error.message);
+                process.exitCode = 1;
+            }
+        }
+
+        if (affectationRoleCreee) {
+            try {
+                await executerRequete(
+                    `DELETE FROM relations_personne_organisation_roles
+                     WHERE personne_id = $1
+                       AND organisation_id = $2
+                       AND role_id = $3`,
+                    [personneIdTest, organisationIdTest, roleIdTest]
+                );
+                console.log("Affectation de rôle temporaire supprimée.");
+            } catch (error) {
+                console.error("ATTENTION - Nettoyage de l'affectation temporaire impossible :", error.message);
                 process.exitCode = 1;
             }
         }
