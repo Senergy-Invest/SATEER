@@ -10,6 +10,7 @@ process.env.PGPORT = process.env.PGPORT || "5432";
 process.env.PGUSER = process.env.PGUSER || process.env.USER;
 
 const { spawn } = require("node:child_process");
+const net = require("node:net");
 const { randomBytes, randomUUID } = require("node:crypto");
 const { setTimeout: delay } = require("node:timers/promises");
 const {
@@ -20,9 +21,10 @@ const {
 const { creerCompteAuthentificationDatabase } = require("../auth-database");
 
 const TENANT = "SN";
-const PORT = Number(process.env.SATEER_WORKFLOW_TEST_PORT || 3188);
+let PORT = Number(process.env.SATEER_WORKFLOW_TEST_PORT || 0);
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 const RUN_ID = randomUUID().replace(/-/g, "").slice(0, 12);
+const DEMAND_OBJECT = "Test E2E SATEER " + RUN_ID;
 const PASSWORD = randomBytes(24).toString("base64url") + "Aa1!";
 const ACTORS = {
     citizen: { login: `e2e.citizen.${RUN_ID}@sateer.test`, personId: null },
@@ -87,6 +89,19 @@ async function login(actorKey) {
         `Identité issue de la session correcte : ${actorKey}`);
 }
 
+async function choisirPortLibre() {
+    if (PORT > 0) return PORT;
+    const probe = net.createServer();
+    await new Promise((resolve, reject) => {
+        probe.once("error", reject);
+        probe.listen(0, "127.0.0.1", resolve);
+    });
+    const address = probe.address();
+    const port = address && typeof address === "object" ? address.port : 0;
+    await new Promise((resolve, reject) => probe.close(error => error ? reject(error) : resolve()));
+    if (!port) throw new Error("Impossible de réserver un port HTTP de test.");
+    return port;
+}
 async function waitForServer() {
     for (let i = 0; i < 50; i += 1) {
         if (server && server.exitCode !== null) {
@@ -315,9 +330,7 @@ async function cleanup() {
                 "DELETE FROM notifications WHERE personne_id = ANY($1::integer[])",
                 [createdPersonIds]
             );
-            if (demandId !== null) {
-                await client.query("DELETE FROM demandes WHERE id = $1", [demandId]);
-            }
+            await client.query("DELETE FROM demandes WHERE objet = $1", [DEMAND_OBJECT]);
             await client.query(
                 "DELETE FROM auth_sessions WHERE compte_id IN (SELECT id FROM auth_accounts WHERE personne_id = ANY($1::integer[]))",
                 [createdPersonIds]
@@ -360,6 +373,7 @@ async function main() {
         "La base ciblée est exclusivement sateer_test");
 
     await provision();
+    PORT = await choisirPortLibre();
 
     server = spawn(process.execPath, ["server.js"], {
         cwd: process.cwd(),
@@ -387,7 +401,7 @@ async function main() {
             organisationId: orgId,
             tenantCode: TENANT,
             categorie: "DEMANDE_INFORMATION",
-            objet: "Test E2E SATEER " + RUN_ID,
+            objet: DEMAND_OBJECT,
             message: "Demande synthétique de test du circuit institutionnel " + RUN_ID,
             priorite: "NORMALE",
             canal: "MON_SATEER"
