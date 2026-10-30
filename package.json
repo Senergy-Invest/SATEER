@@ -11,7 +11,8 @@
     "audit:multitenant": "node scripts/multitenant-schema-audit.js",
     "audit:integrity": "node scripts/multitenant-preflight-audit.js",
     "audit:complete": "npm test && npm run audit:multitenant && npm run audit:integrity",
-    "test:all": "npm test && npm run test:integration && npm run test:multitenant && npm run test:workflow"
+    "test:all": "npm test && npm run test:integration && npm run test:multitenant && npm run test:workflow",
+    "check:all": "npm run audit:complete && npm run test:integration && npm run test:multitenant && npm run test:workflow"
   },
   "repository": {
     "type": "git",
