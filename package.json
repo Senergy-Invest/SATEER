@@ -5,7 +5,8 @@
   "main": "data.js",
   "scripts": {
     "test": "node scripts/security-static-check.js && node scripts/generic-context-static-check.js",
-    "test:integration": "node scripts/integration-http-test.js"
+    "test:integration": "node scripts/integration-http-test.js",
+    "test:workflow": "node scripts/workflow-e2e-test.js"
   },
   "repository": {
     "type": "git",
