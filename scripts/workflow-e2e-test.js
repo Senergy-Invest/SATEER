@@ -22,7 +22,7 @@ const { creerCompteAuthentificationDatabase } = require("../auth-database");
 
 const TENANT = "SN";
 let PORT = Number(process.env.SATEER_WORKFLOW_TEST_PORT || 0);
-const BASE_URL = `http://127.0.0.1:${PORT}`;
+let BASE_URL = `http://127.0.0.1:${PORT}`;
 const RUN_ID = randomUUID().replace(/-/g, "").slice(0, 12);
 const DEMAND_OBJECT = "Test E2E SATEER " + RUN_ID;
 const PASSWORD = randomBytes(24).toString("base64url") + "Aa1!";
@@ -307,6 +307,12 @@ async function provision() {
 }
 
 async function cleanup() {
+    for (const key of Object.keys(cookies)) {
+        try {
+            await api("/api/auth/logout", { method: "POST" }, cookies[key]);
+        } catch {}
+    }
+
     if (server && server.exitCode === null) {
         server.kill("SIGTERM");
         await Promise.race([
@@ -314,12 +320,6 @@ async function cleanup() {
             delay(2500)
         ]);
         if (server.exitCode === null) server.kill("SIGKILL");
-    }
-
-    for (const key of Object.keys(cookies)) {
-        try {
-            await api("/api/auth/logout", { method: "POST" }, cookies[key]);
-        } catch {}
     }
 
     if (createdPersonIds.length) {
@@ -374,6 +374,7 @@ async function main() {
 
     await provision();
     PORT = await choisirPortLibre();
+    BASE_URL = `http://127.0.0.1:${PORT}`;
 
     server = spawn(process.execPath, ["server.js"], {
         cwd: process.cwd(),
