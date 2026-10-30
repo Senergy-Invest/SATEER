@@ -9,10 +9,11 @@
     "test:workflow": "node scripts/workflow-e2e-test.js",
     "test:multitenant": "node scripts/multitenant-isolation-test.js",
     "audit:multitenant": "node scripts/multitenant-schema-audit.js",
-    "audit:integrity": "node scripts/multitenant-preflight-audit.js",
+    "audit:integrity": "SATEER_AUDIT_STRICT=1 node scripts/multitenant-preflight-audit.js",
     "audit:complete": "npm test && npm run audit:multitenant && npm run audit:integrity",
-    "test:all": "npm test && npm run test:integration && npm run test:multitenant && npm run test:workflow",
-    "check:all": "npm run audit:complete && npm run test:integration && npm run test:multitenant && npm run test:workflow"
+    "test:all": "npm test && npm run audit:complete && npm run test:constraints && npm run test:integration && npm run test:multitenant && npm run test:workflow",
+    "check:all": "npm run audit:complete && npm run test:constraints && npm run test:integration && npm run test:multitenant && npm run test:workflow",
+    "test:constraints": "node scripts/multitenant-constraints-test.js"
   },
   "repository": {
     "type": "git",

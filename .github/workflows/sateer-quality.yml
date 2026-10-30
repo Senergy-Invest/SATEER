@@ -79,6 +79,8 @@ jobs:
           done
       - name: Run complete schema and integrity audits
         run: npm run audit:complete
+      - name: Run SQL tenant-boundary constraint tests
+        run: npm run test:constraints
       - name: Run HTTP integration test
         run: npm run test:integration
       - name: Run multi-tenant isolation test

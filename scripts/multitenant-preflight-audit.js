@@ -188,32 +188,65 @@ async function main() {
             "Contrôler les données puis ajouter une garantie composite ou un trigger adapté."
         );
 
-        // Tenant-scoped parent references must carry tenant_id in the same FK pair.
-        // Network tables may intentionally cross tenant boundaries; those remain REVIEW.
-        const crossTenantReviewTables = new Set([
-            "organisation_relationships", "organisation_invitations", "organisation_join_requests",
-            "partner_agreements", "introductions", "leads", "commissions"
+        // A simple FK is covered when a matching composite FK also carries
+        // tenant_id -> tenant_id. This avoids reporting legacy FKs as gaps
+        // after the composite guard has been added.
+        const isCoveredByTenantComposite = fk => fks.some(candidate => {
+            if (candidate === fk || candidate.child !== fk.child || candidate.parent !== fk.parent) return false;
+            const tenantChildIndex = candidate.child_columns.indexOf("tenant_id");
+            const tenantParentIndex = candidate.parent_columns.indexOf("tenant_id");
+            if (tenantChildIndex < 0 || tenantParentIndex < 0 || tenantChildIndex !== tenantParentIndex) return false;
+            return fk.child_columns.every((column, index) => {
+                const position = candidate.child_columns.indexOf(column);
+                return position >= 0 && candidate.parent_columns[position] === fk.parent_columns[index];
+            });
+        });
+
+        // These exact edges are intentionally allowed to reference another
+        // tenant (or a global report template). Other gaps remain HIGH.
+        const intentionalCrossTenantOrGlobalFks = new Set([
+            "fk_lead_partner_org",
+            "fk_introduction_partner",
+            "fk_org_invitation_acceptee",
+            "fk_org_join_cible",
+            "fk_org_relationship_target",
+            "fk_partner_agreement_partner",
+            "fk_report_run_template"
         ]);
+
         const tenantFkGaps = fks.filter(fk => {
             const childNames = new Set((byTable.get(fk.child) || []).map(c => c.column_name));
             const parentNames = new Set((byTable.get(fk.parent) || []).map(c => c.column_name));
             if (!childNames.has("tenant_id") || !parentNames.has("tenant_id")) return false;
             const childIndex = fk.child_columns.indexOf("tenant_id");
             const parentIndex = fk.parent_columns.indexOf("tenant_id");
-            return childIndex < 0 || parentIndex < 0 || childIndex !== parentIndex;
+            if (childIndex >= 0 && childIndex === parentIndex) return false;
+            return !isCoveredByTenantComposite(fk);
         });
+
         const tenantGapsByChild = new Map();
         for (const fk of tenantFkGaps) {
             if (!tenantGapsByChild.has(fk.child)) tenantGapsByChild.set(fk.child, []);
             tenantGapsByChild.get(fk.child).push(fk);
         }
         for (const [child, gaps] of tenantGapsByChild) {
-            const severity = crossTenantReviewTables.has(child) ? "REVIEW" : "HIGH";
-            addStructural(
-                "TENANT_SCOPED_FK_GAPS:" + child, severity, child,
-                "Références vers des tables tenant-scoped sans paire tenant_id → tenant_id : " + gaps.map(fk => fk.name).join(", ") + ".",
-                "Vérifier les cas inter-tenant autorisés, puis ajouter des clés composites (tenant_id, id) et des FK composites pour les références qui doivent rester dans le même tenant."
-            );
+            const intentional = gaps.filter(fk => intentionalCrossTenantOrGlobalFks.has(fk.name));
+            const unresolved = gaps.filter(fk => !intentionalCrossTenantOrGlobalFks.has(fk.name));
+
+            if (unresolved.length) {
+                addStructural(
+                    "TENANT_SCOPED_FK_GAPS:" + child, "HIGH", child,
+                    "Références tenant-scoped sans garde composite tenant_id → tenant_id : " + unresolved.map(fk => fk.name).join(", ") + ".",
+                    "Ajouter une FK composite tenant_id + identifiant parent, après contrôle des données."
+                );
+            }
+            if (intentional.length) {
+                addStructural(
+                    "INTENTIONAL_EXTERNAL_REFERENCES:" + child, "REVIEW", child,
+                    "Références globales ou inter-tenant explicitement autorisées : " + intentional.map(fk => fk.name).join(", ") + ".",
+                    "Conserver uniquement les liens externes documentés. Les contrôles métier doivent vérifier l'invitation, le partenariat, le consentement ou le statut global du modèle avant tout accès."
+                );
+            }
         }
 
         const checks = [], dataFindings = [];
@@ -289,11 +322,41 @@ async function main() {
             "SELECT COUNT(*)::bigint AS count FROM relations_personne_organisation_roles a WHERE a.actif=TRUE AND NOT EXISTS "+
             "(SELECT 1 FROM relations_personne_organisation r WHERE r.personne_id=a.personne_id AND r.organisation_id=a.organisation_id)",
             ["relations_personne_organisation_roles","relations_personne_organisation"]);
-        await countCheck("ORGANISATION_RELATION_CROSS_TENANT_REVIEW","REVIEW","Relation interorganisationnelle inter-tenant (peut être volontaire, revue métier requise).",
+        await countCheck("ORGANISATION_RELATION_TARGET_CROSS_TENANT_REVIEW","REVIEW","Relations dont l'organisation cible appartient à un autre tenant (lien externe volontaire à autoriser).",
             "SELECT COUNT(*)::bigint AS count FROM organisation_relationships r "+
-            "JOIN organisations s ON s.id=r.source_organisation_id JOIN organisations t ON t.id=r.target_organisation_id "+
-            "WHERE r.tenant_id IS DISTINCT FROM s.tenant_id OR r.tenant_id IS DISTINCT FROM t.tenant_id",
+            "JOIN organisations t ON t.id=r.target_organisation_id "+
+            "WHERE r.tenant_id IS DISTINCT FROM t.tenant_id",
             ["organisation_relationships","organisations"]);
+        await countCheck("PARTNER_AGREEMENT_PARTNER_CROSS_TENANT_REVIEW","REVIEW","Accords avec un partenaire situé dans un autre tenant.",
+            "SELECT COUNT(*)::bigint AS count FROM partner_agreements a "+
+            "JOIN organisations p ON p.id=a.partner_organisation_id "+
+            "WHERE a.tenant_id IS DISTINCT FROM p.tenant_id",
+            ["partner_agreements","organisations"]);
+        await countCheck("LEAD_PARTNER_CROSS_TENANT_REVIEW","REVIEW","Leads destinés à une organisation partenaire d'un autre tenant.",
+            "SELECT COUNT(*)::bigint AS count FROM leads l "+
+            "JOIN organisations p ON p.id=l.partner_organisation_id "+
+            "WHERE l.partner_organisation_id IS NOT NULL AND l.tenant_id IS DISTINCT FROM p.tenant_id",
+            ["leads","organisations"]);
+        await countCheck("INTRODUCTION_PARTNER_CROSS_TENANT_REVIEW","REVIEW","Mises en relation vers un partenaire d'un autre tenant.",
+            "SELECT COUNT(*)::bigint AS count FROM introductions i "+
+            "JOIN organisations p ON p.id=i.partner_organisation_id "+
+            "WHERE i.tenant_id IS DISTINCT FROM p.tenant_id",
+            ["introductions","organisations"]);
+        await countCheck("INVITATION_ACCEPTED_ORG_CROSS_TENANT_REVIEW","REVIEW","Organisations acceptant une invitation depuis un autre tenant.",
+            "SELECT COUNT(*)::bigint AS count FROM organisation_invitations i "+
+            "JOIN organisations accepted ON accepted.id=i.organisation_acceptee_id "+
+            "WHERE i.organisation_acceptee_id IS NOT NULL AND i.tenant_id IS DISTINCT FROM accepted.tenant_id",
+            ["organisation_invitations","organisations"]);
+        await countCheck("JOIN_REQUEST_TARGET_CROSS_TENANT_REVIEW","REVIEW","Demandes de rattachement vers une organisation cible d'un autre tenant.",
+            "SELECT COUNT(*)::bigint AS count FROM organisation_join_requests j "+
+            "JOIN organisations target ON target.id=j.organisation_cible_id "+
+            "WHERE j.tenant_id IS DISTINCT FROM target.tenant_id",
+            ["organisation_join_requests","organisations"]);
+        await countCheck("REPORT_RUN_TEMPLATE_TENANT_MISMATCH","HIGH","Un modèle de rapport tenant-scoped ne peut être utilisé que dans son tenant ; un modèle global reste autorisé.",
+            "SELECT COUNT(*)::bigint AS count FROM report_runs r "+
+            "JOIN report_templates t ON t.id=r.report_template_id "+
+            "WHERE t.tenant_id IS NOT NULL AND t.tenant_id IS DISTINCT FROM r.tenant_id",
+            ["report_runs","report_templates"]);
 
         const summary = {
             tables:inventory.length,
@@ -309,7 +372,12 @@ async function main() {
             rls_enabled_tables:inventory.filter(t=>t.rls_enabled).length,
             rls_forced_tables:inventory.filter(t=>t.rls_forced).length,
             rls_policies:policies.length,triggers:triggers.length,
-            structural_findings:structural.length,tenant_scoped_fk_gaps:tenantFkGaps.length,data_checks:checks.length,
+            structural_findings:structural.length,
+            high_structural_findings:structural.filter(item=>item.severity==="HIGH").length,
+            tenant_scoped_fk_gaps:tenantFkGaps.length,
+            intentional_cross_tenant_or_global_fk_edges:tenantFkGaps.filter(fk=>intentionalCrossTenantOrGlobalFks.has(fk.name)).length,
+            unresolved_tenant_fk_gaps:tenantFkGaps.filter(fk=>!intentionalCrossTenantOrGlobalFks.has(fk.name)).length,
+            data_checks:checks.length,
             data_anomalies:dataFindings.length,
             critical_data_anomalies:dataFindings.filter(x=>x.severity==="CRITICAL").length,
             high_data_anomalies:dataFindings.filter(x=>x.severity==="HIGH").length
@@ -375,8 +443,11 @@ async function main() {
     console.log(JSON.stringify(report.summary,null,2));
     console.log("Rapports : AUDIT/multitenant-integrity-preflight-latest.md et .json");
     if (process.env.SATEER_AUDIT_STRICT==="1" &&
-        (report.summary.critical_data_anomalies>0 || report.summary.high_data_anomalies>0)) {
-        throw new Error("Mode strict : anomalies critiques ou hautes présentes.");
+        (report.summary.critical_data_anomalies>0
+            || report.summary.high_data_anomalies>0
+            || report.summary.high_structural_findings>0
+            || report.summary.unresolved_tenant_fk_gaps>0)) {
+        throw new Error("Mode strict : anomalies de données ou écarts structurels tenant non résolus.");
     }
 }
 
