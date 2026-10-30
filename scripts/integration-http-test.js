@@ -58,19 +58,48 @@ async function main() {
     verifier(cible.rows[0].nom === "sateer_test",
         "La cible PostgreSQL est exclusivement sateer_test");
 
+    // Choisir un acteur réel du pilote : rattachement actif à une
+    // organisation SN et rôle organisationnel donnant VIEW_ORGANISATION.
     const personne = await executerRequete(`
-        SELECT p.id
+        SELECT DISTINCT p.id AS personne_id, o.id AS organisation_id
         FROM personnes p
-        LEFT JOIN auth_accounts a ON a.personne_id = p.id
-        WHERE a.id IS NULL
-        ORDER BY p.id
+        INNER JOIN relations_personne_organisation rpo
+            ON rpo.personne_id = p.id
+        INNER JOIN organisations o
+            ON o.id = rpo.organisation_id
+        INNER JOIN tenants t
+            ON t.id = o.tenant_id
+        INNER JOIN relations_personne_organisation_roles rel
+            ON rel.personne_id = p.id
+            AND rel.organisation_id = o.id
+            AND rel.actif = TRUE
+        INNER JOIN organisation_roles r
+            ON r.id = rel.role_id
+            AND r.organisation_id = o.id
+            AND r.actif = TRUE
+        INNER JOIN role_permissions rp
+            ON rp.role_id = r.id
+            AND rp.actif = TRUE
+        INNER JOIN permissions perm
+            ON perm.id = rp.permission_id
+            AND perm.actif = TRUE
+            AND perm.code = 'VIEW_ORGANISATION'
+        LEFT JOIN auth_accounts a
+            ON a.personne_id = p.id
+        WHERE t.code = 'SN'
+            AND t.actif = TRUE
+            AND a.id IS NULL
+        ORDER BY p.id, o.id
         LIMIT 1
     `);
     verifier(personne.rows.length === 1,
-        "Une personne de test sans compte existant est disponible");
+        "Un acteur pilote sans compte, rattaché à une organisation SN et doté de VIEW_ORGANISATION est disponible");
+
+    const personneId = personne.rows[0].personne_id;
+    const organisationId = personne.rows[0].organisation_id;
 
     const creation = await creerCompteAuthentificationDatabase(
-        personne.rows[0].id,
+        personneId,
         IDENTIFIANT,
         MOT_DE_PASSE
     );
@@ -126,6 +155,46 @@ async function main() {
     });
     verifier(contexte.status === 200,
         "Le contexte organisationnel est chargé depuis PostgreSQL");
+    const contexteJson = await contexte.json();
+    verifier(
+        contexteJson.statut === "CONTEXTE_CHARGE"
+        && contexteJson.organisations.some(org => Number(org.id) === Number(organisationId)),
+        "Le contexte expose le rattachement réel de l'acteur au Consulat pilote");
+
+    const catalogue = await requete("/api/permissions", {
+        headers: { Cookie: cookie }
+    });
+    verifier(catalogue.status === 200,
+        "Le catalogue des permissions est accessible après authentification");
+    const catalogueJson = await catalogue.json();
+    verifier(Array.isArray(catalogueJson.permissions) && catalogueJson.permissions.length > 0,
+        "Le catalogue des permissions provient de PostgreSQL");
+
+    const structure = await requete(
+        `/api/organisations/${organisationId}/structure?tenant=SN`,
+        { headers: { Cookie: cookie } }
+    );
+    verifier(structure.status === 200,
+        "La permission VIEW_ORGANISATION autorise l'accès à la structure de l'organisation");
+
+    const organisationHorsTenant = await executerRequete(`
+        SELECT o.id
+        FROM organisations o
+        INNER JOIN tenants t ON t.id = o.tenant_id
+        WHERE t.code <> 'SN' AND t.actif = TRUE
+        ORDER BY o.id
+        LIMIT 1
+    `);
+    if (organisationHorsTenant.rows.length > 0) {
+        const refus = await requete(
+            `/api/organisations/${organisationHorsTenant.rows[0].id}/structure?tenant=SN`,
+            { headers: { Cookie: cookie } }
+        );
+        verifier(refus.status === 403,
+            "Un utilisateur SN ne peut pas consulter une organisation d'un autre tenant");
+    } else {
+        console.log("INFO - Test inter-tenant ignoré : aucune organisation étrangère au tenant SN dans les données de test.");
+    }
 
     const logout = await requete("/api/auth/logout", {
         method: "POST",
