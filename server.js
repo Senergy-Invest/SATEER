@@ -81,6 +81,8 @@ const {
     exigerPermission
 } = require("./auth-authorization");
 
+const { exigerTenantTransactionVerifie } = require("./database-request-context");
+
 const app = express();
 
 const PORT = Number(process.env.PORT || 3000);
@@ -728,6 +730,7 @@ app.post(
 app.post(
     "/api/demandes",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
 
         try {
@@ -2652,6 +2655,7 @@ app.get(
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/route",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const organisationId = Number(req.params.organisationId);
@@ -2735,6 +2739,7 @@ app.post(
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/take",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const organisationId = Number(req.params.organisationId);
@@ -2804,6 +2809,7 @@ app.post(
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/respond",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const organisationId = Number(req.params.organisationId);
@@ -4058,6 +4064,7 @@ app.get(
 app.post(
     "/api/secretariat/demandes/:demandeId/orientation",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const demandeId = Number(req.params.demandeId);
@@ -4139,6 +4146,7 @@ app.post(
 app.post(
     "/api/agent/demandes/:demandeId/prise-en-charge",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
 
         try {
@@ -4279,6 +4287,7 @@ app.post(
 app.post(
     "/api/agent/demandes/:demandeId/reponse",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
 
         try {

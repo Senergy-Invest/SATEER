@@ -395,6 +395,23 @@ async function main() {
 
     for (const key of Object.keys(ACTORS)) await login(key);
 
+    // The authenticated context is not authorized by a forged tenant code.
+    // The gate must reject before any database write.
+    const forgedTenant = await api("/api/demandes", {
+        method: "POST",
+        body: JSON.stringify({
+            organisationId: orgId,
+            tenantCode: "UNAUTHORIZED_" + RUN_ID,
+            categorie: "DEMANDE_INFORMATION",
+            objet: "Must not be created " + RUN_ID,
+            message: "Untrusted tenant selector"
+        })
+    }, cookies.citizen);
+    expectStatus(forgedTenant, 403,
+        "Un tenant inventé ne permet pas de créer une demande");
+    check(forgedTenant.body?.statut === "CONTEXTE_TENANT_NON_AUTORISE",
+        "La création est refusée avant les écritures métier");
+
     // Citizen creates a request.
     const create = await api("/api/demandes", {
         method: "POST",

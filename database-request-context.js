@@ -300,8 +300,35 @@ async function executerRequeteAuthentifieeDansTransaction({
     }
 }
 
+/**
+ * Fail-closed gate for institution-scoped writes.
+ * exigerSession establishes a verified, transaction-local tenant first.
+ * A tenant supplied in query/body never grants this context by itself.
+ */
+function exigerTenantTransactionVerifie(req, res, next) {
+    const contexte = req.databaseContext;
+    const courant = obtenirContexteDatabaseCourant();
+    const personne = Number(req.auth?.personneId);
+    const tenant = Number(contexte?.tenantId);
+
+    if (!Number.isSafeInteger(personne) || personne <= 0
+        || !Number.isSafeInteger(tenant) || tenant <= 0
+        || contexte?.type !== "USER"
+        || Number(contexte?.personneId) !== personne
+        || !courant || courant.type !== "USER"
+        || Number(courant.personneId) !== personne
+        || Number(courant.tenantId) !== tenant) {
+        return res.status(403).json({
+            statut: "CONTEXTE_TENANT_NON_AUTORISE"
+        });
+    }
+
+    return next();
+}
+
 module.exports = {
     extraireSelecteursRequete,
+    exigerTenantTransactionVerifie,
     resoudreTenantIdPourContexteAuthentifie,
     executerRequeteAuthentifieeDansTransaction
 };
