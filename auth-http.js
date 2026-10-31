@@ -20,6 +20,10 @@ const {
     revoquerSessionDatabase
 } = require("./auth-database");
 
+const {
+    executerRequeteAuthentifieeDansTransaction
+} = require("./database-request-context");
+
 const authRouter = express.Router();
 
 const COOKIE_NAME = "sateer_session";
@@ -183,7 +187,12 @@ async function exigerSession(req, res, next) {
             nom: session.nom
         };
 
-        next();
+        await executerRequeteAuthentifieeDansTransaction({
+            personneId: req.auth.personneId,
+            req,
+            res,
+            next
+        });
 
     } catch (erreur) {
 

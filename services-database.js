@@ -2159,7 +2159,7 @@ async function orienterDemandeDatabase(
 
     } finally {
 
-        client.release();
+        await client.release();
     }
 }
 async function prendreEnChargeDemandeDatabase(
@@ -2652,6 +2652,7 @@ async function listerNotificationsPersonneDatabase(
             `
             SELECT
                 n.id,
+                n.organisation_id,
                 n.type,
                 n.titre,
                 n.message,
@@ -6362,7 +6363,7 @@ async function affecterMembreOrganisationUnitDatabase(
 
     } finally {
 
-        client.release();
+        await client.release();
     }
 }
 
@@ -6656,7 +6657,7 @@ async function modifierMembreOrganisationUnitDatabase(
 
     } finally {
 
-        client.release();
+        await client.release();
     }
 }
 
@@ -9969,7 +9970,7 @@ async function orienterDemandeWorkspaceUnitDatabase(
         await client.query("ROLLBACK");
         throw erreur;
     } finally {
-        client.release();
+        await client.release();
     }
 }
 

@@ -46,6 +46,14 @@ async function chargerOrganisation() {
         const organisation = await window.SATEER_choisirOrganisation(organisationId);
         if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
         organisationId = Number(organisation.id);
+        const adminLink = document.getElementById("administrationOrganisationLink");
+        if (adminLink) {
+            const target = new URL("/administration-organisation.html", window.location.origin);
+            target.searchParams.set("organisation", String(organisationId));
+            target.searchParams.set("tenant", tenant);
+            adminLink.href = target.pathname + target.search;
+            adminLink.hidden = false;
+        }
 
         organisationLoading.hidden =
             false;

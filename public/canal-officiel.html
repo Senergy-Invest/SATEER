@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Canal officiel • SATEER</title><link rel="stylesheet" href="/styles.css">
+<style>
+.channel-page{max-width:1000px;margin:auto;padding:26px 20px 70px}
+.channel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:20px}
+.channel-panel{background:white;border:1px solid var(--border);border-radius:18px;padding:22px}
+.channel-panel form{display:grid;gap:12px}
+.channel-panel label{display:grid;gap:5px;font-weight:600}
+.channel-panel input,.channel-panel textarea,.channel-panel select{font:inherit;border:1px solid #b5c8bc;border-radius:9px;padding:10px;width:100%}
+.channel-panel textarea{min-height:150px;resize:vertical}
+.channel-status{margin:12px 0;min-height:1.6em;color:var(--primary)}
+.channel-status[data-error="true"]{color:#ab2525}
+.channel-item{border-bottom:1px solid var(--border);padding:12px 0}
+.channel-item small{display:block;color:var(--muted);margin:5px 0}
+.channel-item p{white-space:pre-wrap;overflow-wrap:anywhere}
+.channel-note{color:var(--muted);line-height:1.6}
+</style></head>
+<body><main class="channel-page">
+<p class="eyebrow">SATEER CORE • COMMUNICATION INSTITUTIONNELLE</p>
+<h1>Canal officiel</h1>
+<p id="channelOrg" class="channel-note">Chargement de l'organisation…</p>
+<p class="channel-note">Une publication alimente SATEER et les notifications internes des destinataires autorisés. Ce canal n'envoie pas encore d'e-mails externes, SMS ou notifications mobiles.</p>
+<a id="channelBack" class="button button-secondary" href="/dashboard-vice-consul.html">Retour au pilotage</a>
+<p id="channelStatus" class="channel-status" role="status" aria-live="polite"></p>
+<div class="channel-grid">
+<section class="channel-panel" aria-labelledby="channelFormTitle">
+<h2 id="channelFormTitle">Diffuser une information</h2>
+<form id="channelForm">
+<label>Titre<input name="titre" maxlength="255" required placeholder="Ex. : Permanence consulaire"></label>
+<label>Contenu<textarea name="contenu" maxlength="20000" required></textarea></label>
+<label>Catégorie<input name="categorie" maxlength="100" value="INFORMATION" required></label>
+<label>Priorité<select name="priorite"><option value="NORMALE">Normale</option><option value="IMPORTANTE">Importante</option><option value="URGENTE">Urgente</option></select></label>
+<label>Destinataires<select name="audienceType" id="audienceType">
+<option value="TOUS">Membres de cette organisation</option>
+<option value="DEPARTEMENT">Département de résidence</option>
+<option value="PROFIL">Profil des usagers</option>
+<option value="ASSOCIATION">Membres d'une association connectée</option>
+</select></label>
+<label id="audienceTextBlock" hidden>Valeur du ciblage<input id="audienceValue" maxlength="255" placeholder="Département ou profil"></label>
+<label id="audienceAssociationBlock" hidden>Association connectée<select id="audienceAssociation"></select></label>
+<button type="submit" class="button button-primary">Publier dans SATEER</button>
+</form>
+</section>
+<section class="channel-panel" aria-labelledby="channelHistoryTitle">
+<h2 id="channelHistoryTitle">Informations diffusées</h2>
+<p class="channel-note">Historique de l'organisation, y compris les destinataires ciblés.</p>
+<div id="channelHistory"></div>
+</section>
+</div></main>
+<script src="/auth-client.js"></script><script src="/canal-officiel.js"></script>
+</body></html>

@@ -11,7 +11,14 @@ const { spawn } = require("node:child_process");
 const net = require("node:net");
 const { randomBytes } = require("node:crypto");
 const { setTimeout: delay } = require("node:timers/promises");
-const { executerRequete, fermerDatabase } = require("../database");
+const {
+    executerRequete,
+    executerTransactionDatabase,
+    fermerDatabase
+} = require("../database");
+const {
+    resoudreTenantIdPourContexteAuthentifie
+} = require("../database-request-context");
 const { creerCompteAuthentificationDatabase } = require("../auth-database");
 
 const RUN = randomBytes(6).toString("hex").toUpperCase();
@@ -180,6 +187,42 @@ async function provision() {
     check(true, "Deux tenants, deux organisations, deux personnes et deux rattachements provisionnés");
 }
 
+
+async function testResolutionContexteDatabase() {
+    const tenantA = await executerTransactionDatabase(
+        { type: "USER", personneId: personneIds[0] },
+        () => resoudreTenantIdPourContexteAuthentifie(
+            personneIds[0],
+            { tenantCode: TENANT_A }
+        )
+    );
+    check(tenantA === tenantIds[0],
+        "Le tenant A est résolu depuis le rattachement de la personne A");
+
+    const tenantBDepuisA = await executerTransactionDatabase(
+        { type: "USER", personneId: personneIds[0] },
+        () => resoudreTenantIdPourContexteAuthentifie(
+            personneIds[0],
+            { tenantCode: TENANT_B }
+        )
+    );
+    check(tenantBDepuisA === null,
+        "La personne A ne peut pas résoudre le tenant B sans rattachement");
+
+    const organisationIncoherente = await executerTransactionDatabase(
+        { type: "USER", personneId: personneIds[0] },
+        () => resoudreTenantIdPourContexteAuthentifie(
+            personneIds[0],
+            {
+                tenantCode: TENANT_B,
+                organisationId: organisationIds[0]
+            }
+        )
+    );
+    check(organisationIncoherente === null,
+        "Un tenant déclaré ne peut pas être associé à l'organisation d'un autre tenant");
+}
+
 async function testContextes() {
     const contextA = await api("/api/context?tenant=" + TENANT_A, {}, cookies.a);
     await expectStatus(contextA, 200, "A consulte son contexte tenant");
@@ -308,6 +351,7 @@ async function cleanup() {
 
 async function main() {
     await provision();
+    await testResolutionContexteDatabase();
     port = await choosePort();
     baseUrl = "http://127.0.0.1:" + port;
 

@@ -37,6 +37,8 @@ const createdAccounts = [];
 const cookies = {};
 let server = null;
 let demandId = null;
+let publicationId = null;
+let communicationRoleId = null;
 let orgId = null;
 let secretariatUnitId = null;
 let serviceUnitId = null;
@@ -283,8 +285,27 @@ async function provision() {
             createdMemberships.push([ACTORS[key].personId, unitId, roleId]);
         }
 
+        // Attribution d'un rôle institutionnel supplémentaire, non protégé,
+        // pour démontrer la publication par le Vice-Consul sans modifier son rôle stratégique.
+        const communicationRole = await client.query(
+            `INSERT INTO organisation_roles (organisation_id,code,nom,scope)
+             VALUES ($1,$2,'Responsable communication pilote','ORGANISATION') RETURNING id`,
+            [orgId, "E2E_COMMUNICATION_" + RUN_ID]
+        );
+        communicationRoleId = Number(communicationRole.rows[0].id);
+        await client.query(
+            `INSERT INTO role_permissions(role_id,permission_id)
+             SELECT $1,p.id FROM permissions p
+             WHERE p.code IN ('MANAGE_PUBLICATIONS','TARGET_COMMUNICATION')`,
+            [communicationRoleId]
+        );
+        await client.query(
+            `INSERT INTO relations_personne_organisation_roles
+             (personne_id,organisation_id,role_id,actif) VALUES ($1,$2,$3,TRUE)`,
+            [ACTORS.viceConsul.personId,orgId,communicationRoleId]
+        );
         await client.query("COMMIT");
-        console.log("OK - 5 acteurs synthétiques et leurs rattachements créés dans sateer_test");
+        console.log("OK - 5 acteurs et rôle communication configurés dans sateer_test");
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -330,6 +351,9 @@ async function cleanup() {
                 "DELETE FROM notifications WHERE personne_id = ANY($1::integer[])",
                 [createdPersonIds]
             );
+            if (publicationId) {
+                await client.query("DELETE FROM publications WHERE id = $1", [publicationId]);
+            }
             await client.query("DELETE FROM demandes WHERE objet = $1", [DEMAND_OBJECT]);
             await client.query(
                 "DELETE FROM auth_sessions WHERE compte_id IN (SELECT id FROM auth_accounts WHERE personne_id = ANY($1::integer[]))",
@@ -347,6 +371,10 @@ async function cleanup() {
                 "DELETE FROM relations_personne_organisation_roles WHERE personne_id = ANY($1::integer[])",
                 [createdPersonIds]
             );
+            if (communicationRoleId) {
+                await client.query("DELETE FROM role_permissions WHERE role_id = $1", [communicationRoleId]);
+                await client.query("DELETE FROM organisation_roles WHERE id = $1", [communicationRoleId]);
+            }
             await client.query(
                 "DELETE FROM relations_personne_organisation WHERE personne_id = ANY($1::integer[])",
                 [createdPersonIds]
@@ -394,6 +422,64 @@ async function main() {
     await waitForServer();
 
     for (const key of Object.keys(ACTORS)) await login(key);
+
+    // The authenticated context is not authorized by a forged tenant code.
+    // The gate must reject before any database write.
+    const forgedTenant = await api("/api/demandes", {
+        method: "POST",
+        body: JSON.stringify({
+            organisationId: orgId,
+            tenantCode: "UNAUTHORIZED_" + RUN_ID,
+            categorie: "DEMANDE_INFORMATION",
+            objet: "Must not be created " + RUN_ID,
+            message: "Untrusted tenant selector"
+        })
+    }, cookies.citizen);
+    expectStatus(forgedTenant, 403,
+        "Un tenant inventé ne permet pas de créer une demande");
+    check(forgedTenant.body?.statut === "CONTEXTE_TENANT_NON_AUTORISE",
+        "La création est refusée avant les écritures métier");
+
+    // Vice-Consul has a specifically assigned communication role, not an implicit right.
+    const publicationPath = `/api/organisations/${orgId}/canal-officiel?tenant=${TENANT}`;
+    const citizenPublish = await api(publicationPath, {
+        method:"POST",
+        body:JSON.stringify({tenantCode:TENANT,titre:"Interdit " + RUN_ID,
+            contenu:"Le citoyen ne peut pas diffuser une publication"})
+    },cookies.citizen);
+    expectStatus(citizenPublish,403,"Le citoyen ne peut pas publier sur le canal officiel");
+
+    const publication = await api(publicationPath, {
+        method:"POST",
+        body:JSON.stringify({tenantCode:TENANT,
+            titre:"Information officielle pilote " + RUN_ID,
+            contenu:"Permanence consulaire à Bordeaux — communication du pilote " + RUN_ID,
+            categorie:"INFORMATION",priorite:"IMPORTANTE",audienceType:"TOUS"})
+    },cookies.viceConsul);
+    expectStatus(publication,201,"Vice-Consul diffuse dans son canal officiel");
+    publicationId=Number(publication.body.publication.id);
+    check(publication.body.notificationsCreees >= 5,
+        "Une notification interne est créée pour les membres de l'organisation");
+    check(publication.body.emailExterne==="NON_CONNECTE",
+        "L'API ne prétend pas envoyer des e-mails externes");
+
+    const citizenCommunication = await api(
+        `/api/mon-consulat/${ACTORS.citizen.personId}?tenant=${TENANT}&organisation=${orgId}`,
+        {},cookies.citizen
+    );
+    expectStatus(citizenCommunication,200,"Le citoyen consulte les informations du Consulat");
+    check((citizenCommunication.body.publications || []).some(p=>Number(p.id)===publicationId),
+        "L'information officielle apparaît dans Mon Consulat");
+    check((citizenCommunication.body.notifications || []).some(n=>Number(n.reference_id)===publicationId),
+        "La notification est visible dans Mon Consulat");
+
+    const associationNonConnectee = await api(publicationPath, {
+        method:"POST",
+        body:JSON.stringify({tenantCode:TENANT,titre:"Ciblage interdit",
+            contenu:"Association non connectée",audienceType:"ASSOCIATION",audienceValeur:"99999999"})
+    },cookies.viceConsul);
+    expectStatus(associationNonConnectee,403,
+        "Le canal refuse de cibler une association non connectée");
 
     // Citizen creates a request.
     const create = await api("/api/demandes", {

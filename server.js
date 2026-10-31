@@ -6,6 +6,7 @@ const {
     obtenirMonSateerDatabase,
     trouverOrganisationParIdEtTenantDatabase,
     listerPublicationsVisiblesPourPersonneDatabase,
+    listerPublicationsParOrganisationEtTenantDatabase,
     listerDemandesPersonneDatabase,
     listerNotificationsPersonneDatabase,
     creerDemandeDatabase,
@@ -78,8 +79,12 @@ const {
 
 // AUTORISATIONS GENERIQUES SATEER
 const {
-    exigerPermission
+    exigerPermission,
+    verifierPermissionPersonneDatabase
 } = require("./auth-authorization");
+
+const { exigerTenantTransactionVerifie } = require("./database-request-context");
+const { publierDansCanalInstitutionnel } = require("./communication-pilot");
 
 const app = express();
 
@@ -417,6 +422,78 @@ app.get(
     }
 );
 // =========================================================
+// CANAL OFFICIEL — diffusion dans SATEER uniquement, sans email externe
+// =========================================================
+app.get(
+    "/api/organisations/:organisationId/canal-officiel",
+    ...exigerPermission("MANAGE_PUBLICATIONS", "ORGANISATION"),
+    async (req, res) => {
+        try {
+            const publications = await listerPublicationsParOrganisationEtTenantDatabase(
+                Number(req.params.organisationId), String(req.query.tenant || "")
+            );
+            return res.set("Cache-Control", "no-store").json({
+                statut:"PUBLICATIONS_CHARGEES", publications
+            });
+        } catch (erreur) {
+            console.error("Canal officiel - liste :", erreur);
+            return res.status(500).json({statut:"ERREUR_CANAL_OFFICIEL"});
+        }
+    }
+);
+
+app.post(
+    "/api/organisations/:organisationId/canal-officiel",
+    ...exigerPermission("MANAGE_PUBLICATIONS", "ORGANISATION"),
+    exigerTenantTransactionVerifie,
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const tenantCode = String(req.body?.tenantCode || "").trim();
+            const audienceType = String(req.body?.audienceType || "TOUS").trim().toUpperCase();
+
+            if (audienceType !== "TOUS") {
+                const decision = await verifierPermissionPersonneDatabase({
+                    personneId:req.auth.personneId, organisationId, tenantCode,
+                    permissionCode:"TARGET_COMMUNICATION"
+                });
+                if (!decision.succes || !decision.autorise ||
+                    decision.portee !== "ORGANISATION") {
+                    return res.status(403).json({statut:"CIBLAGE_COMMUNICATION_NON_AUTORISE"});
+                }
+            }
+
+            const resultat = await publierDansCanalInstitutionnel({
+                organisationId,
+                tenantId:Number(req.databaseContext.tenantId),
+                personneId:Number(req.auth.personneId),
+                titre:req.body?.titre,
+                contenu:req.body?.contenu,
+                categorie:req.body?.categorie,
+                priorite:req.body?.priorite,
+                audienceType,
+                audienceValeur:req.body?.audienceValeur
+            });
+            if (!resultat.succes) {
+                const httpCode = ["PUBLICATION_INVALIDE", "ASSOCIATION_INVALIDE"].includes(resultat.code)
+                    ? 400 : resultat.code === "ASSOCIATION_NON_CONNECTEE" ? 403 : 404;
+                return res.status(httpCode).json({statut:resultat.code});
+            }
+            return res.status(201).json({
+                statut:"PUBLICATION_DIFFUSEE_SATEER",
+                canal:"SATEER",
+                publication:resultat.publication,
+                notificationsCreees:resultat.notificationsCreees,
+                emailExterne:"NON_CONNECTE"
+            });
+        } catch (erreur) {
+            console.error("Canal officiel - publication :", erreur);
+            return res.status(500).json({statut:"ERREUR_PUBLICATION_CANAL"});
+        }
+    }
+);
+
+// =========================================================
 // API - MON CONSULAT
 // =========================================================
 
@@ -728,6 +805,7 @@ app.post(
 app.post(
     "/api/demandes",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
 
         try {
@@ -2652,6 +2730,7 @@ app.get(
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/route",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const organisationId = Number(req.params.organisationId);
@@ -2735,6 +2814,7 @@ app.post(
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/take",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const organisationId = Number(req.params.organisationId);
@@ -2804,6 +2884,7 @@ app.post(
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/respond",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const organisationId = Number(req.params.organisationId);
@@ -4058,6 +4139,7 @@ app.get(
 app.post(
     "/api/secretariat/demandes/:demandeId/orientation",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
         try {
             const demandeId = Number(req.params.demandeId);
@@ -4139,6 +4221,7 @@ app.post(
 app.post(
     "/api/agent/demandes/:demandeId/prise-en-charge",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
 
         try {
@@ -4279,6 +4362,7 @@ app.post(
 app.post(
     "/api/agent/demandes/:demandeId/reponse",
     exigerSession,
+    exigerTenantTransactionVerifie,
     async (req, res) => {
 
         try {
