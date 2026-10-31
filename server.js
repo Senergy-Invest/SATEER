@@ -54,7 +54,8 @@ const {
     obtenirPermissionsEffectivesDatabase,
     obtenirUnitesWorkspaceOverviewDatabase,
     listerDemandesWorkspaceUnitDatabase,
-    orienterDemandeWorkspaceUnitDatabase
+    orienterDemandeWorkspaceUnitDatabase,
+    listerOrganisationsPersonneDatabase
 } = require("./services-database");
 
 const {
@@ -82,7 +83,7 @@ const {
 
 const app = express();
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 
 app.use(
@@ -106,6 +107,24 @@ app.use(
         )
     )
 );
+
+// Contexte derive de la session et des rattachements actifs.
+app.get("/api/context", exigerSession, async (req, res) => {
+    try {
+        const tenantCode = String(req.query.tenant || "SN").trim();
+        if (!tenantCode || tenantCode.length > 50) return res.status(400).json({ statut: "TENANT_INVALIDE" });
+        const organisations = await listerOrganisationsPersonneDatabase(Number(req.auth.personneId), tenantCode);
+        return res.set("Cache-Control", "no-store").json({
+            statut: "CONTEXTE_CHARGE",
+            personne: { id: Number(req.auth.personneId), prenom: req.auth.prenom, nom: req.auth.nom },
+            tenantCode,
+            organisations
+        });
+    } catch (erreur) {
+        console.error("Erreur chargement contexte authentifie :", erreur);
+        return res.status(500).json({ statut: "ERREUR_CONTEXTE" });
+    }
+});
 
 // =========================================================
 // CONTROLES D'AUTORISATION DU CIRCUIT METIER
@@ -416,17 +435,15 @@ app.get(
                 req.query.tenant || "SN";
 
 
-            const organisationId =
-                Number(
-                    req.query.organisation || 1
-                );
-
-
-            const organisation =
-                await trouverOrganisationParIdEtTenantDatabase(
-                    organisationId,
-                    tenantCode
-                );
+            const organisationId = Number(req.query.organisation);
+            if (!Number.isSafeInteger(organisationId) || organisationId <= 0) {
+                return res.status(400).json({ statut: "ORGANISATION_REQUISE" });
+            }
+            const organisationsAutorisees = await listerOrganisationsPersonneDatabase(personneId, tenantCode);
+            if (!organisationsAutorisees.some(item => Number(item.id) === organisationId)) {
+                return res.status(403).json({ statut: "PERSONNE_HORS_ORGANISATION" });
+            }
+            const organisation = await trouverOrganisationParIdEtTenantDatabase(organisationId, tenantCode);
 
 
             if (!organisation) {
@@ -614,6 +631,13 @@ app.post(
             }
 
 
+            const organisationsAutorisees = await listerOrganisationsPersonneDatabase(
+                Number(req.auth.personneId),
+                tenantCode
+            );
+            if (!organisationsAutorisees.some(item => Number(item.id) === Number(organisationId))) {
+                return res.status(403).json({ statut: "PERSONNE_HORS_ORGANISATION" });
+            }
             // =================================================
             // CONTRÔLE GÉNÉRIQUE SATEER
             // =================================================
@@ -744,6 +768,13 @@ app.post(
             }
 
 
+            const organisationsAutorisees = await listerOrganisationsPersonneDatabase(
+                Number(req.auth.personneId),
+                tenantCode
+            );
+            if (!organisationsAutorisees.some(item => Number(item.id) === Number(organisationId))) {
+                return res.status(403).json({ statut: "PERSONNE_HORS_ORGANISATION" });
+            }
             // =================================================
             // CRÉATION POSTGRESQL
             // =================================================

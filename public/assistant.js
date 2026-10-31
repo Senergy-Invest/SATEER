@@ -1,5 +1,4 @@
-const PERSONNE_ID = 1;
-const TENANT = "SN";
+
 
 
 // =========================================================
@@ -12,10 +11,7 @@ const params =
     );
 
 
-const ORGANISATION_ID =
-    Number(
-        params.get("organisation") || 1
-    );
+let ORGANISATION_ID = Number(params.get("organisation")) || null;
 
 
 const USE_CASE =
@@ -347,6 +343,13 @@ form.addEventListener(
 
         event.preventDefault();
 
+        const contexte = await window.SATEER_CONTEXT_READY;
+        const organisation = await window.SATEER_choisirOrganisation(ORGANISATION_ID);
+        if (!organisation) {
+            ajouterMessage("Sélectionnez une organisation rattachée à votre compte pour utiliser cet assistant.", "ai");
+            return;
+        }
+        ORGANISATION_ID = Number(organisation.id);
 
         const question =
             input.value.trim();
@@ -412,14 +415,11 @@ form.addEventListener(
                         body:
                             JSON.stringify({
 
-                                personneId:
-                                    PERSONNE_ID,
-
                                 organisationId:
                                     ORGANISATION_ID,
 
                                 tenantCode:
-                                    TENANT,
+                                    contexte.tenantCode,
 
                                 useCase:
                                     USE_CASE,

@@ -1,7 +1,3 @@
-const PERSONNE_ID = 1;
-const TENANT = "SN";
-
-
 function iconeExperience(code) {
 
     switch (code) {
@@ -291,75 +287,61 @@ function afficherNotifications(
 async function chargerEspacesInstitutionnels() {
     const container = document.getElementById("experiencesContainer");
     if (!container) return;
-
-    try {
+    const contexte = await window.SATEER_CONTEXT_READY;
+    const organisations = contexte.organisations || [];
+    for (const organisation of organisations) {
         const response = await fetch(
-            `/api/organisations/1/dashboards/acces?tenant=${TENANT}`,
+            `/api/organisations/${organisation.id}/dashboards/acces?tenant=${encodeURIComponent(contexte.tenantCode)}`,
             { credentials: "same-origin", cache: "no-store" }
         );
-        if (!response.ok) return;
-
+        if (!response.ok) continue;
         const data = await response.json();
         const dashboards = data.dashboards || {};
         const espaces = [];
-
-        if (dashboards.strategique) {
-            espaces.push({
-                titre: "Dashboard stratégique",
-                description: "Pilotage institutionnel, résultats et vision globale du Consulat.",
-                url: `/dashboard-consul.html?organisation=1&tenant=${TENANT}`,
-                icone: "◆"
-            });
-        }
-
-        if (dashboards.operationnel) {
-            espaces.push({
-                titre: "Dashboard opérationnel",
-                description: "Suivi de l'activité, des unités et des opérations du Consulat.",
-                url: `/dashboard-vice-consul.html?organisation=1&tenant=${TENANT}`,
-                icone: "◈"
-            });
-        }
-
+        if (dashboards.strategique) espaces.push({
+            titre: "Dashboard stratégique",
+            description: `Pilotage institutionnel — ${organisation.nom}.`,
+            url: `/dashboard-consul.html?organisation=${organisation.id}&tenant=${encodeURIComponent(contexte.tenantCode)}`,
+            icone: "◆"
+        });
+        if (dashboards.operationnel) espaces.push({
+            titre: "Dashboard opérationnel",
+            description: `Suivi des opérations — ${organisation.nom}.`,
+            url: `/dashboard-vice-consul.html?organisation=${organisation.id}&tenant=${encodeURIComponent(contexte.tenantCode)}`,
+            icone: "◈"
+        });
         espaces.forEach(espace => {
             const card = document.createElement("article");
             card.className = "experience-card";
             card.tabIndex = 0;
             card.setAttribute("role", "link");
-
             const icon = document.createElement("div");
             icon.className = "experience-icon";
             icon.textContent = espace.icone;
-
             const title = document.createElement("h3");
             title.textContent = espace.titre;
-
             const description = document.createElement("p");
             description.textContent = espace.description;
-
             card.append(icon, title, description);
-            card.addEventListener("click", () => { window.location.href = espace.url; });
+            const ouvrir = () => { window.location.href = espace.url; };
+            card.addEventListener("click", ouvrir);
             card.addEventListener("keydown", event => {
-                if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    window.location.href = espace.url;
-                }
+                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); ouvrir(); }
             });
             container.appendChild(card);
         });
-    } catch (erreur) {
-        console.error("Erreur chargement des espaces institutionnels :", erreur);
     }
 }
-
 
 async function chargerMonSateer() {
 
     try {
+        const contexte = await window.SATEER_CONTEXT_READY;
+
 
         const reponse =
             await fetch(
-                `/api/mon-sateer/${PERSONNE_ID}?tenant=${TENANT}`
+                `/api/mon-sateer/${contexte.personne.id}?tenant=${encodeURIComponent(contexte.tenantCode)}`
             );
 
 

@@ -1,7 +1,7 @@
 (() => {
     const params = new URLSearchParams(window.location.search);
-    const organisationId = Number(params.get("organisation") || 1);
-    const tenant = params.get("tenant") || "SN";
+    let organisationId = Number(params.get("organisation")) || null;
+    let tenant = params.get("tenant") || "SN";
 
     const number = value => {
         const parsed = Number(value || 0);
@@ -110,6 +110,11 @@
 
     async function initialiser() {
         try {
+            const contexte = await window.SATEER_CONTEXT_READY;
+            tenant = contexte.tenantCode;
+            const organisation = await window.SATEER_choisirOrganisation(organisationId);
+            if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
+            organisationId = Number(organisation.id);
             const response = await fetch(
                 `/api/organisations/${organisationId}/dashboard-strategique?tenant=${encodeURIComponent(tenant)}`,
                 { credentials: "same-origin", cache: "no-store" }

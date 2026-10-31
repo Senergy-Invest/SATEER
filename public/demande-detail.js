@@ -1,5 +1,4 @@
-const PERSONNE_ID = 1;
-const TENANT = "SN";
+
 
 
 // =========================================================
@@ -20,12 +19,7 @@ const DEMANDE_ID =
     );
 
 
-const ORGANISATION_ID =
-    Number(
-        params.get(
-            "organisation"
-        ) || 1
-    );
+let ORGANISATION_ID = Number(params.get("organisation")) || null;
 
 
 const SOURCE =
@@ -666,6 +660,10 @@ function afficherReponses(
 async function chargerDetailDemande() {
 
     try {
+        const contexte = await window.SATEER_CONTEXT_READY;
+        const organisation = await window.SATEER_choisirOrganisation(ORGANISATION_ID);
+        if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
+        ORGANISATION_ID = Number(organisation.id);
 
         if (
             !DEMANDE_ID
@@ -679,7 +677,7 @@ async function chargerDetailDemande() {
 
         const reponse =
             await fetch(
-                `/api/demandes/${DEMANDE_ID}?personneId=${PERSONNE_ID}&organisationId=${ORGANISATION_ID}&tenant=${TENANT}`
+                `/api/demandes/${DEMANDE_ID}?organisationId=${ORGANISATION_ID}&tenant=${encodeURIComponent(contexte.tenantCode)}`
             );
 
 
