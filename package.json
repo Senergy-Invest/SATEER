@@ -12,9 +12,10 @@
     "audit:multitenant": "node scripts/multitenant-schema-audit.js",
     "audit:integrity": "SATEER_AUDIT_STRICT=1 node scripts/multitenant-preflight-audit.js",
     "audit:complete": "npm test && npm run audit:multitenant && npm run audit:integrity",
-    "test:all": "npm test && npm run audit:complete && npm run test:constraints && npm run test:db-context && npm run test:integration && npm run test:multitenant && npm run test:workflow",
-    "check:all": "npm run audit:complete && npm run test:constraints && npm run test:db-context && npm run test:integration && npm run test:multitenant && npm run test:workflow",
-    "test:constraints": "node scripts/multitenant-constraints-test.js"
+    "test:all": "npm test && npm run audit:complete && npm run test:constraints && npm run test:db-context && npm run test:integration && npm run test:multitenant && npm run test:workflow && npm run test:tenant-context",
+    "check:all": "npm run audit:complete && npm run test:constraints && npm run test:db-context && npm run test:integration && npm run test:multitenant && npm run test:workflow && npm run test:tenant-context",
+    "test:constraints": "node scripts/multitenant-constraints-test.js",
+    "test:tenant-context": "node scripts/tenant-context-test.js"
   },
   "repository": {
     "type": "git",
