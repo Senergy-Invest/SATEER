@@ -83,6 +83,8 @@ jobs:
         run: npm run test:constraints
       - name: Run transaction-scoped database context tests
         run: npm run test:db-context
+      - name: Verify authenticated tenant context
+        run: npm run test:tenant-context
       - name: Run HTTP integration test
         run: npm run test:integration
       - name: Run multi-tenant isolation test
