@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Administration des unités et habilitations • SATEER</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .pilot-admin {max-width:1100px;margin:0 auto;padding:24px 18px 65px}
+    .pilot-admin header {display:flex;align-items:start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+    .pilot-admin p {line-height:1.5}
+    .pilot-admin-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:20px}
+    .pilot-panel {background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:18px;padding:20px;min-width:0}
+    .pilot-panel h2 {margin:0 0 10px}
+    .pilot-panel form {display:grid;gap:10px;margin:16px 0}
+    .pilot-panel label {display:grid;gap:5px;font-weight:600;font-size:14px}
+    .pilot-panel input,.pilot-panel select {width:100%;border:1px solid #b5c8bc;background:white;border-radius:10px;padding:10px;font:inherit}
+    .pilot-panel button {cursor:pointer}
+    .pilot-panel button:disabled {opacity:.5;cursor:not-allowed}
+    .pilot-list {display:grid;gap:7px;margin-top:12px}
+    .pilot-item {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border:1px solid var(--border,#ddd);padding:10px;border-radius:10px}
+    .pilot-item small {color:var(--muted,#666);display:block}
+    .pilot-item button {border:1px solid var(--primary,#087a4b);background:white;color:var(--primary,#087a4b);border-radius:8px;padding:8px}
+    .pilot-item button.danger {color:#8d2525;border-color:#cfadad}
+    .pilot-muted {color:var(--muted,#666)}
+    .pilot-status {min-height:1.4em;margin:8px 0 18px}
+    .pilot-status[data-error="true"] {color:#a02121}
+    .pilot-panel select {min-height:42px}
+  </style>
+</head>
+<body>
+ <main class="pilot-admin">
+  <header>
+   <div>
+    <p class="eyebrow">SATEER CORE • ADMINISTRATION DES UNITÉS</p>
+    <h1>Organisation & habilitations</h1>
+    <p id="pilotOrganisation" class="pilot-muted">Chargement de l'organisation…</p>
+   </div>
+   <a class="button button-secondary" id="pilotRetour" href="/organisation-consulat.html">Retour à l'organigramme</a>
+  </header>
+  <p class="pilot-muted">Les modifications concernent uniquement l'organisation sélectionnée. Chaque action est soumise aux permissions vérifiées par le serveur.</p>
+  <p id="pilotStatut" class="pilot-status" role="status" aria-live="polite"></p>
+  <div class="pilot-admin-grid">
+   <section class="pilot-panel" aria-labelledby="titreUnites">
+    <h2 id="titreUnites">Unités organisationnelles</h2>
+    <p class="pilot-muted">Créer une unité ou une sous-unité à partir de l'organigramme configurable.</p>
+    <form id="pilotCreerUnite">
+     <label>Nom de l'unité<input name="nom" required maxlength="160" placeholder="Ex. : État civil"></label>
+     <label>Code stable<input name="code" required maxlength="70" pattern="[A-Z0-9_]+" placeholder="ETAT_CIVIL"></label>
+     <label>Type<input name="type" required maxlength="70" placeholder="SERVICE"></label>
+     <label>Unité parente<select name="parentUnitId" id="pilotParent"><option value="">Racine de l'organisation</option></select></label>
+     <button class="button button-primary" type="submit">Créer l'unité</button>
+    </form>
+    <div id="pilotUnites" class="pilot-list" aria-label="Unités existantes"></div>
+   </section>
+   <section class="pilot-panel" aria-labelledby="titreCapacites">
+    <h2 id="titreCapacites">Capacités par unité</h2>
+    <p class="pilot-muted">Activez les fonctionnalités qu'une unité doit pouvoir exercer. Les permissions du membre restent nécessaires.</p>
+    <label>Unité à configurer<select id="pilotUniteCapacites"></select></label>
+    <div id="pilotCapacites" class="pilot-list" aria-label="Capacités configurables"></div>
+   </section>
+   <section class="pilot-panel" aria-labelledby="titreRoles">
+    <h2 id="titreRoles">Rôles institutionnels</h2>
+    <p class="pilot-muted">Créer et administrer des rôles génériques. Les rôles protégés ne sont pas modifiables.</p>
+    <form id="pilotCreerRole">
+     <label>Nom du rôle<input name="nom" required maxlength="160" placeholder="Responsable d'unité"></label>
+     <label>Code stable<input name="code" required maxlength="70" pattern="[A-Z0-9_]+" placeholder="RESPONSABLE_UNITE"></label>
+     <label>Portée<select name="scope"><option value="UNIT">Unité</option><option value="ORGANISATION">Organisation</option><option value="BOTH">Organisation et unité</option></select></label>
+     <button class="button button-primary" type="submit">Créer un rôle</button>
+    </form>
+    <label>Rôle à configurer<select id="pilotRole"></select></label>
+    <div id="pilotRoles" class="pilot-list" aria-label="Rôles existants"></div>
+   </section>
+   <section class="pilot-panel" aria-labelledby="titrePermissions">
+    <h2 id="titrePermissions">Permissions du rôle</h2>
+    <p class="pilot-muted">Les droits de chaque rôle sont appliqués par le backend et ne dépendent pas uniquement de l'interface.</p>
+    <div id="pilotPermissions" class="pilot-list" aria-label="Permissions attribuées"></div>
+   </section>
+  </div>
+ </main>
+ <script src="/auth-client.js"></script>
+ <script src="/administration-organisation.js"></script>
+</body>
+</html>
