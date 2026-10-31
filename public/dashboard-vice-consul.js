@@ -1258,6 +1258,14 @@ async function initialiserDashboardOperationnel() {
         const organisation = await window.SATEER_choisirOrganisation(organisationId);
         if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
         organisationId = Number(organisation.id);
+        const canalLien = document.getElementById("canalOfficielLien");
+        if (canalLien) {
+            const cible = new URL("/canal-officiel.html", window.location.origin);
+            cible.searchParams.set("organisation",String(organisationId));
+            cible.searchParams.set("tenant",tenant);
+            canalLien.href = cible.pathname + cible.search;
+            canalLien.hidden = false;
+        }
         const response = await fetch(
             `/api/organisations/${organisationId}/dashboard-operationnel/acces?tenant=${encodeURIComponent(tenant)}`,
             { credentials: "same-origin", cache: "no-store" }

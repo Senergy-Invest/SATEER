@@ -2652,6 +2652,7 @@ async function listerNotificationsPersonneDatabase(
             `
             SELECT
                 n.id,
+                n.organisation_id,
                 n.type,
                 n.titre,
                 n.message,
