@@ -5,6 +5,7 @@
   "main": "data.js",
   "scripts": {
     "test": "node scripts/security-static-check.js && node scripts/generic-context-static-check.js",
+    "test:p3.1": "node scripts/communication-p3-1-api-test.js",
     "test:integration": "node scripts/integration-http-test.js",
     "test:workflow": "node scripts/workflow-e2e-test.js",
     "test:multitenant": "node scripts/multitenant-isolation-test.js",
