@@ -1,410 +1,232 @@
-function iconeExperience(code) {
+/* Lot 1O — Accueil personnel citoyen : uniquement des résumés.
+ * Les informations complètes, demandes et communications restent dans Mon Consulat.
+ * Les API métier existantes et la vérification d'audience côté serveur sont conservées.
+ */
+"use strict";
 
-    switch (code) {
-
-        case "MON_CONSULAT":
-            return "🇸🇳";
-
-        case "MON_AMBASSADE":
-            return "🏛️";
-
-        case "DIASPORA":
-            return "🌍";
-
-        default:
-            return "◈";
-    }
+function element(tag, classe, texte) {
+    const noeud = document.createElement(tag);
+    if (classe) noeud.className = classe;
+    if (texte !== undefined && texte !== null) noeud.textContent = String(texte);
+    return noeud;
 }
 
-
-function descriptionExperience(code) {
-
-    switch (code) {
-
-        case "MON_CONSULAT":
-            return "Démarches, informations et échanges avec votre Consulat.";
-
-        case "MON_AMBASSADE":
-            return "Informations nationales et services de votre Ambassade.";
-
-        case "DIASPORA":
-            return "Informations et opportunités pertinentes pour votre profil.";
-
-        default:
-            return "Accéder à votre espace SATEER.";
-    }
+function lienVers(path, organisationId, tenantCode) {
+    const params = new URLSearchParams({
+        organisation: String(organisationId),
+        tenant: String(tenantCode)
+    });
+    return `${path}?${params.toString()}`;
 }
 
-
-function classeStatut(statut) {
-
-    return (
-        "status status-" +
-        String(statut)
-            .toLowerCase()
-    );
+function resumeStatutDemandes(demandes) {
+    const toutes = Array.isArray(demandes) ? demandes : [];
+    const traitees = new Set(["TRAITEE", "TRAITÉE", "CLOTUREE", "CLOTURÉE", "ANNULEE", "ANNULÉE"]);
+    return {
+        total: toutes.length,
+        enCours: toutes.filter(d => !traitees.has(String(d.statut || "").toUpperCase())).length
+    };
 }
 
+function carteConsulat(organisation, tenantCode) {
+    const carte = element("article", "sx-consulat-card");
+    carte.setAttribute("aria-label", `Résumé de ${organisation.nom || "votre Consulat"}`);
 
-function afficherExperiences(
-    experiences
-) {
+    const tete = element("div", "sx-card-top");
+    const pictogramme = element("div", "sx-consulat-icon", "🇸🇳");
+    pictogramme.setAttribute("aria-hidden", "true");
+    const info = element("div", "sx-card-heading");
+    info.append(element("p", "sx-card-kicker", "EXPÉRIENCE INSTITUTIONNELLE"));
+    info.append(element("h3", "sx-card-title", "Mon Consulat"));
+    info.append(element("p", "sx-card-subtitle", organisation.nom || "Consulat"));
+    tete.append(pictogramme, info);
 
-    const container =
-        document.getElementById(
-            "experiencesContainer"
-        );
+    const description = element("p", "sx-card-description",
+        "Vos informations officielles, démarches, demandes et échanges consulaires dans un seul espace.");
+    const resume = element("div", "sx-consulat-summary");
+    resume.setAttribute("aria-live", "polite");
+    resume.append(element("p", "sx-summary-loading", "Chargement du résumé consulaire…"));
 
+    const aller = element("a", "sx-open-consulat", "Ouvrir Mon Consulat");
+    aller.href = lienVers("/consulat.html", organisation.id, tenantCode);
+    aller.append(element("span", "sx-link-arrow", "→"));
 
-    container.innerHTML = "";
-
-
-    for (
-        const experience
-        of experiences
-    ) {
-
-        const card =
-            document.createElement(
-                "article"
-            );
-
-
-        card.className =
-            "experience-card";
-
-
-        card.innerHTML = `
-            <div class="experience-icon">
-                ${iconeExperience(experience.code)}
-            </div>
-
-            <h3>
-                ${experience.nom}
-            </h3>
-
-            <p>
-                ${descriptionExperience(experience.code)}
-            </p>
-        `;
-
-if (
-    experience.code ===
-    "MON_CONSULAT"
-) {
-
-    card.addEventListener(
-        "click",
-        () => {
-
-            window.location.href =
-                "/consulat.html";
-        }
-    );
-}
-        container.appendChild(
-            card
-        );
-    }
+    carte.append(tete, description, resume, aller);
+    return { carte, resume };
 }
 
+function afficherResumeConsulat(container, data) {
+    container.replaceChildren();
+    const publications = Array.isArray(data.publications) ? data.publications : [];
+    const demandes = resumeStatutDemandes(data.demandes);
+    const chiffres = element("div", "sx-summary-metrics");
+    const information = element("div", "sx-summary-metric");
+    information.append(element("strong", "", publications.length));
+    information.append(element("span", "", "Informations disponibles"));
+    const suivi = element("div", "sx-summary-metric");
+    suivi.append(element("strong", "", demandes.enCours));
+    suivi.append(element("span", "", "Demandes à suivre"));
+    chiffres.append(information, suivi);
+    container.append(chiffres);
 
-function afficherDemandes(
-    demandes
-) {
-
-    const container =
-        document.getElementById(
-            "demandesContainer"
-        );
-
-
-    container.innerHTML = "";
-
-
-    if (
-        !demandes ||
-        demandes.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="empty">
-                Aucune demande récente.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    for (
-        const demande
-        of demandes
-    ) {
-
-        const item =
-            document.createElement(
-                "div"
-            );
-
-
-        item.className =
-            "list-item";
-
-
-        item.innerHTML = `
-            <div class="list-main">
-
-                <p class="list-title">
-                    ${demande.objet}
-                </p>
-
-                <p class="list-subtitle">
-                    ${demande.organisation || "Institution"}
-                </p>
-
-            </div>
-
-            <span
-                class="${classeStatut(demande.statut)}"
-            >
-                ${demande.statut}
-            </span>
-        `;
-
-
-        container.appendChild(
-            item
-        );
-    }
-}
-
-
-function afficherNotifications(
-    notifications
-) {
-
-    const container =
-        document.getElementById(
-            "notificationsContainer"
-        );
-
-
-    const badge =
-        document.getElementById(
-            "notificationBadge"
-        );
-
-
-    container.innerHTML = "";
-
-
-    const nonLues =
-        (
-            notifications || []
-        ).filter(
-            notification =>
-                notification.statut ===
-                "NON_LUE"
-        );
-
-
-    if (
-        nonLues.length > 0
-    ) {
-
-        badge.textContent =
-            nonLues.length;
-
-        badge.classList.remove(
-            "hidden"
-        );
-
+    const actualites = element("div", "sx-recent-news");
+    actualites.append(element("h4", "", "À la une du Consulat"));
+    if (!publications.length) {
+        actualites.append(element("p", "sx-summary-empty", "Aucune information officielle publiée pour le moment."));
     } else {
-
-        badge.classList.add(
-            "hidden"
-        );
+        // L'API renvoie exclusivement les publications visibles par ce compte.
+        const visibles = [...publications].sort((a, b) => {
+            const da = Date.parse(a.date_publication || "") || 0;
+            const db = Date.parse(b.date_publication || "") || 0;
+            return db - da || Number(b.id || 0) - Number(a.id || 0);
+        });
+        for (const publication of visibles.slice(0, 3)) {
+            const ligne = element("p", "sx-news-line");
+            ligne.append(element("span", "sx-news-dot", "•"));
+            ligne.append(element("span", "", publication.titre || "Information officielle"));
+            actualites.append(ligne);
+        }
     }
+    container.append(actualites);
+    container.append(element("p", "sx-summary-footnote", "Aucun abonnement nécessaire. Retrouvez le contenu complet dans Mon Consulat."));
+}
 
-
-    if (
-        !notifications ||
-        notifications.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="empty">
-                Aucune notification.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    for (
-        const notification
-        of notifications
-    ) {
-
-        const item =
-            document.createElement(
-                "div"
-            );
-
-
-        item.className =
-            "notification";
-
-
-        item.innerHTML = `
-            <div class="notification-icon">
-                🔔
-            </div>
-
-            <div>
-
-                <p class="notification-title">
-                    ${notification.titre}
-                </p>
-
-                <p class="notification-message">
-                    ${notification.message}
-                </p>
-
-            </div>
-        `;
-
-
-        container.appendChild(
-            item
-        );
+async function chargerApercuConsulat({ organisation, tenantCode, personneId, resume }) {
+    try {
+        const url = `/api/mon-consulat/${encodeURIComponent(personneId)}?` +
+            new URLSearchParams({ tenant: String(tenantCode), organisation: String(organisation.id) });
+        const reponse = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+        if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
+        const donnees = await reponse.json();
+        afficherResumeConsulat(resume, donnees);
+    } catch (erreur) {
+        console.warn("Résumé consulaire indisponible :", erreur);
+        resume.replaceChildren(element("p", "sx-summary-empty",
+            "Résumé indisponible momentanément. Ouvrez Mon Consulat pour accéder à vos services."));
     }
 }
 
-
-async function chargerEspacesInstitutionnels() {
-    const container = document.getElementById("experiencesContainer");
-    if (!container) return;
-    const contexte = await window.SATEER_CONTEXT_READY;
-    const organisations = contexte.organisations || [];
-    for (const organisation of organisations) {
-        const response = await fetch(
-            `/api/organisations/${organisation.id}/dashboards/acces?tenant=${encodeURIComponent(contexte.tenantCode)}`,
-            { credentials: "same-origin", cache: "no-store" }
-        );
-        if (!response.ok) continue;
-        const data = await response.json();
-        const dashboards = data.dashboards || {};
-        const espaces = [];
-        if (dashboards.strategique) espaces.push({
-            titre: "Dashboard stratégique",
-            description: `Pilotage institutionnel — ${organisation.nom}.`,
-            url: `/dashboard-consul.html?organisation=${organisation.id}&tenant=${encodeURIComponent(contexte.tenantCode)}`,
-            icone: "◆"
-        });
-        if (dashboards.operationnel) espaces.push({
-            titre: "Dashboard opérationnel",
-            description: `Suivi des opérations — ${organisation.nom}.`,
-            url: `/dashboard-vice-consul.html?organisation=${organisation.id}&tenant=${encodeURIComponent(contexte.tenantCode)}`,
-            icone: "◈"
-        });
-        espaces.forEach(espace => {
-            const card = document.createElement("article");
-            card.className = "experience-card";
-            card.tabIndex = 0;
-            card.setAttribute("role", "link");
-            const icon = document.createElement("div");
-            icon.className = "experience-icon";
-            icon.textContent = espace.icone;
-            const title = document.createElement("h3");
-            title.textContent = espace.titre;
-            const description = document.createElement("p");
-            description.textContent = espace.description;
-            card.append(icon, title, description);
-            const ouvrir = () => { window.location.href = espace.url; };
-            card.addEventListener("click", ouvrir);
-            card.addEventListener("keydown", event => {
-                if (event.key === "Enter" || event.key === " ") { event.preventDefault(); ouvrir(); }
-            });
-            container.appendChild(card);
-        });
+function afficherIdentite(personne, organisations) {
+    const prenom = String(personne.prenom || "").trim();
+    const nom = String(personne.nom || "").trim();
+    document.getElementById("welcomeTitle").textContent = prenom ? `Bonjour ${prenom} 👋` : "Bienvenue sur Mon SATEER";
+    document.getElementById("welcomeSubtitle").textContent =
+        "Votre accueil personnel : une identité, vos expériences et vos notifications.";
+    const avatar = document.getElementById("accountAvatar");
+    if (avatar) avatar.textContent = (prenom || nom || "S").charAt(0).toUpperCase();
+    const identite = document.getElementById("identitySummary");
+    identite.replaceChildren();
+    const nomComplet = [prenom, nom].filter(Boolean).join(" ");
+    if (nomComplet) identite.append(element("span", "sx-identity-chip", `Compte : ${nomComplet}`));
+    const consuls = organisations.filter(o => o.type === "CONSULAT");
+    if (consuls.length) {
+        identite.append(element("span", "sx-identity-chip", `${consuls.length} rattachement${consuls.length > 1 ? "s" : ""} consulaire${consuls.length > 1 ? "s" : ""}`));
     }
+}
+
+function afficherNotifications(notifications) {
+    const cible = document.getElementById("notificationsContainer");
+    const badge = document.getElementById("notificationBadge");
+    const items = Array.isArray(notifications) ? notifications : [];
+    const nonLues = items.filter(n => n.statut === "NON_LUE").length;
+    badge.textContent = String(nonLues);
+    badge.classList.toggle("hidden", nonLues === 0);
+    cible.replaceChildren();
+    if (!items.length) {
+        cible.append(element("div", "sx-notification-empty", "Aucune notification pour le moment."));
+        return;
+    }
+    for (const notification of items.slice(0, 5)) {
+        const item = element("article", "sx-notification-item");
+        const texte = element("div", "sx-notification-text");
+        texte.append(element("strong", "", notification.titre || "Notification"));
+        texte.append(element("p", "", notification.message || ""));
+        if (notification.organisation) texte.append(element("small", "", notification.organisation));
+        item.append(element("span", "sx-notification-symbol", "🔔"), texte);
+        cible.append(item);
+    }
+}
+
+async function afficherAccesProfessionnels(contexte) {
+    const section = document.getElementById("professionnelsSection");
+    const container = document.getElementById("professionnelsContainer");
+    const orgs = Array.isArray(contexte.organisations) ? contexte.organisations : [];
+    const tenant = contexte.tenantCode;
+    for (const org of orgs) {
+        try {
+            const response = await fetch(
+                `/api/organisations/${encodeURIComponent(org.id)}/dashboards/acces?tenant=${encodeURIComponent(tenant)}`,
+                { credentials: "same-origin", cache: "no-store" }
+            );
+            if (!response.ok) continue;
+            const data = await response.json();
+            const dashboards = data.dashboards || {};
+            for (const [autorise, titre, path, explication] of [
+                [dashboards.operationnel, "Pilotage opérationnel", "/dashboard-vice-consul.html", "Superviser les services et les demandes"],
+                [dashboards.strategique, "Pilotage stratégique", "/dashboard-consul.html", "Suivre l'activité générale de la mission"]
+            ]) {
+                if (!autorise) continue;
+                const a = element("a", "sx-professional-card");
+                a.href = lienVers(path, org.id, tenant);
+                a.append(element("strong", "", titre));
+                a.append(element("span", "", `${org.nom || "Organisation"} · ${explication}`));
+                a.append(element("span", "sx-professional-arrow", "Ouvrir →"));
+                container.append(a);
+            }
+        } catch (erreur) {
+            console.warn("Accès professionnel indisponible :", erreur);
+        }
+    }
+    section.hidden = !container.children.length;
 }
 
 async function chargerMonSateer() {
-
+    const experiencesContainer = document.getElementById("experiencesContainer");
     try {
         const contexte = await window.SATEER_CONTEXT_READY;
+        const organisations = Array.isArray(contexte.organisations) ? contexte.organisations : [];
+        const tenant = contexte.tenantCode;
+        const personneId = contexte.personne.id;
 
-
-        const reponse =
-            await fetch(
-                `/api/mon-sateer/${contexte.personne.id}?tenant=${encodeURIComponent(contexte.tenantCode)}`
-            );
-
-
-        if (!reponse.ok) {
-
-            throw new Error(
-                "Impossible de charger Mon SATEER."
-            );
+        // On n'affiche jamais Mon Consulat à partir d'une organisation non consulaire.
+        const consulats = organisations.filter(org => org.type === "CONSULAT" && org.id != null);
+        const apercus = [];
+        experiencesContainer.replaceChildren();
+        for (const org of consulats) {
+            const { carte, resume } = carteConsulat(org, tenant);
+            experiencesContainer.append(carte);
+            apercus.push({ organisation: org, tenantCode: tenant, personneId, resume });
         }
+        if (!consulats.length) {
+            experiencesContainer.append(element("div", "sx-empty-experience",
+                "Aucun Consulat rattaché à ce compte. Les expériences disponibles apparaîtront ici après rattachement."));
+        }
+        afficherIdentite(contexte.personne || {}, organisations);
 
-
-        const data =
-            await reponse.json();
-
-
-        const personne =
-            data.personne;
-
-
-        document.getElementById(
-            "welcomeTitle"
-        ).textContent =
-            `Bonjour ${personne.prenom} 👋`;
-
-
-        document.getElementById(
-            "welcomeSubtitle"
-        ).textContent =
-            personne.territoire
-                ? `Votre espace Sénégal • ${personne.territoire}`
-                : "Votre espace Sénégal";
-
-
-        afficherExperiences(
-            data.experiences || []
+        // La page personnelle reste utilisable même si l'API du résumé échoue.
+        const response = await fetch(
+            `/api/mon-sateer/${encodeURIComponent(personneId)}?tenant=${encodeURIComponent(tenant)}`,
+            { credentials: "same-origin", cache: "no-store" }
         );
-
-        // Les espaces institutionnels sont affichés selon les permissions effectives.
-        await chargerEspacesInstitutionnels();
-
-        afficherDemandes(
-            data.demandes || []
-        );
-
-
-        afficherNotifications(
-            data.notifications || []
-        );
-
-
+        if (!response.ok) throw new Error(`Mon SATEER HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.personne) afficherIdentite(data.personne, organisations);
+        afficherNotifications(data.notifications || []);
+        await Promise.all(apercus.map(chargerApercuConsulat));
+        await afficherAccesProfessionnels(contexte);
     } catch (erreur) {
-
-        console.error(
-            erreur
-        );
-
-
-        document.getElementById(
-            "welcomeSubtitle"
-        ).textContent =
-            "Impossible de charger votre espace.";
+        console.error("Erreur Mon SATEER :", erreur);
+        document.getElementById("notificationsContainer").replaceChildren(
+            element("div", "sx-notification-empty", "Notifications indisponibles pour le moment."));
+        if (!experiencesContainer.children.length) {
+            experiencesContainer.append(element("div", "sx-empty-experience",
+                "Impossible de charger vos expériences. Rechargez la page."));
+        }
     }
 }
 
+document.getElementById("notificationButton")?.addEventListener("click", () => {
+    document.getElementById("notificationsTitle")?.scrollIntoView({ behavior: "smooth" });
+});
 
 chargerMonSateer();

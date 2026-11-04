@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>Mon identité · Mon SATEER</title>
+  <link rel="stylesheet" href="/sateer-identity.css">
+  <link rel="stylesheet" href="/sateer-identity-docs.css">
+  <link rel="stylesheet" href="/sateer-private-files.css">
+</head>
+<body class="identity-body">
+  <div class="identity-shell">
+    <header class="identity-header">
+      <a class="identity-back" href="/index.html">← Mon SATEER</a>
+      <strong>SATEER</strong>
+    </header>
+    <main>
+      <div class="identity-hero">
+        <div><p class="identity-kicker">MON SATEER · PROFIL PERSONNEL</p>
+        <h1>Mon identité</h1>
+        <p>Vos informations personnelles restent liées à votre compte SATEER, indépendamment de votre Consulat.</p></div>
+        <span class="identity-badge" id="verificationEtat">Identité non vérifiée</span>
+      </div>
+      <div class="identity-notice" role="note">Les informations ci-dessous sont <strong>déclarées par vous</strong>. Elles ne constituent pas une vérification d'identité par le Sénégal ou par un Consulat.</div>
+      <div class="identity-grid">
+        <section class="identity-card" aria-labelledby="etatCivilTitre">
+          <h2 id="etatCivilTitre">État civil</h2>
+          <p class="identity-subtitle">Informations liées à votre compte. Nom et prénom ne sont pas modifiés par ce formulaire.</p>
+          <div class="identity-values">
+            <div><span>Prénom</span><strong id="prenom">—</strong></div>
+            <div><span>Nom</span><strong id="nom">—</strong></div>
+            <div><span>Pays de résidence connu</span><strong id="paysResidence">—</strong></div>
+          </div>
+          <form id="identityForm" novalidate>
+            <div class="identity-field-row">
+              <label>Date de naissance<input id="dateNaissance" name="dateNaissance" type="date" autocomplete="bday"></label>
+              <label>Nationalité déclarée<input id="nationalite" name="nationalite" maxlength="100" autocomplete="off" placeholder="À renseigner"></label>
+            </div>
+            <label>Adresse de résidence<input id="adresse" name="adresse" maxlength="250" autocomplete="street-address" placeholder="Adresse (facultatif)"></label>
+            <div class="identity-field-row">
+              <label>Ville<input id="ville" name="ville" maxlength="120" autocomplete="address-level2" placeholder="Ville"></label>
+              <label>Code postal<input id="codePostal" name="codePostal" maxlength="20" autocomplete="postal-code" placeholder="Code postal"></label>
+            </div>
+            <div class="identity-actions"><button id="enregistrer" type="submit">Enregistrer mon profil</button><span id="saveStatus" role="status" aria-live="polite"></span></div>
+          </form>
+        </section>
+        <aside class="identity-side">
+          <section class="identity-card" id="identityDocuments">
+            <h2>Mes pièces d'identité</h2>
+            <p class="identity-subtitle">Références personnelles déclarées, non vérifiées par le Consulat.</p>
+            <div class="identity-doc-warning">Pilote Bordeaux : utilisez uniquement des références fictives. Ne transmettez pas de scan ou de pièce réelle.</div>
+            <div id="documentList" aria-live="polite"></div>
+            <form id="documentForm" autocomplete="off" hidden>
+              <label class="identity-document-input">Type de document
+                <select id="documentType" required>
+                  <option value="CNI">Carte nationale d'identité</option>
+                  <option value="PASSEPORT">Passeport</option>
+                </select>
+              </label>
+              <label class="identity-document-input">Numéro (valeur fictive pendant le pilote)
+                <input id="documentNumber" type="password" required minlength="5" maxlength="64" autocomplete="off" spellcheck="false" placeholder="Numéro non affiché après enregistrement">
+              </label>
+              <label class="identity-document-input">Pays émetteur (code à deux lettres)
+                <input id="documentCountry" type="text" maxlength="2" pattern="[A-Za-z]{2}" value="SN" autocomplete="off" required>
+              </label>
+              <div class="identity-document-row">
+                <label class="identity-document-input">Délivré le (facultatif)
+                  <input id="documentIssued" type="date" autocomplete="off">
+                </label>
+                <label class="identity-document-input">Expire le (facultatif)
+                  <input id="documentExpires" type="date" autocomplete="off">
+                </label>
+              </div>
+              <button type="submit" id="saveDocument">Enregistrer la référence</button>
+            </form>
+            <span id="documentStatus" role="status" aria-live="polite">Chargement des références…</span>
+            <p class="identity-help">Le numéro est chiffré côté serveur ; seuls les quatre derniers caractères sont affichés ensuite. Ce dépôt ne prouve pas l'identité.</p>
+          </section>
+          <section class="identity-card" id="personalVault">
+            <h2>Mes documents personnels</h2>
+            <p class="identity-subtitle">Photographiez ou importez une pièce pour la conserver dans votre coffre privé SATEER.</p>
+            <p class="identity-help">Pilote Bordeaux : uniquement des documents et photos FICTIFS. Jamais de vraie CNI ou de vrai passeport. Dépôt non vérifié et non transmis.</p>
+            <div class="vault-controls">
+              <label>Nature du document
+                <select id="vaultCategory">
+                  <option value="CNI_RECTO">CNI — recto</option>
+                  <option value="CNI_VERSO">CNI — verso</option>
+                  <option value="PASSEPORT">Passeport — page d'identité</option>
+                  <option value="CARTE_CONSULAIRE">Carte consulaire</option>
+                  <option value="ACTE_NAISSANCE">Acte de naissance</option>
+                  <option value="JUSTIFICATIF_DOMICILE">Justificatif de domicile</option>
+                  <option value="AUTRE">Autre justificatif</option>
+                </select>
+              </label>
+              <button type="button" id="vaultPhotoButton">Prendre une photo</button>
+              <button type="button" id="vaultImportButton">Importer une pièce</button>
+              <input id="vaultCameraPicker" type="file" accept="image/*" capture="environment" hidden>
+              <input id="vaultFilePicker" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
+            </div>
+            <p class="identity-help">JPG, PNG, WebP ou PDF, 5 Mo maximum par fichier ; 30 documents par compte dans le pilote.</p>
+            <div id="vaultList" aria-live="polite"></div>
+            <span id="vaultStatus" role="status" aria-live="polite">Chargement du coffre…</span>
+            <p class="identity-help">Les documents restent privés. Leur sélection dans une demande consulaire et leur transmission seront ajoutées séparément, avec autorisation explicite.</p>
+          </section>
+          <section class="identity-card">
+            <h2>Vérification consulaire</h2>
+            <p>Votre identité n'a pas encore été vérifiée institutionnellement dans SATEER.</p>
+            <p class="identity-help">La demande volontaire de vérification, les justificatifs et la décision d'un agent habilité feront l'objet de la prochaine étape.</p>
+            <a class="identity-inline-link" href="/index.html">Retour à mes expériences →</a>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <script src="/auth-client.js"></script>
+  <script src="/mon-identite.js"></script>
+  <script src="/sateer-identity-docs.js"></script>
+  <script src="/sateer-private-files.js"></script>
+</body>
+</html>

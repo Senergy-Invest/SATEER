@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Retour à Mon Consulat · SATEER</title>
+</head><body>
+<p>Les informations officielles sont désormais centralisées dans <a id="retour" href="/consulat.html">Mon Consulat</a>.</p>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const destination = new URL('/consulat.html', window.location.origin);
+  for (const key of ['organisation', 'tenant']) {
+    const value = params.get(key);
+    if (value) destination.searchParams.set(key, value);
+  }
+  document.getElementById('retour').href = destination.pathname + destination.search;
+  window.location.replace(destination.pathname + destination.search);
+})();
+</script>
+</body></html>

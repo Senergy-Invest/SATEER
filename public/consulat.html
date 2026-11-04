@@ -18,10 +18,12 @@
         href="styles.css"
     >
 
+  <link rel="stylesheet" href="/sateer-experiences.css">
+  <link rel="stylesheet" href="/sateer-citizen-home.css">
 </head>
 
 
-<body>
+<body class="sateer-experience sateer-consulat">
 
     <div class="app">
 
@@ -34,8 +36,10 @@
             <button
                 class="back-button"
                 id="backButton"
+                type="button"
+                aria-label="Retour à Mon SATEER"
             >
-                ←
+                ← Mon SATEER
             </button>
 
 
@@ -188,29 +192,15 @@
 
 
                     <!-- ================================= -->
-                    <!-- ORGANISATION DU CONSULAT -->
-                    <!-- ================================= -->
-
+                    <!-- INFORMATIONS OFFICIELLES — raccourci citoyen, aucune page administrative -->
                     <button
                         class="service-card"
-                        onclick="
-                            window.location.href =
-                            '/organisation-consulat.html?organisation=' + new URLSearchParams(window.location.search).get('organisation') + '&tenant=' + new URLSearchParams(window.location.search).get('tenant')
-                        "
+                        type="button"
+                        onclick="document.getElementById('actualitesConsulat').scrollIntoView({behavior:'smooth',block:'start'})"
                     >
-
-                        <span class="service-icon">
-                            ◫
-                        </span>
-
-                        <strong>
-                            Organisation du Consulat
-                        </strong>
-
-                        <small>
-                            Découvrir la structure
-                        </small>
-
+                        <span class="service-icon" aria-hidden="true">📰</span>
+                        <strong>Actualités officielles</strong>
+                        <small>Lire les informations du Consulat</small>
                     </button>
 
                 </div>
@@ -222,7 +212,7 @@
             <!-- INFORMATIONS OFFICIELLES -->
             <!-- ======================================== -->
 
-            <section class="panel">
+            <section class="panel" id="actualitesConsulat">
 
                 <div class="section-header">
 
@@ -240,6 +230,12 @@
 
                 </div>
 
+
+                <div style="margin:12px 0 18px">
+                    <p style="margin:0;color:#496453;max-width:660px">Toutes les informations officielles accessibles à votre profil sont réunies ici automatiquement. Aucun abonnement n'est nécessaire. Les thèmes vous permettent simplement de filtrer le fil d'actualités.</p>
+                </div>
+                <label for="filtreCanalConsulat" style="display:block;margin:12px 0;color:#40574a">Filtrer les informations par thème</label>
+                <select id="filtreCanalConsulat" style="max-width:420px;width:100%;padding:11px;border-radius:10px;border:1px solid #cbd9d0;margin-bottom:18px"><option value="">Toutes les informations</option></select>
 
                 <div
                     id="publicationsContainer"
@@ -313,6 +309,15 @@
 
             </section>
 
+
+        <!-- Lot 1T : verification volontaire au sein de Mon Consulat. -->
+        <section class="panel" id="identityVerificationLink" style="margin-top:18px;padding:20px;border:1px solid #cfe2d9;border-radius:16px;background:#f3faf6">
+            <p class="eyebrow">IDENTITÉ</p>
+            <h2>Vérification d'identité</h2>
+            <p>Demandez un examen interne de votre dossier et suivez la réponse du Consulat.</p>
+            <a id="verificationCitizenButton" href="/verification-identite.html" style="display:inline-block;padding:11px 17px;border-radius:9px;background:#17684b;color:white;text-decoration:none;font-weight:700">Demander une vérification →</a>
+        </section>
+
         </main>
 
     </div>
@@ -322,6 +327,10 @@
     <script src="consulat.js"></script>
 
   
+
+<script>
+  (function(){const p=new URLSearchParams(location.search),a=document.getElementById("verificationCitizenButton");if(a){const u=new URL(a.href);for(const x of ["organisation","tenant"]){if(p.get(x))u.searchParams.set(x,p.get(x))}a.href=u.pathname+u.search}})();
+</script>
 </body>
 
 </html>

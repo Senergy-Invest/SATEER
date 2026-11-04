@@ -1,0 +1,103 @@
+/* SATEER P4 : contraste assuré dans le centre d'administration. Ne touche pas Mon SATEER. */
+body.sx-p4-body{margin:0;background:#f2f6f8!important;color:#18343e!important;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.sx-p4-shell,.sx-p4-shell *{box-sizing:border-box}
+.sx-p4-shell{max-width:1200px;margin:0 auto;padding:26px 18px 70px;color:#18343e}
+.sx-p4-shell [hidden]{display:none!important}
+.sx-p4-shell h1,.sx-p4-shell h2,.sx-p4-shell h3,.sx-p4-shell p{margin-top:0}
+.sx-p4-shell h1{font-size:clamp(27px,3vw,39px);line-height:1.2;color:#fff!important}
+.sx-p4-shell h2{font-size:22px;color:#173844!important;margin-bottom:5px}
+.sx-p4-shell h3{font-size:16px;color:#173844!important}
+.sx-p4-hero{background:linear-gradient(115deg,#103d49,#14716c);border-radius:22px;padding:30px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px;color:#fff!important}
+.sx-p4-hero p,.sx-p4-hero strong{color:#e5f9f7!important}
+.sx-p4-eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:#b6ebe2!important}
+.sx-p4-hero-note{opacity:.93;margin-bottom:0}
+.sx-p4-shell a.sx-p4-link-light{display:inline-block;color:#fff!important;border:1px solid #bcece7;border-radius:11px;padding:11px 15px;text-decoration:none;font-weight:750;white-space:nowrap;background:#124651}
+#sx-p4-status{margin:16px 0;background:#e6f4f1;border:1px solid #a7d7ce;color:#125045!important;border-radius:10px;padding:12px 15px;overflow-wrap:anywhere}
+#sx-p4-status.sx-p4-error{background:#fff1ec;border-color:#ebc2b7;color:#842c19!important}
+.sx-p4-tabs{display:flex;flex-wrap:wrap;gap:7px;padding:8px;background:#e5eef1;border-radius:14px;margin-bottom:18px}
+.sx-p4-tabs button{border:none;background:transparent;color:#20444e;font:700 14px system-ui,sans-serif;padding:11px 13px;border-radius:10px;cursor:pointer}
+.sx-p4-tabs button[aria-selected="true"]{background:#fff!important;color:#0d5658!important;box-shadow:0 2px 8px #17455817}
+.sx-p4-panel{background:white!important;border:1px solid #d9e5e8;border-radius:18px;padding:clamp(16px,2.4vw,28px);min-height:300px;box-shadow:0 7px 24px #15414d09}
+.sx-p4-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px}
+.sx-p4-heading p{color:#526a75!important;font-size:14px;margin:0}
+.sx-p4-split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sx-p4-box{border:1px solid #dbe7ea;border-radius:15px;padding:20px;background:#fff!important;min-width:0;color:#18343e!important}
+.sx-p4-box h3:not(:first-child){margin-top:20px}
+.sx-p4-shell hr{border:0;border-top:1px solid #d8e6e9;margin:22px 0}
+.sx-p4-form{display:grid;gap:11px}
+.sx-p4-form label,.sx-p4-voice label{display:grid;gap:6px;font-weight:650;color:#2c4a55!important;font-size:13px}
+.sx-p4-form input,.sx-p4-form select,.sx-p4-form textarea,.sx-p4-voice input,.sx-p4-voice select,.sx-p4-voice textarea{display:block;width:100%;border:1px solid #b7cdd4!important;background:#fff!important;color:#18343e!important;border-radius:9px;padding:10px 12px;font:15px/1.45 system-ui,sans-serif;max-width:100%}
+.sx-p4-form textarea,.sx-p4-voice textarea{resize:vertical}
+.sx-p4-shell :is(button,input,select,textarea,a):focus-visible{outline:3px solid #087b82!important;outline-offset:2px}
+.sx-p4-shell button{cursor:pointer}
+.sx-p4-button,.sx-p4-primary{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid #87acb6!important;padding:10px 15px;font:700 14px system-ui,sans-serif;min-height:43px;color:#144b55!important;background:#eef7f8!important}
+.sx-p4-primary{background:#086a64!important;border-color:#086a64!important;color:#fff!important}
+.sx-p4-shell button:hover{filter:brightness(.95)}
+.sx-p4-tree ul{list-style:none;margin:0 0 0 13px;padding-left:16px;border-left:2px solid #b8d7d9}
+.sx-p4-tree>ul{border:0;margin:0;padding:0}
+.sx-p4-tree li{margin:10px 0;position:relative}
+.sx-p4-tree ul ul li:before{content:"";position:absolute;left:-17px;top:20px;width:14px;border-top:2px solid #b8d7d9}
+.sx-p4-unit-line{border:1px solid #d4e5e8;background:#f6fafb;border-radius:11px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.sx-p4-unit-line button{background:none!important;color:#0c5259!important;font:750 14px system-ui,sans-serif;border:0;text-align:left;padding:2px}
+.sx-p4-unit-line small{font-size:11px;color:#516c76}
+.sx-p4-item{border-bottom:1px solid #e0eaed;padding:12px 0;display:flex;justify-content:space-between;gap:9px;overflow-wrap:anywhere;color:#1e3c47}
+.sx-p4-item div{display:grid;gap:4px}.sx-p4-item small{color:#5b7480;font-size:12px}
+.sx-p4-muted{color:#566e78!important;font-size:13px;line-height:1.6}
+.sx-p4-warning{background:#fff7e8;color:#744719!important;padding:12px;border:1px solid #e9d1a0;border-radius:10px;font-size:13px}
+.sx-p4-preview{background:#edf7f5;border:1px solid #bce1d9;color:#13564b!important;padding:15px;border-radius:12px;font-weight:700}
+.sx-p4-stages{display:flex;align-items:center;gap:10px;margin:10px 0 24px}
+.sx-p4-stages>div{border:1px solid #cfe3e6;background:#f2f8f9;border-radius:12px;padding:14px;flex:1;min-width:0;display:grid;gap:5px}
+.sx-p4-stages>div strong{color:#0f5157}.sx-p4-stages>div span{font-size:12px;color:#536e78}
+.sx-p4-three{grid-template-columns:1fr 1fr auto;align-items:end;gap:12px}.sx-p4-two{grid-template-columns:1fr 1fr;gap:14px}
+.sx-p4-voice{max-width:850px;display:grid;gap:15px}.sx-p4-controls{display:flex;flex-wrap:wrap;gap:9px}
+.sx-p4-space{margin-top:22px}
+@media(max-width:840px){.sx-p4-split{grid-template-columns:1fr}.sx-p4-three{grid-template-columns:1fr 1fr}.sx-p4-three button{grid-column:1/-1}.sx-p4-stages{flex-wrap:wrap}.sx-p4-stages>div{min-width:180px}}
+@media(max-width:540px){.sx-p4-shell{padding:12px 10px 30px}.sx-p4-hero{flex-direction:column;padding:22px}.sx-p4-two,.sx-p4-three{grid-template-columns:1fr}.sx-p4-stages{display:grid}.sx-p4-stages>span{margin:auto;transform:rotate(90deg)}.sx-p4-tabs button{flex:1 1 auto}.sx-p4-box{padding:14px}}
+
+/* SATEER P5.1 : interface orientée tâches, contraste robuste. */
+.sx-p51-body .sx-p4-shell{max-width:1160px}
+.sx-p51-hero{padding:25px 28px;align-items:center}
+.sx-p51-tabs{background:#e8f0f2;padding:8px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sx-p51-tabs button{background:#fff!important;color:#25464c!important;box-shadow:0 1px 3px #0b404b16;border:1px solid #d5e3e7!important;text-align:center;font-size:14px;min-height:50px}
+.sx-p51-tabs button[aria-selected=true]{background:#0f625d!important;color:#fff!important;border-color:#0f625d!important;box-shadow:0 3px 12px #123f4a24}
+.sx-p51-body .sx-p4-panel{min-height:0}
+.sx-p51-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(300px,.88fr);gap:18px}
+.sx-p51-side{min-width:0;display:grid;align-content:start;gap:14px}
+.sx-p51-side .sx-p4-box{margin:0}
+.sx-p51-selected{background:#edf7f5!important;border-color:#b4d9d4!important}
+.sx-p51-selected h3{font-size:18px!important;margin-bottom:7px}
+.sx-p51-caption{font-size:11px;letter-spacing:.08em;color:#2d6260!important;font-weight:750;margin-bottom:5px}
+.sx-p51-details{padding:0!important;overflow:hidden}
+.sx-p51-details>summary{padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;color:#143f46;font-weight:750;background:#fff;border-radius:14px}
+.sx-p51-details>summary::-webkit-details-marker{display:none}
+.sx-p51-details[open]>summary{border-bottom:1px solid #dbe7ea;background:#eff7f7}
+.sx-p51-details>form,.sx-p51-details>div,.sx-p51-details>p:not(.sx-p51-caption),.sx-p51-details>details,.sx-p51-details>h3,.sx-p51-details>hr{margin:15px 19px}
+.sx-p51-details>form{margin-bottom:20px}
+.sx-p51-chevron{color:#356a6b;font-size:18px}
+.sx-p51-details[open] .sx-p51-chevron{transform:rotate(180deg)}
+.sx-p51-subdetails{background:#f4f9fa;border-radius:9px;padding:12px;margin-top:18px}
+.sx-p51-subdetails summary{cursor:pointer;color:#215862;font-weight:700}
+.sx-p51-subdetails .sx-p4-space{margin-top:10px}
+.sx-p51-optional{color:#677983;font-weight:400}
+.sx-p51-main-label{display:grid;gap:7px;color:#1d454e;font-weight:750}
+.sx-p51-main-label select{background:#fff!important;color:#163e46!important;border:1px solid #aec5cc;padding:12px;border-radius:10px;width:100%}
+.sx-p51-cols{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:20px}
+.sx-p51-cols h3{margin-top:0}
+.sx-p51-main-card{margin-bottom:15px}
+.sx-p51-inline{grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+.sx-p51-inline>button{grid-column:1/-1;justify-self:start}
+.sx-p51-note{background:#f1f6f8;color:#47616c!important;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.55;margin-bottom:0}
+.sx-p51-advanced{margin-top:14px}
+.sx-p51-route-banner{display:grid;gap:4px;background:#fff4df;color:#674813;border:1px solid #e2c89d;padding:14px 18px;margin-bottom:16px;border-radius:12px}
+.sx-p51-route-banner strong{color:#64420f}.sx-p51-route-banner span{font-size:13px}
+.sx-p51-flow{display:flex;align-items:stretch;gap:12px;margin:23px 0;flex-wrap:wrap}
+.sx-p51-flow>div{flex:1;min-width:155px;display:grid;gap:4px;border-radius:12px;padding:14px;background:#ebf6f5;color:#1a4b49}
+.sx-p51-flow strong{font-size:14px;color:#164844}.sx-p51-flow small{font-size:12px;color:#53716f}
+.sx-p51-flow>span{align-self:center;color:#52757b}
+.sx-p51-body .sx-p4-unit-line:hover{border-color:#73acae}
+.sx-p51-body #sx-p5-open-workspace{width:100%;white-space:normal;line-height:1.4;background:#12685f!important;color:#fff!important;border-color:#12685f!important}
+.sx-p51-body #sx-p5-open-workspace:disabled{background:#dce7e8!important;color:#556f75!important;border-color:#c8d9dc!important;cursor:not-allowed}
+.sx-p51-body .sx-p4-unit-button{line-height:1.45}
+.sx-p51-body .sx-p4-unit-line small{display:none}
+@media(max-width:800px){.sx-p51-grid,.sx-p51-cols{grid-template-columns:1fr}.sx-p51-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.sx-p51-tabs{grid-template-columns:1fr}.sx-p51-hero{padding:20px}.sx-p51-flow{display:grid}.sx-p51-flow>span{justify-self:center;transform:rotate(90deg)}}

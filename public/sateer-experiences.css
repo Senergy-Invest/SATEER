@@ -1,0 +1,119 @@
+/* Lot 1J révisé — identité visuelle des expériences SATEER. Aucun JS ni API affecté. */
+:root{--sx-font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body.sateer-experience{--sx-accent:#2563eb;--sx-deep:#10284a;--sx-pale:#ecf3ff;--sx-border:#e1e8f1;background:linear-gradient(180deg,var(--sx-pale) 0,#f7f9fd 330px,#f8fafc 100%);color:#1b2b41;font-family:var(--sx-font);min-height:100vh}
+body.sateer-home{--sx-accent:#3765a5;--sx-deep:#142c4b;--sx-pale:#eaf2ff}
+body.sateer-consulat{--sx-accent:#078454;--sx-deep:#063d2b;--sx-pale:#e9f7ee}
+body.sateer-vice{--sx-accent:#0b756b;--sx-deep:#093e43;--sx-pale:#e7f5f4}
+body.sateer-consul{--sx-accent:#6c549d;--sx-deep:#32234c;--sx-pale:#f1ecfa}
+body.sateer-experience *,body.sateer-experience *::before,body.sateer-experience *::after{box-sizing:border-box}
+body.sateer-experience .app{max-width:none;min-height:100vh}
+body.sateer-experience .header{max-width:1240px;margin:0 auto;padding:16px clamp(18px,3.5vw,42px);background:transparent;min-height:78px;display:flex;align-items:center;gap:15px}
+body.sateer-experience .brand{font-size:23px;letter-spacing:-.06em;font-weight:850;color:var(--sx-deep)}
+body.sateer-experience .avatar{width:42px;height:42px;border-radius:14px;background:var(--sx-deep);color:#fff;display:grid;place-items:center;font-weight:800;box-shadow:0 6px 16px #12294d1c}
+body.sateer-experience .main{width:min(1160px,calc(100% - 38px));margin:18px auto 74px;padding:0;display:grid;gap:25px}
+body.sateer-experience .welcome,body.sateer-experience .consulat-hero{background:linear-gradient(112deg,var(--sx-deep),var(--sx-accent));border-radius:27px;padding:clamp(26px,4vw,48px);color:white;box-shadow:0 19px 39px #15284621;min-height:190px;position:relative;overflow:hidden}
+body.sateer-experience .welcome::after,body.sateer-experience .consulat-hero::after{content:"";position:absolute;right:-65px;top:-110px;width:320px;height:320px;border:1px solid #ffffff24;border-radius:50%;box-shadow:0 0 0 52px #ffffff0b,0 0 0 103px #ffffff08;pointer-events:none}
+body.sateer-experience .welcome h1,body.sateer-experience .consulat-hero h1{font-size:clamp(29px,4vw,44px);line-height:1.13;letter-spacing:-.045em;color:white;margin:9px 0 14px;position:relative;z-index:1}
+body.sateer-experience .welcome .eyebrow,body.sateer-experience .consulat-hero .eyebrow{color:#d0f4e6;letter-spacing:.13em;font-weight:800}
+body.sateer-home .welcome .eyebrow{color:#d7e7ff}
+body.sateer-experience .welcome .subtitle,body.sateer-experience .consulat-hero .subtitle{color:#e9f0f7;line-height:1.6;font-size:16px;max-width:680px;position:relative;z-index:1}
+body.sateer-experience .main>section:not(.welcome):not(.consulat-hero){min-width:0}
+body.sateer-experience .section-header{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:18px}
+body.sateer-experience .section-header h2{font-size:clamp(20px,2.3vw,27px);font-weight:800;letter-spacing:-.04em;color:var(--sx-deep)}
+body.sateer-experience .section-header .eyebrow{font-size:11px;color:var(--sx-accent);font-weight:850;letter-spacing:.13em}
+body.sateer-experience .panel{border:1px solid var(--sx-border);border-radius:24px;background:#fff;box-shadow:0 9px 29px #1f3b5f09;padding:clamp(20px,3vw,30px)}
+body.sateer-experience .experiences-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:16px}
+body.sateer-experience .experience-card,body.sateer-experience .service-card{border:1px solid var(--sx-border);background:white;border-radius:20px;padding:25px;box-shadow:0 10px 22px #1736500a;transition:transform .18s,box-shadow .18s,border-color .18s;min-width:0}
+body.sateer-experience .experience-card:hover,body.sateer-experience .service-card:hover{transform:translateY(-3px);border-color:var(--sx-accent);box-shadow:0 13px 26px #1736501d}
+body.sateer-experience .experience-card:focus-visible,body.sateer-experience .service-card:focus-visible{outline:3px solid var(--sx-accent);outline-offset:4px}
+body.sateer-experience .experience-icon,body.sateer-experience .service-icon{background:var(--sx-pale);border-radius:16px;display:grid;place-items:center;width:56px;height:56px;font-size:29px;margin-bottom:14px}
+body.sateer-experience .experience-card h3,body.sateer-experience .service-card h3{font-size:19px;color:var(--sx-deep);letter-spacing:-.02em}
+body.sateer-experience .experience-card p,body.sateer-experience .service-card p{line-height:1.6;color:#617082}
+body.sateer-experience .services-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+body.sateer-experience .list-item{border-bottom:1px solid #edf1f6;padding:15px 0}
+body.sateer-experience .empty{color:#6d798a;background:#f8fafc;border:1px dashed #d6e0e9;border-radius:14px;padding:20px;line-height:1.5}
+body.sateer-experience .link-button{color:var(--sx-accent);font-weight:750}
+body.sateer-experience a{overflow-wrap:anywhere}
+body.sateer-experience .back-button{background:white;border:1px solid var(--sx-border);border-radius:12px;min-width:40px;min-height:40px}
+body.sateer-experience .consulat-flag{background:#ffffff24;border-radius:18px;padding:15px;font-size:35px;align-self:start}
+body.sateer-experience .page{max-width:1190px;margin:0 auto;padding:22px clamp(15px,3vw,34px) 76px}
+body.sateer-experience .page .hero{background:linear-gradient(115deg,var(--sx-deep),var(--sx-accent));border-radius:25px;padding:clamp(25px,4vw,47px);color:white;box-shadow:0 16px 35px #172c4030}
+body.sateer-experience .page .hero h1{color:#fff;font-size:clamp(28px,3.2vw,43px);letter-spacing:-.04em}
+body.sateer-experience .page .hero .eyebrow,body.sateer-experience .page .hero .muted{color:#e5f3f4}
+body.sateer-experience .page .panel,body.sateer-experience .page .dashboard-kpi{border:1px solid var(--sx-border);border-radius:19px;background:white;box-shadow:0 9px 25px #132f4310}
+body.sateer-experience .page .dashboard-kpi{padding:23px}
+body.sateer-experience .page .dashboard-kpi strong{color:var(--sx-accent)}
+body.sateer-experience :is(button,a,input,select,textarea):focus-visible{outline:3px solid var(--sx-accent);outline-offset:3px}
+@media(max-width:700px){body.sateer-experience .main{width:min(100% - 26px,1160px);margin-top:8px;gap:18px}body.sateer-experience .header{padding:10px 16px}body.sateer-experience .welcome,body.sateer-experience .consulat-hero{border-radius:19px;padding:27px 23px}body.sateer-experience .services-grid{grid-template-columns:1fr}body.sateer-experience .panel{padding:19px}body.sateer-experience .section-header{align-items:start}}
+@media(prefers-reduced-motion:reduce){body.sateer-experience .experience-card,body.sateer-experience .service-card{transition:none}}
+
+/* Lot 1J : hiérarchie, centrage et respiration des informations */
+body.sateer-experience{line-height:1.55;-webkit-font-smoothing:antialiased}
+body.sateer-experience .main,body.sateer-experience .page{max-width:1120px;margin-left:auto;margin-right:auto}
+body.sateer-experience .page>section{margin-block:24px}
+body.sateer-experience .page .section-header{margin-bottom:17px}
+body.sateer-experience .page .dashboard-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+body.sateer-experience .page .dashboard-kpi{min-height:116px;display:flex;flex-direction:column;justify-content:space-between;gap:9px}
+body.sateer-experience .page .dashboard-kpi span{color:#546579;font-size:13px;font-weight:700}
+body.sateer-experience .page .dashboard-kpi strong{font-size:clamp(26px,3vw,37px);line-height:1.1}
+body.sateer-experience .page .section h2{font-size:clamp(21px,2.6vw,28px);letter-spacing:-.035em;line-height:1.2}
+body.sateer-experience .page .muted{color:#64748b;line-height:1.65}
+body.sateer-experience .page .dashboard-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+body.sateer-experience .page .panel{padding:clamp(20px,2.3vw,27px)}
+body.sateer-experience .page .button{min-height:43px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:10px 16px;text-decoration:none}
+body.sateer-experience .page .button-primary{background:var(--sx-accent);border-color:var(--sx-accent);color:white}
+body.sateer-experience .page .section{scroll-margin-top:24px}
+body.sateer-experience .sx-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;background:#fff;border:1px solid var(--sx-border);border-radius:20px;padding:18px 22px;box-shadow:0 8px 23px #132f4310;margin:22px 0}
+body.sateer-experience .sx-toolbar h2{font-size:20px;margin:0;color:var(--sx-deep)}
+body.sateer-experience .sx-toolbar p{margin:4px 0 0;color:#64748b}
+body.sateer-experience .sx-toolbar-actions{display:flex;flex-wrap:wrap;gap:10px}
+body.sateer-experience .sx-disclosure{border:1px solid var(--sx-border);border-radius:18px;background:#fff;margin:15px 0;box-shadow:0 6px 18px #132f4309;overflow:hidden}
+body.sateer-experience .sx-disclosure>summary{cursor:pointer;padding:22px 25px;display:flex;align-items:center;justify-content:space-between;gap:18px;color:var(--sx-deep);font-size:18px;font-weight:750;list-style:none}
+body.sateer-experience .sx-disclosure>summary::-webkit-details-marker{display:none}
+body.sateer-experience .sx-disclosure>summary::after{content:'+';font-size:25px;line-height:1;color:var(--sx-accent)}
+body.sateer-experience .sx-disclosure[open]>summary::after{content:'−'}
+body.sateer-experience .sx-disclosure>summary:hover{background:var(--sx-pale)}
+body.sateer-experience .sx-disclosure>section{padding:0 25px 24px;margin:0!important}
+body.sateer-experience .sx-disclosure .section-header{margin-top:0}
+body.sateer-experience .sx-disclosure .section-header>div>h2{display:none}
+body.sateer-experience .sx-disclosure .section-header .eyebrow{display:none}
+body.sateer-vice .communication-audiences{display:none}
+body.sateer-vice .communication-preview{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;background:#fff;border:1px solid var(--sx-border);border-radius:18px;padding:22px}
+body.sateer-vice .communication-preview>div{max-width:570px}
+body.sateer-vice .communication-preview strong{font-size:17px;color:var(--sx-deep)}
+body.sateer-vice .communication-preview p{font-size:14px;line-height:1.55;color:#64748b}
+body.sateer-vice .sx-secondary-copy{font-size:13px;color:#64748b}
+body.sateer-home .experiences-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+body.sateer-home .experience-card{border-left:4px solid #0d8763;cursor:pointer}
+body.sateer-experience .main>section.panel{max-width:100%}
+@media(max-width:800px){body.sateer-experience .page .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}body.sateer-experience .page .dashboard-columns{grid-template-columns:1fr}}
+@media(max-width:520px){body.sateer-experience .page .dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}body.sateer-experience .page{padding-inline:14px}body.sateer-experience .sx-disclosure>summary{padding:17px}body.sateer-experience .sx-disclosure>section{padding:0 17px 17px}}
+
+/* Lot 1K — Vue Vice-Consul : priorite aux actions et situations. */
+body.sateer-vice .page{max-width:1080px}
+body.sateer-vice .page .hero{margin-bottom:22px}
+body.sateer-vice .sx1k-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+body.sateer-vice .sx1k-action{display:flex;gap:12px;align-items:center;text-decoration:none;background:#fff;border:1px solid #dce8e7;border-radius:17px;padding:19px;color:#123c3b;min-height:90px;box-shadow:0 5px 22px #103b370b}
+body.sateer-vice .sx1k-action:hover{border-color:#0b756b;background:#f4fbf9}
+body.sateer-vice .sx1k-action strong{display:block;font-size:15px}
+body.sateer-vice .sx1k-action small{display:block;color:#657b79;font-size:12px;margin-top:4px}
+body.sateer-vice .sx1k-glyph{font-size:24px;background:#e9f5f2;border-radius:13px;width:45px;height:45px;flex:none;display:grid;place-items:center}
+body.sateer-vice .sx1k-unit-list{display:grid;gap:8px;margin:15px 0}
+body.sateer-vice .sx1k-unit-row{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#fff;border:1px solid #e3eeec;border-radius:13px;padding:12px 16px}
+body.sateer-vice .sx1k-unit-row strong{font-size:14px}
+body.sateer-vice .sx1k-unit-row span{font-size:12px;color:#57716b}
+body.sateer-vice .sx1k-summary{margin-top:13px;font-weight:700;color:#185b4e}
+body.sateer-vice .sx1k-more{margin:14px 0;border:1px solid #dfebe8;border-radius:15px;background:white;overflow:hidden}
+body.sateer-vice .sx1k-more>summary{list-style:none;cursor:pointer;padding:15px 18px;color:#0b645a;font-weight:700}
+body.sateer-vice .sx1k-more>summary::-webkit-details-marker{display:none}
+body.sateer-vice .sx1k-more>summary::after{content:' +';float:right}
+body.sateer-vice .sx1k-more[open]>summary::after{content:' −'}
+body.sateer-vice .sx1k-more>#supervisionUnitsGrid{padding:16px}
+body.sateer-vice .sx1k-more .supervision-grid{margin:0}
+body.sateer-vice .sx1k-aux{margin-top:15px}
+body.sateer-vice .sx1k-aux>summary{font-size:15px}
+body.sateer-vice .sx1k-aux>section{padding:0 18px 18px}
+body.sateer-vice .sx1k-aux .section-header h2{font-size:21px}
+body.sateer-vice .sx1k-actions a[hidden]{display:none}
+body.sateer-vice .sx1k-internal-note{font-size:13px;color:#647b76}
+@media(max-width:700px){body.sateer-vice .sx1k-actions{grid-template-columns:1fr}body.sateer-vice .sx1k-unit-row{flex-wrap:wrap}}

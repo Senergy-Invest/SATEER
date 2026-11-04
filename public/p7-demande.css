@@ -1,0 +1,15 @@
+#p7-panel{padding:24px;margin-top:20px;background:#fff;border:1px solid #d2dce2;border-radius:18px;color:#162d38;box-shadow:0 6px 30px rgba(20,50,60,.05);max-width:820px}
+#p7-panel h2,#p7-panel h3{color:#123c46;margin:0 0 12px}#p7-panel p{color:#375261;line-height:1.55}
+#p7-panel .p7-field{display:flex;flex-direction:column;gap:8px;font-weight:650;color:#183a47;margin:16px 0}
+#p7-panel select,#p7-panel textarea{display:block;width:100%;padding:12px 14px;border:1px solid #8ca9b1;border-radius:9px;background:#fff;color:#152f3b;font:inherit;min-height:46px}
+#p7-panel .p7-piece{padding:16px;border:1px solid #d1e0e5;background:#f8fbfc;border-radius:12px;margin:10px 0}#p7-panel .p7-piece strong{display:block;color:#153844;margin-bottom:9px}
+#p7-panel .p7-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}#p7-panel button{font:inherit;border-radius:10px;padding:11px 16px;cursor:pointer}
+#p7-panel .p7-primary{background:#126b63;color:#fff;border:2px solid #126b63;font-weight:700;width:100%;margin-top:15px}
+#p7-panel .p7-primary:disabled{background:#6e8187;color:#fff;border-color:#6e8187;cursor:not-allowed}
+#p7-panel .p7-secondary{background:#fff;color:#14515b;border:1px solid #6797a0;font-weight:600}
+#p7-panel .p7-consent{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:.91rem;color:#213c46;margin-top:18px}
+#p7-panel .p7-consent input{min-width:18px;min-height:18px;margin-top:3px}
+#p7-panel .p7-status{padding:12px;background:#e8f4f0;color:#145044;border-radius:9px;margin:12px 0}
+#p7-panel .p7-status.error,#p7-panel .p7-warning{background:#fff1e7;color:#763a16;padding:10px;border-radius:9px}
+#p7-panel .p7-muted{color:#526c77;font-size:.9rem}
+#p7-panel a{color:#075b86;text-decoration:underline}

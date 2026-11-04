@@ -42,90 +42,82 @@ function classeStatut(
 // PUBLICATIONS
 // =========================================================
 
-function afficherPublications(
-    publications
-) {
-
-    const container =
-        document.getElementById(
-            "publicationsContainer"
-        );
-
-
-    container.innerHTML =
-        "";
-
-
-    if (
-        !publications ||
-        publications.length === 0
-    ) {
-
-        container.innerHTML = `
-            <div class="empty">
-                Aucune information officielle disponible.
-            </div>
-        `;
-
+let publicationsConsulat = [];
+function afficherPublications(publications) {
+    const container = document.getElementById("publicationsContainer");
+    const filtre = document.getElementById("filtreCanalConsulat");
+    publicationsConsulat = Array.isArray(publications) ? publications : [];
+    const choixPrecedent = filtre.value;
+    filtre.replaceChildren();
+    filtre.add(new Option("Toutes les informations", ""));
+    const canaux = new Map();
+    for (const p of publicationsConsulat) {
+        if (p.communication_channel_id != null) {
+            canaux.set(String(p.communication_channel_id), p.communication_channel_nom || "Canal " + p.communication_channel_id);
+        }
+    }
+    for (const [id, nom] of [...canaux].sort((a,b) => a[1].localeCompare(b[1]))) filtre.add(new Option(nom, id));
+    if ([...filtre.options].some(o => o.value === choixPrecedent)) filtre.value = choixPrecedent;
+    afficherPublicationsFiltrees();
+}
+function afficherPublicationsFiltrees() {
+    const container = document.getElementById("publicationsContainer");
+    const filtre = document.getElementById("filtreCanalConsulat").value;
+    const liste = publicationsConsulat.filter(p => !filtre || String(p.communication_channel_id) === filtre);
+    container.replaceChildren();
+    if (!liste.length) {
+        const vide = document.createElement("div");
+        vide.className = "empty";
+        vide.textContent = "Aucune information officielle disponible pour ce filtre.";
+        container.appendChild(vide);
         return;
     }
-
-
-    for (
-        const publication
-        of publications
-    ) {
-
-        const item =
-            document.createElement(
-                "article"
-            );
-
-
-        item.className =
-            "publication-card";
-
-
-        item.innerHTML = `
-
-            <div class="publication-top">
-
-                <span class="publication-category">
-                    ${publication.categorie}
-                </span>
-
-                <span class="publication-priority">
-                    ${publication.priorite}
-                </span>
-
-            </div>
-
-
-            <h3>
-                ${publication.titre}
-            </h3>
-
-
-            <p>
-                ${publication.contenu}
-            </p>
-
-
-            <div class="publication-footer">
-
-                <span>
-                    🇸🇳 Information officielle
-                </span>
-
-            </div>
-        `;
-
-
-        container.appendChild(
-            item
-        );
+    for (const pub of liste) {
+        const item = document.createElement("article");
+        item.className = "publication-card";
+        const top = document.createElement("div");
+        top.className = "publication-top";
+        for (const [cls, valeur] of [["publication-category", pub.categorie], ["publication-priority", pub.priorite]]) {
+            const badge = document.createElement("span");
+            badge.className = cls;
+            badge.textContent = valeur || "";
+            top.appendChild(badge);
+        }
+        const titre = document.createElement("h3");
+        titre.textContent = pub.titre || "";
+        const contenu = document.createElement("p");
+        contenu.textContent = pub.contenu || "";
+        const pied = document.createElement("div");
+        pied.className = "publication-footer";
+        pied.textContent = "🇸🇳 Information officielle" + (pub.communication_channel_nom ? " · " + pub.communication_channel_nom : " · Informations générales");
+        item.append(top, titre, contenu);
+        const medias = Array.isArray(pub.medias) ? pub.medias : [];
+        for (const m of medias) {
+            if (m.type === "IMAGE" && typeof m.url === "string" && m.url.startsWith("/api/organisations/")) {
+                const img = document.createElement("img");
+                img.src = m.url; img.alt = "Illustration de la publication";
+                img.loading = "lazy"; img.style.cssText="max-width:100%;max-height:340px;object-fit:contain;border-radius:12px;margin:12px 0";
+                item.appendChild(img);
+            } else if (m.type === "DOCUMENT" && typeof m.url === "string" && m.url.startsWith("/api/organisations/")) {
+                const link = document.createElement("a");
+                link.href=m.url;link.textContent="Consulter le document PDF";link.target="_blank";link.rel="noopener noreferrer";
+                item.appendChild(link);
+            } else if (m.type === "LIEN" && typeof m.url === "string") {
+                try {
+                    const u=new URL(m.url);
+                    if (u.protocol !== "https:" || !["youtube.com","www.youtube.com","youtu.be","www.youtu.be","facebook.com","www.facebook.com","instagram.com","www.instagram.com","tiktok.com","www.tiktok.com"].includes(u.hostname)) continue;
+                    const link=document.createElement("a");
+                    link.href=u.href;link.textContent="Voir la vidéo ou la publication sur " + u.hostname;
+                    link.target="_blank";link.rel="noopener noreferrer";
+                    item.appendChild(link);
+                } catch (_) {}
+            }
+        }
+        item.appendChild(pied);
+        container.appendChild(item);
     }
 }
+document.getElementById("filtreCanalConsulat").addEventListener("change", afficherPublicationsFiltrees);
 
 
 // =========================================================

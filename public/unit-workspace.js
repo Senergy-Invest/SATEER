@@ -413,6 +413,9 @@
         );
 
         renderCaseActions(detail, demande);
+        if (typeof window.SATEER_P7_SHOW_CASE === 'function') {
+            window.SATEER_P7_SHOW_CASE(detail, demande.id).catch(() => {});
+        }
     }
 
     function renderCaseActions(container, demande) {

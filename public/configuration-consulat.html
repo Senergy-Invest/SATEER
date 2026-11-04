@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organiser mon Consulat · SATEER</title>
+<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/sateer-p4.css"><link rel="stylesheet" href="/p6-routing-ui.css">
+<link rel="stylesheet" href="/p61-activites.css">
+<link rel="stylesheet" href="/p62-agents.css">
+<link rel="stylesheet" href="/p63-invitations.css">
+</head>
+<body class="sx-p4-body sx-p51-body">
+<main class="sx-p4-shell" id="sx-p4">
+  <header class="sx-p4-hero sx-p51-hero">
+    <div><p class="sx-p4-eyebrow">SATEER · ORGANISATION DU CONSULAT</p>
+      <h1>Organiser mon Consulat</h1><p id="sx-p4-org">Chargement de votre organisation…</p>
+      <p class="sx-p4-hero-note">Choisissez vos bureaux, leurs responsabilités et les demandes à recevoir.</p>
+    </div>
+    <a href="/dashboard-vice-consul.html" id="sx-p4-back" class="sx-p4-link-light">← Mon tableau de bord</a>
+  </header>
+  <p id="sx-p4-status" role="status" aria-live="polite">Vérification de vos autorisations…</p>
+  <section id="sx-p4-workspace" hidden>
+    <nav class="sx-p4-tabs sx-p51-tabs" role="tablist" aria-label="Organiser le Consulat">
+      <button type="button" role="tab" aria-selected="true" data-tab="bureaux">1. Mes bureaux</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="equipes">2. Qui fait quoi ?</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="routage">3. Qui reçoit quoi ?</button>
+      <button type="button" role="tab" aria-selected="false" data-tab="voix">4. Voix &amp; IA</button>
+    </nav>
+    <section role="tabpanel" data-panel="bureaux" class="sx-p4-panel">
+      <div class="sx-p4-heading"><div><h2>Les bureaux de mon Consulat</h2><p>Cliquez sur un bureau pour le sélectionner. Vous pouvez ensuite ouvrir son espace de travail si vous y êtes autorisé.</p></div><button type="button" class="sx-p4-button" id="sx-p4-reload">↻ Actualiser</button></div>
+      <div class="sx-p51-grid"><div class="sx-p4-box"><h3>Organisation actuelle</h3><div id="sx-p4-tree" class="sx-p4-tree"></div></div>
+        <div class="sx-p51-side">
+          <div class="sx-p4-box sx-p51-selected"><p class="sx-p51-caption">BUREAU SÉLECTIONNÉ</p><h3 id="sx-p51-selected-name">Choisir un bureau dans la liste</h3><p class="sx-p4-muted">L'espace de travail affiche uniquement les dossiers et actions autorisés pour votre compte.</p><div id="sx-p51-workspace-slot"></div></div>
+          <details class="sx-p4-box sx-p51-details" id="sx-p51-add-unit"><summary><span>＋ Ajouter un bureau</span><span class="sx-p51-chevron" aria-hidden="true">⌄</span></summary>
+            <p class="sx-p4-muted">Deux informations suffisent pour démarrer : son nom et son rattachement.</p>
+            <form id="sx-p4-new-unit" class="sx-p4-form">
+              <label>Comment s'appelle ce bureau ?<input name="nom" required maxlength="100" placeholder="Ex. Bureau des passeports" autocomplete="off"></label>
+              <label>À quel bureau est-il rattaché ?<select name="parentUnitId" id="sx-p4-new-parent" required><option value="">Choisir un bureau responsable</option></select></label>
+              <label>Quelle est sa mission ? <span class="sx-p51-optional">(facultatif)</span><textarea name="mission" rows="2" maxlength="500" placeholder="Ex. Suivre les demandes de passeport"></textarea></label>
+              <input type="hidden" name="code" value=""><input type="hidden" name="type" value="BUREAU">
+              <button type="submit" class="sx-p4-primary">Créer le bureau</button>
+            </form>
+          </details>
+          <details class="sx-p4-box sx-p51-details"><summary><span>Modifier un bureau existant</span><span class="sx-p51-chevron" aria-hidden="true">⌄</span></summary>
+            <p class="sx-p4-muted">À utiliser pour renommer ou déplacer un bureau, sans changer ses dossiers.</p>
+            <form id="sx-p4-edit-unit" class="sx-p4-form">
+              <label>Bureau à modifier<select id="sx-p4-edit-select" required><option value="">Sélectionner un bureau</option></select></label>
+              <label>Nouveau nom<input id="sx-p4-edit-name" maxlength="100" required></label>
+              <label>Mission <span class="sx-p51-optional">(facultatif)</span><textarea id="sx-p4-edit-mission" rows="2" maxlength="500"></textarea></label>
+              <button type="submit" class="sx-p4-button">Enregistrer le nouveau nom</button>
+            </form>
+            <details class="sx-p51-subdetails"><summary>Changer son rattachement (avancé)</summary>
+              <div class="sx-p4-form sx-p4-space"><label>Nouveau bureau responsable<select id="sx-p4-move-parent"><option value="">Sans parent</option></select></label><button id="sx-p4-move" type="button" class="sx-p4-button">Déplacer ce bureau</button></div>
+            </details>
+          </details>
+        </div>
+      </div>
+    </section>
+    <section role="tabpanel" data-panel="equipes" class="sx-p4-panel" hidden>
+      <div class="sx-p4-heading"><div><h2>Qui travaille dans chaque bureau ?</h2><p>Choisissez un bureau pour voir les agents, les responsabilités et ce qu'il est autorisé à faire.</p></div></div>
+      <div class="sx-p4-box sx-p51-main-card">
+        <label class="sx-p51-main-label">Choisir un bureau<select id="sx-p4-team-unit"><option value="">Sélectionner un bureau</option></select></label>
+        <div class="sx-p51-cols">
+          <details><summary>Membres du bureau (aperçu)</summary><div id="sx-p4-team-members"></div></details>
+          <div><h3>Activités autorisées du bureau</h3><div id="sx-p4-team-caps"></div></div>
+        </div>
+        <!-- SATEER P6.3 : inviter un agent -->
+      <details class="sx-p63-box" id="sx-p63-root"><summary><strong>＋ Inviter un nouvel agent</strong></summary>
+        <p>L'agent n'est pas dans la liste ? Invitez-le à rejoindre SATEER. Il choisira lui-même son mot de passe.</p>
+        <form id="sx-p63-form" autocomplete="off"><div class="sx-p63-grid">
+          <label>Prénom<input name="prenom" maxlength="100" required placeholder="Prénom de l’agent"></label>
+          <label>Nom<input name="nom" maxlength="100" required placeholder="Nom de l’agent"></label>
+          <label>E-mail professionnel<input name="email" type="email" maxlength="190" required placeholder="agent@consulat.test"></label>
+          <label>Responsabilité dans ce bureau<select id="sx-p63-role" required><option value="">Choisir une responsabilité</option></select></label>
+        </div><button type="submit" disabled>Créer l'invitation</button></form>
+        <p id="sx-p63-status" role="status" aria-live="polite">Sélectionnez d'abord un bureau.</p>
+        <div class="sx-p63-delivery" hidden><strong>Lien d'activation à usage unique (48 heures)</strong>
+          <p>Aucun e-mail n'a été envoyé. Copiez et transmettez le lien à l'agent par un canal privé.</p>
+          <input readonly aria-label="Lien d’invitation" id="sx-p63-link"><button type="button" id="sx-p63-copy">Copier le lien</button>
+        </div>
+        <h3>Invitations pour ce bureau</h3><div id="sx-p63-list"></div>
+      </details>
+        <!-- SATEER P6.2 personnel -->
+      <div class="sx-p62-box" id="sx-p62-root">
+        <h3>Affecter un agent à ce bureau</h3>
+        <p>Choisissez une personne du Consulat, puis sa responsabilité dans ce bureau. Vous n'avez pas besoin de configurer les droits un par un.</p>
+        <div class="sx-p62-grid">
+          <label>Rechercher un agent<input type="search" id="sx-p62-search" placeholder="Nom ou prénom" autocomplete="off"></label>
+          <label>Agent<select id="sx-p62-person"><option value="">Choisir une personne</option></select></label>
+          <label>Responsabilité<select id="sx-p62-role"><option value="">Choisir une responsabilité</option></select></label>
+        </div>
+        <p><button type="button" class="sx-p62-primary" id="sx-p62-assign" disabled>Affecter cet agent</button></p>
+        <p id="sx-p62-status" class="sx-p62-state" role="status" aria-live="polite">Sélectionnez d'abord un bureau.</p>
+        <h3>Agents actuellement affectés</h3><div id="sx-p62-members" class="sx-p62-list"></div>
+      </div>
+      </div>
+      <details class="sx-p4-box sx-p51-details sx-p51-advanced"><summary><span>Définir les activités autorisées du bureau</span><span class="sx-p51-chevron">⌄</span></summary>
+        <p class="sx-p4-muted">Ces capacités déterminent les fonctionnalités disponibles pour le bureau. Elles sont vérifiées par SATEER.</p>
+        <div class="sx-p61-panel" id="sx-p61-root">
+          <label class="sx-p61-label" for="sx-p61-search">Rechercher une activité</label>
+          <input id="sx-p61-search" type="search" placeholder="Ex. recevoir, boîte de réception, dossiers…" autocomplete="off" aria-controls="sx-p61-list">
+          <p class="sx-p61-help">Cochez pour autoriser une activité, décochez pour la retirer. Vérifiez les modifications avant de les enregistrer.</p>
+          <div id="sx-p61-list" class="sx-p61-list" role="group" aria-label="Activités à autoriser pour ce bureau"></div>
+          <div class="sx-p61-actions">
+            <button type="button" id="sx-p61-select-visible">Sélectionner les résultats affichés</button>
+            <button type="button" id="sx-p61-clear">Effacer ma sélection</button>
+            <button type="button" id="sx-p61-save" class="sx-p61-primary" disabled>Activer 0 activité</button>
+          </div>
+          <p id="sx-p61-info" class="sx-p61-state" role="status" aria-live="polite">Choisissez d'abord un bureau.</p>
+        </div>
+        <div class="sx-p4-form sx-p51-inline sx-p61-legacy" hidden aria-hidden="true"><label>Activité à autoriser<select id="sx-p4-capability"><option value="">Choisir une activité</option></select></label><button type="button" id="sx-p4-cap-add" class="sx-p4-primary">Autoriser cette activité</button></div>
+      </details>
+      <details class="sx-p4-box sx-p51-details sx-p51-advanced"><summary><span>Rôles et autorisations détaillées (avancé)</span><span class="sx-p51-chevron">⌄</span></summary>
+        <p class="sx-p4-muted">Réservé à la personne chargée des autorisations. Un rôle donne des droits aux agents ; un bureau reçoit des activités.</p>
+        <div class="sx-p51-cols"><div><h3>Responsabilités existantes</h3><div id="sx-p4-roles-list"></div></div>
+          <div><h3>Ajouter une responsabilité</h3><form id="sx-p4-new-role" class="sx-p4-form">
+            <label>Nom de la responsabilité<input name="nom" required maxlength="100" placeholder="Ex. Agent chargé des passeports"></label>
+            <label>Description <span class="sx-p51-optional">(facultatif)</span><textarea name="description" maxlength="500" rows="2"></textarea></label>
+            <input type="hidden" name="code" value=""><input type="hidden" name="scope" value="UNIT">
+            <button type="submit" class="sx-p4-button">Créer une responsabilité</button>
+          </form></div></div>
+        <hr>
+        <div class="sx-p4-form sx-p51-inline"><label>Responsabilité<select id="sx-p4-perm-role"><option value="">Sélectionner un rôle</option></select></label><label>Action à autoriser<select id="sx-p4-perm-new"><option value="">Choisir une action</option></select></label><button type="button" id="sx-p4-perm-add" class="sx-p4-primary">Autoriser cette action</button></div>
+        <h3>Autorisations du rôle sélectionné</h3><div id="sx-p4-perms-list"></div>
+        <p class="sx-p51-note">Les rôles institutionnels protégés ne sont pas modifiables librement. Chaque modification doit être autorisée par le serveur.</p>
+      </details>
+    </section>
+    <section role="tabpanel" data-panel="routage" class="sx-p4-panel" hidden>
+      <div class="sx-p4-heading"><div><h2>Qui reçoit quoi ?</h2><p>Choisissez le type de demande et le bureau qui doit la recevoir automatiquement.</p></div></div>
+      <div class="sx-p4-box sx-p51-main-card">
+        <div class="sx-p4-form sx-p4-two">
+          <label>Quand un Sénégalais demande…
+            <select id="sx-p4-demo-type">
+              <option value="PASSEPORT">Passeport</option><option value="CARTE_CONSULAIRE">Carte consulaire</option>
+              <option value="ETAT_CIVIL">État civil</option><option value="RENDEZ_VOUS">Rendez-vous</option>
+              <option value="INFORMATION">Question générale</option><option value="AUTRE">Autre demande</option>
+              <option value="__DEFAULT__">Toutes les catégories sans règle (file de tri)</option>
+            </select>
+          </label>
+          <label>Quel bureau doit recevoir la demande ?
+            <select id="sx-p4-demo-unit"><option value="">Choisir un bureau autorisé</option></select>
+          </label>
+        </div>
+        <p id="sx-p4-route-preview" class="sx-p4-preview" role="status">Choisissez un bureau.</p>
+        <div class="sx-p6-actions"><button type="button" class="sx-p4-primary" id="sx-p6-save">Enregistrer cette règle</button>
+          <button type="button" class="sx-p4-button" id="sx-p6-refresh">Actualiser les règles</button></div>
+        <p id="sx-p6-status" role="status" aria-live="polite">Chargement des règles enregistrées…</p>
+        <p class="sx-p6-info">Une règle s'applique uniquement aux <strong>nouvelles demandes</strong> créées dans Mon Consulat. Le bureau doit disposer des activités « Recevoir des entrées » et « Consulter une boîte de réception ». Les agents doivent avoir les permissions et les affectations nécessaires.</p>
+      </div>
+      <div class="sx-p4-box"><h3>Règles actuellement enregistrées</h3>
+        <p class="sx-p4-muted">Les documents exigés et le délai indicatif se définissent dans le catalogue des démarches. La liste doit être validée par le Consulat.</p>
+        <p><a href="/catalogue-demarches.html" class="sx-p4-button" id="sx-p7-procedures">Configurer les documents demandés</a></p><div id="sx-p6-rules"></div></div>
+      <p class="sx-p51-note">Les e-mails, leur classement par IA et les notifications ne sont pas encore raccordés. Les demandes déjà enregistrées ne sont pas réorientées rétroactivement.</p>
+    </section>
+    <section role="tabpanel" data-panel="voix" class="sx-p4-panel" hidden>
+      <div class="sx-p4-heading"><div><h2>Parler plutôt que taper</h2><p>Essayez une dictée ou une lecture vocale. Cette démonstration ne transmet pas de demande.</p></div></div>
+      <div class="sx-p4-box sx-p4-voice"><label>Langue<select id="sx-p4-language"><option value="fr-FR">Français</option><option value="it-IT">Italien</option><option value="es-ES">Espagnol</option><option value="en-US">Anglais</option></select></label>
+      <label>Texte à dicter ou à écouter<textarea id="sx-p4-voice-text" rows="5" placeholder="Ex. Le bureau des passeports reçoit les demandes de renouvellement."></textarea></label>
+      <div class="sx-p4-controls"><button type="button" id="sx-p4-listen" class="sx-p4-primary">🎙️ Dicter</button><button type="button" id="sx-p4-stop" class="sx-p4-button">Arrêter</button><button type="button" id="sx-p4-speak" class="sx-p4-button">🔊 Écouter</button><button type="button" id="sx-p4-clear" class="sx-p4-button">Effacer</button></div><p id="sx-p4-voice-state" class="sx-p4-muted" role="status">Cette fonction dépend du navigateur et peut utiliser la reconnaissance vocale du fournisseur de ce navigateur. Ne dictez aucune donnée personnelle réelle.</p>
+      <p class="sx-p51-note">Démonstration navigateur : pas encore de traduction automatique, d'assistant IA consulaire connecté, ni de transmission de message.</p></div>
+    </section>
+  </section>
+</main>
+<script src="/auth-client.js"></script><script defer src="/sateer-p4.js"></script><script defer src="/p6-routing-ui.js"></script>
+<script defer src="/p61-activites.js"></script>
+<script defer src="/p62-agents.js"></script>
+<script defer src="/p63-invitations.js"></script>
+</body></html>

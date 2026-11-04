@@ -1,11 +1,16 @@
 
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
+const crypto = require("crypto");
 
 const {
     obtenirMonSateerDatabase,
     trouverOrganisationParIdEtTenantDatabase,
     listerPublicationsVisiblesPourPersonneDatabase,
+    creerPublicationDatabase,
+    obtenirPublicationPourMediaDatabase,
+    ajouterMediaPublicationDatabase,
     listerDemandesPersonneDatabase,
     listerNotificationsPersonneDatabase,
     creerDemandeDatabase,
@@ -81,6 +86,7 @@ const {
     exigerPermission
 } = require("./auth-authorization");
 
+const { creerPublicationMultiOrganisationsDatabase } = require("./communication-targets");
 const app = express();
 
 const PORT = Number(process.env.PORT || 3000);
@@ -98,6 +104,29 @@ app.use(
     "/api/auth",
     authRouter
 );
+// Lot 1R - Identité personnelle SATEER Core (session obligatoire côté route).
+const { identityRouter } = require("./identity-http");
+app.use("/api/mon-identite", identityRouter);
+// SATEER Lot 1S - References documentaires chiffrées, Core personnel.
+const { identityDocumentsRouter } = require("./identity-documents-http");
+app.use("/api/mes-pieces-identite", identityDocumentsRouter);
+// Lot 1T - workflow d'instruction interne (aucune verification officielle).
+const { identityVerificationsRouter } = require("./identity-verifications-http");
+app.use("/api/verifications-identite", identityVerificationsRouter);
+// Lot 1U: coffre de documents personnels chiffre, sans partage automatique.
+const { privateFilesRouter } = require("./private-files-http");
+app.use("/api/coffre-documents", privateFilesRouter);
+
+// SATEER_PUBLIC_HOME_V1 : accueil central public, sans authentification
+app.get("/", (req, res) => {
+    res.set("Cache-Control", "no-store");
+    return res.sendFile(path.join(__dirname, "public", "accueil-sateer.html"));
+});
+
+
+
+
+
 
 app.use(
     express.static(
@@ -721,6 +750,13 @@ app.post(
         }
     }
 );
+// SATEER P6 : règle de réception par catégorie (périmètre citoyen uniquement).
+const { installRoutingRoutes, routeNewCitizenCase } = require("./pilot-routing-rules");
+installRoutingRoutes(app, exigerSession);
+// SATEER P7 : catalogue des démarches, coffre partagé explicitement et dossier guidé.
+const { setup: setupPilotProcedures } = require('./pilot-procedures-http');
+setupPilotProcedures(app, exigerSession);
+
 // =========================================================
 // API - CRÉER UNE DEMANDE
 // =========================================================
@@ -803,6 +839,11 @@ app.post(
                         "MON_CONSULAT"
                 );
 
+            // SATEER P6 : appliquer la règle, avec historique et repli sûr si indisponible.
+            const p6Orientation = demande?.id ? await routeNewCitizenCase({
+                demandeId: demande.id, organisationId: Number(organisationId),
+                tenantCode, categorie, canal: canal || "MON_CONSULAT"
+            }) : { statut: "DOSSIER_NON_CREE" };
 
             // =================================================
             // RÉPONSE
@@ -819,7 +860,8 @@ app.post(
                         "Votre demande a bien été envoyée.",
 
                     demande:
-                        demande
+                        demande,
+                    orientationAutomatique: p6Orientation
                 });
 
 
@@ -1507,6 +1549,8 @@ app.post(
     }
 );
 // =========================================================
+require("./pilot-office-agent-directory").installOfficeAgentDirectory(app);
+require("./pilot-staff-invitations").installStaffInvitations(app);
 // API - ADMINISTRATION GÉNÉRIQUE DES MEMBRES D'UNE UNITÉ
 // =========================================================
 
@@ -4478,7 +4522,167 @@ app.post(
         }
     }
 );
+// MEDIA PRIVÉS : lecture après contrôle de la visibilité réelle de la publication.
+const MEDIA_STORE = path.resolve(__dirname, "storage", "publication-media");
+const MEDIA_TYPES = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp", pdf: "application/pdf" };
+function typeMediaValide(buffer) {
+    if (buffer.length >= 4 && buffer.subarray(0,4).toString("ascii") === "%PDF") return "pdf";
+    if (buffer.length >= 3 && buffer[0]===255 && buffer[1]===216 && buffer[2]===255) return "jpeg";
+    if (buffer.length >= 8 && buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return "png";
+    if (buffer.length >= 12 && buffer.subarray(0,4).toString("ascii")==="RIFF" && buffer.subarray(8,12).toString("ascii")==="WEBP") return "webp";
+    return null;
+}
+app.post("/api/organisations/:organisationId/publications/:publicationId/media",
+    ...exigerPermission("TARGET_COMMUNICATION", "ORGANISATION"),
+    express.raw({ type: "application/octet-stream", limit: "8mb" }),
+    async (req,res) => {
+      let stored = null;
+      try {
+        const org=Number(req.params.organisationId), id=Number(req.params.publicationId);
+        const tenant=String(req.query.tenant||"");
+        if (!Number.isSafeInteger(org)||org<=0||!Number.isSafeInteger(id)||id<=0||!tenant||tenant.length>50)
+          return res.status(400).json({statut:"PARAMETRES_INVALIDES"});
+        if (!Buffer.isBuffer(req.body) || req.body.length<12 || req.body.length>8*1024*1024)
+          return res.status(400).json({statut:"FICHIER_INVALIDE"});
+        const kind=typeMediaValide(req.body);
+        if (!kind) return res.status(415).json({statut:"FORMAT_NON_AUTORISE"});
+        const pub=await obtenirPublicationPourMediaDatabase(tenant,org,id);
+        if (!pub || Number(pub.publie_par)!==Number(req.auth.personneId))
+          return res.status(404).json({statut:"PUBLICATION_INTROUVABLE"});
+        const uuid=crypto.randomUUID();
+        const chemin=path.join(MEDIA_STORE,`${uuid}.${kind}`);
+        await fs.promises.mkdir(MEDIA_STORE,{recursive:true,mode:0o700});
+        await fs.promises.writeFile(chemin, req.body, {flag:"wx",mode:0o600});
+        stored=chemin;
+        const media={type:kind==="pdf"?"DOCUMENT":"IMAGE",format:kind,id:uuid,
+          url:`/api/organisations/${org}/publications/${id}/media/${uuid}?tenant=${encodeURIComponent(tenant)}`};
+        const saved=await ajouterMediaPublicationDatabase(tenant,org,id,Number(req.auth.personneId),media);
+        if (!saved) {await fs.promises.unlink(chemin);stored=null;return res.status(409).json({statut:"MEDIA_NON_AJOUTE"});}
+        return res.status(201).json({statut:"MEDIA_AJOUTE",media});
+      } catch(e) {
+        if (stored) await fs.promises.unlink(stored).catch(()=>{});
+        console.error("Echec média publication",e);
+        return res.status(500).json({statut:"ERREUR_MEDIA"});
+      }
+    }
+);
+app.get("/api/organisations/:organisationId/publications/:publicationId/media/:mediaId",
+    exigerSession, async(req,res)=>{
+      try {
+        const org=Number(req.params.organisationId),id=Number(req.params.publicationId);
+        const tenant=String(req.query.tenant||"");
+        if (!Number.isSafeInteger(org)||org<=0||!Number.isSafeInteger(id)||id<=0||!tenant||tenant.length>50)
+          return res.status(400).json({statut:"PARAMETRES_INVALIDES"});
+        const orgs=await listerOrganisationsPersonneDatabase(Number(req.auth.personneId),tenant);
+        // Les membres d'une organisation destinataire peuvent lire les medias
+        // d'une publication ciblee, meme sans rattachement a l'emetteur.
+        const membreEmetteur=orgs.some(o=>Number(o.id)===org);
+        const pubs=await listerPublicationsVisiblesPourPersonneDatabase(Number(req.auth.personneId),org,tenant);
+        const pub=pubs.find(p=>Number(p.id)===id && (
+            membreEmetteur || p.audience_type==='ORGANISATIONS' || p.audience_type==='ASSOCIATION'
+        ));
+        if (!pub) return res.status(404).end();
+        const media=(Array.isArray(pub.medias)?pub.medias:[]).find(m=>m.id===req.params.mediaId && (m.type==="IMAGE"||m.type==="DOCUMENT") && MEDIA_TYPES[m.format]);
+        if (!media || !/^[0-9a-f-]{36}$/.test(media.id)) return res.status(404).end();
+        const filename=path.join(MEDIA_STORE,`${media.id}.${media.format}`);
+        res.set("Cache-Control","private, no-store");
+        res.set("X-Content-Type-Options","nosniff");
+        res.set("Content-Security-Policy","default-src 'none'; sandbox");
+        res.type(MEDIA_TYPES[media.format]);
+        return res.sendFile(filename,err=>{if(err && !res.headersSent)res.status(err.statusCode||404).end();});
+      } catch(e){console.error("Lecture media",e);if(!res.headersSent)return res.status(500).end();}
+    }
+);
 // =========================================================
+// PILOTE : PUBLICATION INSTITUTIONNELLE SECURISEE
+// =========================================================
+app.post(
+    "/api/organisations/:organisationId/publications",
+    ...exigerPermission("TARGET_COMMUNICATION", "ORGANISATION"),
+    async (req, res) => {
+        try {
+            const organisationId = Number(req.params.organisationId);
+            const tenantCode = String(req.body?.tenantCode || "").trim();
+            const titre = req.body?.titre;
+            const rawChannel = req.body?.communicationChannelId;
+            const communicationChannelId = rawChannel === undefined || rawChannel === null || rawChannel === "" ? null : Number(rawChannel);
+            const contenu = req.body?.contenu;
+            const categorie = req.body?.categorie || "INFORMATION";
+            const priorite = req.body?.priorite || "NORMALE";
+            const audienceType = req.body?.audienceType || "TOUS";
+            const audienceValeur = req.body?.audienceValeur || null;
+            if (
+                (communicationChannelId !== null && (!Number.isSafeInteger(communicationChannelId) || communicationChannelId <= 0)) ||
+                typeof titre !== "string" || !titre.trim() || titre.length > 255 ||
+                typeof contenu !== "string" || !contenu.trim() || contenu.length > 20000 ||
+                !["TOUS", "DEPARTEMENT", "PROFIL", "ASSOCIATION", "ORGANISATIONS"].includes(audienceType) ||
+                (audienceType !== "TOUS" && audienceType !== "ORGANISATIONS" && (typeof audienceValeur !== "string" || !audienceValeur.trim() || audienceValeur.length > 255)) ||
+                !["INFORMATION", "ANNONCE", "COMMUNIQUE", "ALERTE"].includes(categorie) ||
+                !["NORMALE", "HAUTE", "URGENTE"].includes(priorite)
+            ) return res.status(400).json({ statut: "PUBLICATION_INVALIDE" });
+
+            // Un droit effectif ne remplace pas le controle d'existence du tenant.
+            const organisation = await trouverOrganisationParIdEtTenantDatabase(organisationId, tenantCode);
+            if (!organisation) return res.status(404).json({ statut: "ORGANISATION_INTROUVABLE" });
+
+            const liens = req.body?.liensExternes || [];
+            if (!Array.isArray(liens) || liens.length > 4 || liens.some(l => typeof l !== "string" || l.length > 500))
+              return res.status(400).json({statut:"LIENS_INVALIDES"});
+            const mediasExternes=[];
+            for (const lien of liens) {
+              if (!lien.trim()) continue;
+              let u;
+              try {u=new URL(lien.trim());}catch{return res.status(400).json({statut:"LIEN_INVALIDE"});}
+              if (u.protocol!=="https:" || u.username || u.password || !["youtube.com","www.youtube.com","youtu.be","www.youtu.be","facebook.com","www.facebook.com","instagram.com","www.instagram.com","tiktok.com","www.tiktok.com"].includes(u.hostname))
+                return res.status(400).json({statut:"PLATEFORME_NON_AUTORISEE"});
+              mediasExternes.push({type:"LIEN",url:u.toString()});
+            }
+            // P3.1 : audience multi-organisations, resolue transactionnellement
+            // et verifiee exclusivement dans le reseau actif de l'emetteur.
+            if (audienceType === "ORGANISATIONS") {
+                const cibles = req.body?.organisationsCibles;
+                if (!Array.isArray(cibles) || cibles.length < 1 || cibles.length > 30 ||
+                    cibles.some(id => !Number.isSafeInteger(id) || id <= 0) ||
+                    new Set(cibles).size !== cibles.length || audienceValeur != null) {
+                    return res.status(400).json({ statut: "CIBLES_INVALIDES" });
+                }
+                const publication = await creerPublicationMultiOrganisationsDatabase({
+                    tenantCode, organisationId, personneId: Number(req.auth.personneId),
+                    titre: titre.trim(), contenu: contenu.trim(), categorie, priorite,
+                    medias: mediasExternes, communicationChannelId, cibles
+                });
+                if (!publication) return res.status(422).json({ statut: "CIBLES_NON_AUTORISEES_OU_CANAL_INVALIDE" });
+                return res.status(201).json({ statut: "PUBLICATION_CREEE", publication });
+            }
+            // Pour l'audience historique ASSOCIATION, ne jamais accepter un nom
+            // ambigu ni une organisation non reliee et non autorisee.
+            if (audienceType === "ASSOCIATION") {
+                const { verifierOrganisationCible } = require("./communication-targets");
+                if (!/^\d+$/.test(audienceValeur) ||
+                    !(await verifierOrganisationCible(tenantCode, organisationId, Number(audienceValeur)))) {
+                    return res.status(422).json({ statut: "ASSOCIATION_NON_AUTORISEE" });
+                }
+            }
+            const publication = await creerPublicationDatabase(
+                tenantCode, organisationId, Number(req.auth.personneId),
+                titre.trim(), contenu.trim(), audienceType,
+                audienceType === "TOUS" ? null : audienceValeur.trim(),
+                categorie, priorite, mediasExternes, communicationChannelId
+            );
+            if (!publication) return res.status(400).json({ statut: "CANAL_INVALIDE_OU_INACTIF" });
+            return res.status(201).json({ statut: "PUBLICATION_CREEE", publication });
+        } catch (erreur) {
+            console.error("Erreur publication institutionnelle :", erreur);
+            return res.status(500).json({ statut: "ERREUR_PUBLICATION" });
+        }
+    }
+);
+
+// =========================================================
+
+app.use("/api/organisations", require("./communication-channels-router"));
+app.use("/api/organisations", require("./communication-targets-router"));
+
 // DÉMARRAGE
 // =========================================================
 

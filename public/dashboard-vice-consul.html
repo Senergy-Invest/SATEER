@@ -17,9 +17,12 @@
         rel="stylesheet"
         href="/styles.css"
     >
+  <link rel="stylesheet" href="/sateer-experiences.css">
+    <link rel="stylesheet" href="/sateer-pilotage-demandes.css">
+    <link rel="stylesheet" href="/sateer-p2.css">
 </head>
 
-<body>
+<body class="sateer-experience sateer-vice">
 
     <main class="page">
 
@@ -452,19 +455,20 @@
                     </strong>
 
                     <p>
-                        Le prochain module permettra de sélectionner
-                        une ou plusieurs organisations, catégories
-                        ou personnes avant diffusion.
+                        Publiez une information officielle selon les audiences autorisées.
+                        La gestion des canaux, des abonnements et des relais associatifs
+                        sera ajoutée dans les prochains incréments du pilote.
                     </p>
 
                 </div>
 
-                <button
-                    class="button"
-                    disabled
-                >
-                    Composer un message
-                </button>
+                <a id="lienGestionCanaux" class="button button-secondary" href="#" hidden>Gérer les canaux</a>
+                <a id="lienPublicationInstitutionnelle"
+                   class="button button-primary"
+                   href="#"
+                   hidden>
+                    Publier une information
+                </a>
 
             </div>
 
@@ -703,6 +707,14 @@
 
         </section>
 
+
+        <!-- Lot 1T : uniquement pour personnel habilité ; API contrôle les permissions. -->
+        <section class="section" id="identityVerificationAdmin" style="padding:18px;border:1px solid #cfe2ed;border-radius:14px;background:#f2f8fc">
+            <h2>Vérifications d'identité</h2>
+            <p>Dossiers à examiner, demandes de complément et décisions internes tracées.</p>
+            <a id="verificationProButton" class="button button-primary" href="/verifications-identite.html">Ouvrir les demandes d'identité →</a>
+        </section>
+
     </main>
 
 
@@ -710,6 +722,14 @@
     <script src="/dashboard-vice-consul.js"></script>
 
   
+  <script src="/sateer-pilot-clarity.js"></script>
+  <script src="/sateer-pilot-essential.js"></script>
+
+<script>
+  (function(){const p=new URLSearchParams(location.search),a=document.getElementById("verificationProButton"),box=document.getElementById("identityVerificationAdmin");if(!a||!box)return;const org=p.get("organisation"),tenant=p.get("tenant")||"SN";if(!/^\d+$/.test(org||"")){box.hidden=true;return;}const u=new URL(a.href);u.searchParams.set("organisation",org);u.searchParams.set("tenant",tenant);a.href=u.pathname+u.search;box.hidden=true;fetch("/api/verifications-identite/instruction?organisation="+encodeURIComponent(org)+"&tenant="+encodeURIComponent(tenant),{credentials:"same-origin",cache:"no-store"}).then(r=>{if(r.ok)box.hidden=false}).catch(()=>{});})();
+</script>
+    <script src="/sateer-pilotage-demandes.js" defer></script>
+    <script src="/sateer-p2.js" defer></script>
 </body>
 
 </html>

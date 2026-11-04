@@ -1,0 +1,54 @@
+/* Lot 1O — expérience citoyenne, conçue pour l'accueil et le passage vers Mon Consulat.
+   Aucun contenu institutionnel privé n'est injecté depuis le CSS. */
+body.sateer-home{--sx-card-green:#087952;--sx-card-dark:#0c4635}
+body.sateer-home .sx-home-header{border-bottom:1px solid #e6eaf0}
+body.sateer-home .sx-account-label{font-size:12px;font-weight:700;color:#506581;letter-spacing:.02em;white-space:nowrap}
+body.sateer-home .sx-home-main{gap:27px;max-width:1020px}
+body.sateer-home .sx-home-welcome{min-height:215px;display:flex;flex-direction:column;justify-content:center}
+body.sateer-home .sx-home-welcome .subtitle{margin-bottom:20px}
+body.sateer-home .sx-identity{display:flex;flex-wrap:wrap;align-items:center;gap:9px;position:relative;z-index:1}
+body.sateer-home .sx-identity-chip{display:inline-flex;align-items:center;min-height:31px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.24);border-radius:999px;color:white;padding:6px 12px;font-size:12px;font-weight:680;letter-spacing:.015em}
+body.sateer-home .sx-experience-section{padding:0}
+body.sateer-home .sx-section-intro{font-size:14px;color:#66788d;max-width:760px;line-height:1.6;margin:8px 0 0}
+body.sateer-home .experiences-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:17px}
+body.sateer-home .sx-consulat-card{border:1px solid #cde1d6;border-radius:24px;background:white;padding:clamp(22px,3vw,32px);box-shadow:0 12px 36px rgba(13,70,49,.08);display:flex;flex-direction:column;gap:16px;min-width:0;position:relative;overflow:hidden}
+body.sateer-home .sx-consulat-card:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,#087952,#23b57c)}
+body.sateer-home .sx-card-top{display:flex;align-items:center;gap:15px}
+body.sateer-home .sx-consulat-icon{width:64px;height:64px;display:grid;place-items:center;background:#eaf6ee;border-radius:18px;font-size:32px;flex:none}
+body.sateer-home .sx-card-heading{min-width:0}
+body.sateer-home .sx-card-kicker{margin:0 0 3px;color:#137a58;font-size:10px;font-weight:830;letter-spacing:.12em}
+body.sateer-home .sx-card-title{font-size:25px;letter-spacing:-.035em;color:#103d30;margin:0 0 3px;font-weight:830}
+body.sateer-home .sx-card-subtitle{font-size:14px;color:#536e62;margin:0}
+body.sateer-home .sx-card-description{margin:0;color:#4e635b;font-size:14px;line-height:1.6;max-width:820px}
+body.sateer-home .sx-consulat-summary{background:#f5faf7;border:1px solid #e1ede6;border-radius:17px;padding:18px 20px}
+body.sateer-home .sx-summary-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:18px}
+body.sateer-home .sx-summary-metric{display:flex;align-items:baseline;gap:11px;min-width:0}
+body.sateer-home .sx-summary-metric strong{color:#0b654a;font-size:25px;font-weight:850;line-height:1}
+body.sateer-home .sx-summary-metric span{font-size:12px;color:#536e62}
+body.sateer-home .sx-recent-news{border-top:1px solid #dce9e0;padding-top:14px}
+body.sateer-home .sx-recent-news h4{font-size:13px;font-weight:800;color:#174639;margin:0 0 10px}
+body.sateer-home .sx-news-line{display:flex;gap:9px;align-items:baseline;color:#233e34;margin:8px 0;line-height:1.5;font-size:14px}
+body.sateer-home .sx-news-dot{color:#0b9863;font-size:18px;flex:none;line-height:1}
+body.sateer-home .sx-summary-footnote{font-size:12px;color:#658074;margin:14px 0 0}
+body.sateer-home .sx-summary-loading,body.sateer-home .sx-summary-empty{font-size:13px;color:#607869;line-height:1.5;margin:0}
+body.sateer-home .sx-open-consulat{align-self:flex-start;display:inline-flex;align-items:center;gap:14px;background:#0b6d50;border:1px solid #0b6d50;color:white!important;text-decoration:none!important;border-radius:12px;padding:13px 19px;font-weight:790;font-size:14px;min-height:47px;transition:background .18s,transform .18s}
+body.sateer-home .sx-open-consulat:hover{background:#084d39;transform:translateY(-1px)}
+body.sateer-home .sx-link-arrow{font-size:19px;line-height:1}
+body.sateer-home .sx-empty-experience{border:1px dashed #bfd0d9;background:#fff;border-radius:18px;color:#5c6c7c;padding:20px;line-height:1.6}
+body.sateer-home .sx-professional-section{padding-top:7px}
+body.sateer-home [hidden]{display:none!important}
+body.sateer-home .sx-professional-card{display:flex;flex-direction:column;gap:7px;background:#fff;border:1px solid #d4e2eb;border-radius:17px;padding:18px 20px;text-decoration:none!important;min-width:0;color:#183651}
+body.sateer-home .sx-professional-card strong{font-size:16px}
+body.sateer-home .sx-professional-card span{font-size:12px;color:#556b81;line-height:1.5}
+body.sateer-home .sx-professional-card .sx-professional-arrow{font-weight:750;color:#295a8b;padding-top:7px}
+body.sateer-home .sx-home-notifications{padding:24px 28px;box-shadow:0 8px 30px rgba(31,59,95,.05)}
+body.sateer-home .sx-notification-empty{background:#f8fafc;border:1px dashed #e0e8f0;border-radius:13px;color:#63768a;padding:19px 20px;font-size:14px}
+body.sateer-home .sx-notification-item{display:flex;gap:12px;padding:13px 1px;border-bottom:1px solid #e8edf2}
+body.sateer-home .sx-notification-item:last-child{border-bottom:0}
+body.sateer-home .sx-notification-symbol{width:38px;height:38px;flex:none;display:grid;place-items:center;background:#edf4fc;border-radius:12px}
+body.sateer-home .sx-notification-text strong{display:block;font-size:14px;color:#203348}
+body.sateer-home .sx-notification-text p{font-size:13px;line-height:1.5;color:#566e83;margin:4px 0}
+body.sateer-home .sx-notification-text small{font-size:11px;color:#697f94}
+body.sateer-consulat #backButton{width:auto!important;height:auto!important;min-width:142px;min-height:42px;padding:9px 15px;white-space:nowrap;font-size:13px;font-weight:750;color:#176344}
+@media(max-width:660px){body.sateer-home .sx-account-label{display:none}body.sateer-home .sx-home-welcome{min-height:190px}body.sateer-home .sx-card-top{align-items:flex-start}body.sateer-home .sx-card-title{font-size:22px}body.sateer-home .sx-consulat-icon{width:52px;height:52px;font-size:27px}body.sateer-home .sx-summary-metrics{grid-template-columns:1fr;gap:12px}body.sateer-home .sx-home-notifications{padding:20px}body.sateer-home .sx-open-consulat{width:100%;justify-content:center}}
+@media(prefers-reduced-motion:reduce){body.sateer-home .sx-open-consulat{transition:none}}

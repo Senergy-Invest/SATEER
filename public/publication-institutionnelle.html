@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Communication institutionnelle · SATEER</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .com-page{--ink:#193127;--sub:#63746a;--line:#dce8df;--green:#087a4b;max-width:1160px;margin:0 auto;padding:34px 24px 90px;color:var(--ink)}
+    .com-back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:14px;font-weight:650;color:#41705b;margin-bottom:26px}
+    .com-banner{border-radius:28px;padding:40px 44px;background:linear-gradient(118deg,#092e22 0%,#13553c 64%,#207753 100%);color:white;box-shadow:0 16px 45px #0c41252b;position:relative;overflow:hidden}
+    .com-banner:after{content:"";position:absolute;width:320px;height:320px;border:1px solid #ffffff26;border-radius:50%;right:-100px;top:-155px;box-shadow:0 0 0 53px #ffffff0b,0 0 0 105px #ffffff08;pointer-events:none}
+    .com-banner .com-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:750;color:#bde5c8;margin:0 0 14px}
+    .com-banner h1{font-size:clamp(29px,4vw,46px);line-height:1.1;letter-spacing:-.045em;margin:0 0 14px;color:white;max-width:690px}
+    .com-banner p:last-child{font-size:16px;line-height:1.65;max-width:660px;color:#e0f0e6;margin:0}
+    .com-shell{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(260px,.85fr);gap:22px;align-items:start;margin-top:26px}
+    .com-panel{background:white;border:1px solid var(--line);box-shadow:0 8px 35px #14321e0b;border-radius:22px;padding:32px}
+    .com-heading{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+    .com-heading .com-icon{display:grid;place-items:center;width:41px;height:41px;border-radius:12px;background:#e8f5ed;color:var(--green);font-size:20px}
+    .com-heading h2{margin:0;font-size:22px;letter-spacing:-.025em}
+    .com-muted{color:var(--sub);font-size:14px;line-height:1.6;margin:0 0 30px}
+    .com-form{display:grid;gap:22px}
+    .com-field{display:grid;gap:9px;min-width:0;font-size:13px;font-weight:720;color:#32493b}
+    .com-field input,.com-field textarea,.com-field select{display:block;width:100%;background:#fbfdfb;color:#183429;border:1px solid #cfdfd4;border-radius:12px;padding:14px 15px;font:inherit;font-size:15px;font-weight:450;outline:none;transition:border-color .15s,box-shadow .15s}
+    .com-field input:focus,.com-field textarea:focus,.com-field select:focus{border-color:#14845a;box-shadow:0 0 0 4px #0d935322}
+    .com-field textarea{resize:vertical;min-height:195px;line-height:1.6}
+    .com-field small{font-size:12px;font-weight:450;color:var(--sub)}
+    .com-grid{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+    .com-divider{height:1px;background:#edf1ed;margin:2px 0}
+    .com-cta{border:0;background:#087a4b;color:#fff;padding:16px 22px;border-radius:12px;font-size:15px;font-weight:750;cursor:pointer;width:100%;transition:background .15s,transform .15s}
+    .com-cta:hover{background:#05663f;transform:translateY(-1px)}
+    .com-cta:focus-visible{outline:3px solid #60b991;outline-offset:3px}
+    .com-status{margin:0;min-height:22px;color:#1d6043;font-size:14px;font-weight:650;overflow-wrap:anywhere}
+    .com-aside{display:grid;gap:18px}
+    .com-sidecard{border:1px solid var(--line);border-radius:21px;padding:25px;background:#f8fbf9}
+    .com-sidecard h3{margin:0 0 11px;font-size:16px}
+    .com-sidecard p{color:var(--sub);font-size:13px;line-height:1.75;margin:0}
+    .com-pill{display:inline-block;border-radius:99px;padding:6px 10px;background:#e4f2e9;color:#116b43;font-size:11px;font-weight:750;margin-bottom:18px}
+    .com-steps{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:17px}
+    .com-steps li{display:flex;align-items:flex-start;gap:12px;color:#40574a;font-size:13px;line-height:1.45}
+    .com-num{display:grid;place-items:center;flex:none;width:25px;height:25px;border-radius:9px;background:#e3f1e8;color:#087a4b;font-size:12px;font-weight:800}
+    .com-notice{border-left:3px solid #d0a249;background:#fff9eb;padding:15px 16px;border-radius:0 12px 12px 0;color:#78623e;font-size:12px;line-height:1.65}
+    [hidden]{display:none!important}
+    @media(max-width:830px){.com-shell{grid-template-columns:1fr}.com-aside{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.com-page{padding:20px 13px 54px}.com-banner{padding:29px 24px;border-radius:20px}.com-panel{padding:23px 20px}.com-grid,.com-aside{grid-template-columns:1fr}.com-shell{gap:15px}}
+  </style>
+  <link rel="stylesheet" href="/sateer-publication-simple.css">
+</head>
+<body>
+  <main class="com-page">
+    <a class="com-back" href="/dashboard-vice-consul.html">← Retour au pilotage opérationnel</a>
+    <header class="com-banner">
+      <p class="com-kicker">SATEER · Espace consulaire</p>
+      <h1>Communication institutionnelle</h1>
+      <p>Préparez et publiez vos informations officielles, avec une audience définie et les autorisations de votre organisation.</p>
+    </header>
+    <div class="com-shell">
+      <section class="com-panel" aria-labelledby="com-form-title">
+        <div class="com-heading"><span class="com-icon" aria-hidden="true">✎</span><h2 id="com-form-title">Nouvelle publication</h2></div>
+        <p class="com-muted">Rédigez votre message et choisissez les personnes auxquelles il s’adresse.</p>
+        <form id="formPublication" class="com-form">
+          <label class="com-field">Titre de la publication
+            <input name="titre" maxlength="255" placeholder="Ex. Informations pratiques pour les démarches consulaires" autocomplete="off" required>
+          </label>
+          <label class="com-field">Contenu du message
+            <textarea name="contenu" rows="8" maxlength="20000" placeholder="Saisissez ici votre communication officielle…" required></textarea>
+            <small>Indiquez les informations utiles et les éventuelles démarches à suivre.</small>
+          </label>
+          <div class="com-divider"></div>
+          <div class="com-grid">
+            <label class="com-field">Catégorie
+              <select name="categorie"><option value="INFORMATION">Information</option><option value="ANNONCE">Annonce</option><option value="COMMUNIQUE">Communiqué</option><option value="ALERTE">Alerte</option></select>
+            </label>
+            <label class="com-field">Priorité
+              <select name="priorite"><option value="NORMALE">Normale</option><option value="HAUTE">Haute</option><option value="URGENTE">Urgente</option></select>
+            </label>
+          </div>
+          <label class="com-field">Canal de diffusion
+            <select name="communicationChannelId" id="communicationChannelId"><option value="">Informations générales du Consulat</option></select>
+            <small>La publication restera dans le fil unique de Mon Consulat. Choisir un canal permet de la classer par thème.</small>
+          </label>
+          <label class="com-field">Public concerné
+            <select name="audienceType" id="audienceType"><option value="TOUS">Tous les utilisateurs concernés</option><option value="DEPARTEMENT">Un département</option><option value="PROFIL">Un profil</option><option value="ASSOCIATION">Une association</option></select>
+            <small>Le ciblage définit l'audience de cette publication.</small>
+          </label>
+          <label class="com-field" id="ciblageLabel" hidden>Valeur d'audience (nom, profil ou ID d'association)
+            <input name="audienceValeur" id="audienceValeur" maxlength="255" placeholder="Précisez la cible">
+          </label>
+          <label class="com-field">Photos et documents (JPEG, PNG, WebP, PDF · 8 Mo maximum par fichier)
+            <input id="publicationFichiers" type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf">
+            <small>Maximum 4 fichiers par publication. Les documents ciblés seront accessibles uniquement aux destinataires autorisés.</small>
+          </label>
+          <label class="com-field">Lien vers une vidéo ou un réseau officiel
+            <input id="publicationLien" type="url" placeholder="https://www.youtube.com/watch?v=...">
+            <small>YouTube, Facebook, Instagram ou TikTok, hébergés sur la plateforme d’origine.</small>
+          </label>
+          <div class="com-divider"></div>
+          <button class="com-cta" type="submit">Publier l'information ↗</button>
+          <p id="publicationResultat" class="com-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <aside class="com-aside" aria-label="Informations sur la communication">
+        <section class="com-sidecard">
+          <span class="com-pill">Publication officielle</span>
+          <h3>Avant de publier</h3>
+          <ol class="com-steps">
+            <li><span class="com-num">1</span><span>Rédigez une information claire et vérifiée.</span></li>
+            <li><span class="com-num">2</span><span>Définissez la catégorie, la priorité et l'audience.</span></li>
+            <li><span class="com-num">3</span><span>Publiez avec votre autorisation institutionnelle.</span></li>
+          </ol>
+        </section>
+        <section class="com-sidecard">
+          <h3>À venir dans le pilote</h3>
+          <p>Les notifications, les relais associatifs et les échanges par e-mail restent à finaliser.</p>
+        </section>
+        <p class="com-notice">Publier enregistre une information dans SATEER. Cela ne signifie pas qu’un e-mail ou une notification a été envoyé.</p>
+      </aside>
+    </div>
+  </main>
+  <script src="/auth-client.js"></script>
+  <script src="/publication-institutionnelle.js"></script>
+  <script src="/sateer-publication-simple.js" defer></script>
+</body>
+</html>

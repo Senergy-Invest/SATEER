@@ -17,6 +17,7 @@
         rel="stylesheet"
         href="/styles.css"
     >
+    <link rel="stylesheet" href="/sateer-unit-admin.css">
 </head>
 
 <body>
@@ -67,6 +68,24 @@
 
             </div>
 
+
+            <section id="sateer-unit-admin" hidden aria-label="Administration des unités">
+  <div class="sateer-admin-header">
+    <div><h2>Gérer les unités</h2><p>Ajoutez un bureau ou un service à votre organisation. Les permissions sont vérifiées par SATEER.</p></div>
+    <button id="sateer-unit-toggle" class="sateer-admin-button" type="button" aria-expanded="false">+ Ajouter une unité</button>
+  </div>
+  <form id="sateer-unit-form" hidden>
+    <div class="sateer-admin-fields">
+      <label>Nom du service<input id="sateer-unit-name" required maxlength="120" placeholder="Ex. Cellule d'accueil"></label>
+      <label>Code interne unique<input id="sateer-unit-code" required pattern="[A-Za-z0-9_]+" maxlength="60" placeholder="Ex. CELLULE_ACCUEIL"></label>
+      <label>Type<select id="sateer-unit-type" required><option value="SERVICE">Service</option><option value="BUREAU">Bureau</option><option value="CELLULE">Cellule</option><option value="DIRECTION">Direction</option></select></label>
+      <label>Rattachement<select id="sateer-unit-parent"></select></label>
+      <label class="sateer-admin-wide">Mission (facultatif)<textarea id="sateer-unit-mission" rows="2" maxlength="800"></textarea></label>
+    </div>
+    <div class="sateer-admin-actions"><button id="sateer-unit-submit" class="sateer-admin-button" type="submit">Créer l'unité</button><button id="sateer-unit-cancel" class="sateer-admin-button sateer-admin-secondary" type="button">Annuler</button></div>
+  </form>
+  <p id="sateer-unit-result" class="sateer-admin-result" role="status" hidden></p>
+</section>
 
             <div
                 id="organisationLoading"
@@ -197,6 +216,7 @@
 
     <script src="/auth-client.js"></script>
     <script src="/organisation-consulat.js"></script>
+    <script src="/sateer-unit-admin.js"></script>
 
   
 </body>

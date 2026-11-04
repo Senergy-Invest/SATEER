@@ -286,7 +286,8 @@ async function creerPublicationDatabase(
     audienceValeur,
     categorie,
     priorite,
-    medias = []
+    medias = [],
+    communicationChannelId = null
 ) {
 
     const resultatTenant =
@@ -328,9 +329,10 @@ async function creerPublicationDatabase(
                 audience_valeur,
                 medias,
                 statut,
-                statut_diffusion_diaspora
+                statut_diffusion_diaspora,
+                communication_channel_id
             )
-            VALUES (
+            SELECT
                 $1,
                 $2,
                 $3,
@@ -342,7 +344,13 @@ async function creerPublicationDatabase(
                 $9,
                 $10::jsonb,
                 'PUBLIEE',
-                'NON_DEMANDEE'
+                'NON_DEMANDEE',
+                $11::bigint
+            WHERE $11::bigint IS NULL OR EXISTS (
+                SELECT 1 FROM communication_channels ch
+                WHERE ch.id = $11 AND ch.tenant_id = $1
+                  AND ch.organisation_id = $2 AND ch.actif = TRUE
+                  AND ch.visibility = 'PUBLIC'
             )
             RETURNING
                 id,
@@ -358,7 +366,8 @@ async function creerPublicationDatabase(
                 medias,
                 statut,
                 statut_diffusion_diaspora,
-                date_publication
+                date_publication,
+                communication_channel_id
             `,
             [
                 tenantId,
@@ -372,11 +381,32 @@ async function creerPublicationDatabase(
                 audienceValeur,
                 JSON.stringify(
                     medias || []
-                )
+                ),
+                communicationChannelId
             ]
         );
 
 
+    return resultat.rows[0];
+}
+// Medias du pilote : metadata en JSONB, fichiers binaires hors public/.
+async function obtenirPublicationPourMediaDatabase(tenantCode, organisationId, publicationId) {
+    const resultat = await executerRequete(`
+        SELECT pub.id, pub.publie_par, pub.medias
+        FROM publications pub JOIN tenants t ON t.id=pub.tenant_id
+        WHERE t.code=$1 AND pub.organisation_id=$2 AND pub.id=$3
+        AND pub.statut='PUBLIEE'`, [tenantCode, organisationId, publicationId]);
+    return resultat.rows[0];
+}
+async function ajouterMediaPublicationDatabase(tenantCode, organisationId, publicationId, personneId, media) {
+    const resultat = await executerRequete(`
+        UPDATE publications p SET medias=COALESCE(p.medias, '[]'::jsonb) || $5::jsonb
+        FROM tenants t
+        WHERE p.tenant_id=t.id AND t.code=$1 AND p.organisation_id=$2
+          AND p.id=$3 AND p.publie_par=$4 AND p.statut='PUBLIEE'
+          AND jsonb_typeof(COALESCE(p.medias, '[]'::jsonb))='array'
+          AND jsonb_array_length(COALESCE(p.medias, '[]'::jsonb)) < 12
+        RETURNING p.id, p.medias`, [tenantCode, organisationId, publicationId, personneId, JSON.stringify([media])]);
     return resultat.rows[0];
 }
 async function listerPublicationsParOrganisationEtTenantDatabase(
@@ -1471,6 +1501,8 @@ async function listerPublicationsVisiblesPourPersonneDatabase(
                 pub.statut,
                 pub.statut_diffusion_diaspora,
                 pub.date_publication,
+                pub.communication_channel_id,
+                ch.nom AS communication_channel_nom,
 
                 p.prenom,
                 p.nom,
@@ -1484,6 +1516,11 @@ async function listerPublicationsVisiblesPourPersonneDatabase(
                 tr.nom AS territoire_structure
 
             FROM publications pub
+
+            LEFT JOIN communication_channels ch
+                ON ch.id = pub.communication_channel_id
+                AND ch.tenant_id = pub.tenant_id
+                AND ch.organisation_id = pub.organisation_id
 
             INNER JOIN tenants t
                 ON t.id = pub.tenant_id
@@ -1540,33 +1577,42 @@ async function listerPublicationsVisiblesPourPersonneDatabase(
                     OR
 
                     (
-                        pub.audience_type =
-                            'ASSOCIATION'
-
+                        pub.audience_type = 'ASSOCIATION'
                         AND EXISTS (
-
                             SELECT 1
-
-                            FROM
-                                relations_personne_organisation r
-
+                            FROM relations_personne_organisation r
+                            INNER JOIN organisations o ON o.id=r.organisation_id
+                            INNER JOIN organisation_relationships rel
+                              ON rel.source_organisation_id=o.id
+                             AND rel.target_organisation_id=pub.organisation_id
+                             AND rel.tenant_id=pub.tenant_id
+                             AND rel.actif=TRUE AND rel.statut='ACTIVE'
+                             AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+                            WHERE r.personne_id=p.id
+                              AND o.tenant_id=pub.tenant_id
+                              AND pub.audience_valeur=o.id::text
+                        )
+                    )
+                    OR
+                    (
+                        pub.audience_type = 'ORGANISATIONS'
+                        AND EXISTS (
+                            SELECT 1
+                            FROM communication_publication_targets tgt
                             INNER JOIN organisations o
-                                ON o.id =
-                                    r.organisation_id
-
-                            WHERE
-                                r.personne_id =
-                                    p.id
-
-                                AND (
-                                    pub.audience_valeur =
-                                        o.nom
-
-                                    OR
-
-                                    pub.audience_valeur =
-                                        o.id::text
-                                )
+                              ON o.id=tgt.target_organisation_id
+                             AND o.tenant_id=pub.tenant_id
+                            INNER JOIN relations_personne_organisation r
+                              ON r.organisation_id=o.id AND r.personne_id=p.id
+                            INNER JOIN organisation_relationships rel
+                              ON rel.source_organisation_id=o.id
+                             AND rel.target_organisation_id=pub.organisation_id
+                             AND rel.tenant_id=pub.tenant_id
+                             AND rel.actif=TRUE AND rel.statut='ACTIVE'
+                             AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
+                            WHERE tgt.publication_id=pub.id
+                              AND tgt.tenant_id=pub.tenant_id
+                              AND tgt.organisation_id=pub.organisation_id
                         )
                     )
                 )
@@ -10014,6 +10060,8 @@ module.exports = {
     trouverRelationPersonneOrganisationDatabase,
     aPermissionDatabase,
     creerPublicationDatabase,
+    obtenirPublicationPourMediaDatabase,
+    ajouterMediaPublicationDatabase,
     listerPublicationsParOrganisationEtTenantDatabase,
     enregistrerEvenementAnalyticsDatabase,
     obtenirImpactPublicationDatabase,

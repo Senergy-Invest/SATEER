@@ -1,0 +1,28 @@
+/* P6.3: strict readable foreground/background, also inside dark SATEER themes */
+.sx-p63-box{margin-top:15px;padding:18px;border:1px solid #b6d5d3;border-radius:12px;background:#f4faf9!important;color:#163e46!important}
+.sx-p63-box h3,.sx-p63-box strong{color:#163e46!important}
+.sx-p63-box p,.sx-p63-box small{color:#405d62!important}
+.sx-p63-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:10px 0}
+.sx-p63-box label,.sx-p63-card label{display:grid;gap:6px;font-weight:650;color:#163e46!important}
+.sx-p63-box input,.sx-p63-box select,.sx-p63-card input{box-sizing:border-box;width:100%;min-height:44px;border-radius:8px;border:1px solid #789d9f;background:white!important;color:#173a42!important;padding:10px;font-size:15px}
+.sx-p63-box button,.sx-p63-card button{cursor:pointer;border-radius:8px;border:1px solid #12675b;padding:10px 15px;min-height:42px;background:#12675b!important;color:white!important;font-weight:650}
+.sx-p63-box button:disabled,.sx-p63-card button:disabled{opacity:.5;cursor:not-allowed}
+.sx-p63-box .sx-p63-delivery{padding:14px;background:#e2f3ed;border-radius:10px;border:1px solid #97c0b1;color:#124239!important}
+.sx-p63-box .sx-p63-delivery p{color:#124239!important}.sx-p63-box .sx-p63-delivery input{margin-top:8px}
+.sx-p63-entry{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;background:#fff!important;border:1px solid #d3e4e2;border-radius:8px;margin:8px 0;color:#163e46!important}
+.sx-p63-entry>div{display:grid;gap:4px}.sx-p63-entry small{font-size:12px}.sx-p63-error{color:#9a331b!important}
+.sx-p63-activation{margin:0;min-height:100vh;display:grid;place-items:center;background:#ecf4f4;color:#183e45;font:15px/1.55 system-ui,-apple-system,sans-serif;padding:24px;box-sizing:border-box}
+.sx-p63-card{box-sizing:border-box;width:min(100%,530px);background:white!important;color:#183e45!important;padding:30px;border-radius:16px;border:1px solid #d0e2e3;box-shadow:0 14px 44px #163e4620}
+.sx-p63-card h1{margin-top:4px;color:#103f47}.sx-p63-card label{margin-bottom:16px}
+.sx-p63-card #sx-p63-activation-form button,.sx-p63-card #sx-p63-existing{width:100%}
+.sx-p63-card .sx-p63-secondary{background:#e7f2f1!important;color:#18534e!important}
+.sx-p63-overline{color:#146459;font-size:12px;font-weight:750;letter-spacing:.07em}.sx-p63-break{margin:16px 0;text-align:center;color:#53696e}.sx-p63-muted{font-size:12px;color:#53696e}
+#sx-p63-activation-status{padding:12px;background:#e5f4ee;border-radius:9px;color:#154b41!important}
+@media(max-width:540px){.sx-p63-card{padding:20px}.sx-p63-box{padding:12px}.sx-p63-entry{flex-wrap:wrap}}
+/* P6.3.2: bureau de destination directement dans le formulaire d'invitation. */
+.sx-p63-box .sx-p632-unit-choice{padding:13px;border:1px solid #a4c5c0;border-radius:10px;background:#e6f3f0!important;color:#164b47!important;margin:14px 0}
+.sx-p632-unit-choice strong{display:block;margin-bottom:5px}
+.sx-p632-unit-choice p{margin:5px 0 10px!important;font-size:14px}
+.sx-p63-box .sx-p632-unit-choice button{background:#f4faf9!important;color:#174f49!important;border:1px solid #54928a;min-height:39px}
+.sx-p632-unit-choice select{margin-top:10px}
+.sx-p632-unit-choice [hidden]{display:none!important}

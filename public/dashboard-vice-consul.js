@@ -1258,6 +1258,15 @@ async function initialiserDashboardOperationnel() {
         const organisation = await window.SATEER_choisirOrganisation(organisationId);
         if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
         organisationId = Number(organisation.id);
+        const lienGestion = document.getElementById("lienGestionCanaux");
+        if (lienGestion) {
+            lienGestion.href = `/gestion-canaux.html?organisation=${encodeURIComponent(organisationId)}&tenant=${encodeURIComponent(tenant)}`;
+        }
+        const lienPublication = document.getElementById("lienPublicationInstitutionnelle");
+        if (lienPublication) {
+            const query = new URLSearchParams({organisation: String(organisationId), tenant: String(tenant)});
+            lienPublication.href = `/publication-institutionnelle.html?${query.toString()}`;
+        }
         const response = await fetch(
             `/api/organisations/${organisationId}/dashboard-operationnel/acces?tenant=${encodeURIComponent(tenant)}`,
             { credentials: "same-origin", cache: "no-store" }
@@ -1266,6 +1275,12 @@ async function initialiserDashboardOperationnel() {
         if (!response.ok) throw new Error(data.statut || "Session ou accès indisponible.");
         if (!data.peutConsulter) {
             throw new Error("Tu ne disposes pas de l'autorisation de consulter le dashboard opérationnel.");
+        }
+        if (lienPublication && data.sourceAcces !== "DELEGATION") {
+            lienPublication.hidden = false;
+        }
+        if (lienGestion && data.sourceAcces !== "DELEGATION") {
+            lienGestion.hidden = false;
         }
 
         if (data.sourceAcces === "DELEGATION") {

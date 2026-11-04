@@ -1,0 +1,9 @@
+/* P6: explicit high contrast on both themes */
+.sx-p6-rule{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #d6e4e7;background:#fff;color:#193e46}
+.sx-p6-rule div{display:grid;gap:5px;min-width:0}
+.sx-p6-rule strong{color:#173f46;font-size:14px}.sx-p6-rule small{color:#496871;font-size:12px}
+.sx-p6-rule button{white-space:nowrap}
+.sx-p6-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+#sx-p6-status{padding:12px 14px;color:#174a41;background:#e9f6f1;border:1px solid #c0ded3;border-radius:10px;margin:15px 0}
+#sx-p6-status.sx-p4-error{background:#fff0e8;color:#872b16;border-color:#e8b6a7}
+.sx-p6-info{background:#f1f6f8;color:#415d68;border-radius:10px;padding:12px 14px;font-size:13px}

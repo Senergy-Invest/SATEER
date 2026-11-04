@@ -184,14 +184,26 @@ check(
   /systemProtected/.test(fs.readFileSync(path.join(root, 'database', '024_dashboards_consul_viceconsul.sql'), 'utf8')) &&
     /trg_sateer_permissions_role_protege/.test(fs.readFileSync(path.join(root, 'database', '024_dashboards_consul_viceconsul.sql'), 'utf8'))
 );
+// Lot 1O : les espaces professionnels sont présentés distinctement,
+// uniquement à partir des droits effectifs renvoyés par le backend.
+const accueilSateerJs = fs.readFileSync(path.join(root, 'public', 'app.js'), 'utf8');
 check(
   'Entrée institutionnelle selon les permissions effectives',
   routeBlock('get', '/api/organisations/:organisationId/dashboards/acces').includes('exigerSession') &&
-    /chargerEspacesInstitutionnels/.test(fs.readFileSync(path.join(root, 'public', 'app.js'), 'utf8'))
+    /async function afficherAccesProfessionnels\(contexte\)/.test(accueilSateerJs) &&
+    accueilSateerJs.includes('/dashboards/acces?tenant=') &&
+    accueilSateerJs.includes('credentials: "same-origin"') &&
+    /if\s*\(!response\.ok\)\s*continue/.test(accueilSateerJs) &&
+    /if\s*\(!autorise\)\s*continue/.test(accueilSateerJs) &&
+    /dashboards\.operationnel/.test(accueilSateerJs) &&
+    /dashboards\.strategique/.test(accueilSateerJs) &&
+    /section\.hidden\s*=\s*!container\.children\.length/.test(accueilSateerJs)
 );
 check(
   'Espaces institutionnels réellement chargés après Mon SATEER',
-  /await chargerEspacesInstitutionnels\(\)/.test(fs.readFileSync(path.join(root, 'public', 'app.js'), 'utf8'))
+  /await\s+afficherAccesProfessionnels\(contexte\)/.test(accueilSateerJs) &&
+    accueilSateerJs.indexOf('await afficherAccesProfessionnels(contexte)') >
+      accueilSateerJs.indexOf('await Promise.all(apercus.map(chargerApercuConsulat))')
 );
 check(
   'Permissions et rôles système limités au Consulat pilote',

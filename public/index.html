@@ -1,258 +1,79 @@
 <!DOCTYPE html>
-
 <html lang="fr">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>SATEER</title>
-
-    <link
-        rel="stylesheet"
-        href="styles.css"
-    >
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon SATEER · Mon espace personnel</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="/sateer-experiences.css">
+  <link rel="stylesheet" href="/sateer-citizen-home.css">
+  <link rel="stylesheet" href="/sateer-identity.css">
 </head>
-
-
-<body>
-
-    <div class="app">
-
-        <!-- ============================================ -->
-        <!-- HEADER -->
-        <!-- ============================================ -->
-
-        <header class="header">
-
-            <div class="brand">
-                SATEER
-            </div>
-
-            <div class="header-actions">
-
-                <button
-                    class="icon-button"
-                    id="notificationButton"
-                >
-                    🔔
-                    <span
-                        id="notificationBadge"
-                        class="badge hidden"
-                    >
-                        0
-                    </span>
-                </button>
-
-                <div class="avatar">
-                    F
-                </div>
-
-            </div>
-
-        </header>
-
-
-        <!-- ============================================ -->
-        <!-- MAIN -->
-        <!-- ============================================ -->
-
-        <main class="main">
-
-            <section class="welcome">
-
-                <p class="eyebrow">
-                    MON ESPACE
-                </p>
-
-                <h1 id="welcomeTitle">
-                    Bonjour
-                </h1>
-
-                <p
-                    class="subtitle"
-                    id="welcomeSubtitle"
-                >
-                    Chargement de votre espace...
-                </p>
-
-            </section>
-
-
-            <!-- ======================================== -->
-            <!-- EXPERIENCES -->
-            <!-- ======================================== -->
-
-            <section>
-
-                <div class="section-header">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            VOS SERVICES
-                        </p>
-
-                        <h2>
-                            Mes espaces
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="experiences-grid"
-                    id="experiencesContainer"
-                >
-                </div>
-
-            </section>
-
-
-            <!-- ======================================== -->
-            <!-- DEMANDES -->
-            <!-- ======================================== -->
-
-            <section class="panel">
-
-                <div class="section-header">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            SUIVI
-                        </p>
-
-                        <h2>
-                            Mes demandes
-                        </h2>
-
-                    </div>
-
-                    <button class="link-button">
-                        Voir tout
-                    </button>
-
-                </div>
-
-
-                <div
-                    id="demandesContainer"
-                    class="list"
-                >
-                </div>
-
-            </section>
-
-
-            <!-- ======================================== -->
-            <!-- NOTIFICATIONS -->
-            <!-- ======================================== -->
-
-            <section class="panel">
-
-                <div class="section-header">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            ACTUALITÉ
-                        </p>
-
-                        <h2>
-                            Notifications
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="notificationsContainer"
-                    class="list"
-                >
-                </div>
-
-            </section>
-
-        </main>
-
-
-        <!-- ============================================ -->
-        <!-- NAVIGATION MOBILE -->
-        <!-- ============================================ -->
-
-        <nav class="bottom-nav">
-
-            <button class="nav-item active">
-
-                <span>
-                    ⌂
-                </span>
-
-                <small>
-                    Accueil
-                </small>
-
-            </button>
-
-
-            <button class="nav-item">
-
-                <span>
-                    🌍
-                </span>
-
-                <small>
-                    Diaspora
-                </small>
-
-            </button>
-
-
-            <button class="nav-item">
-
-                <span>
-                    ✦
-                </span>
-
-                <small>
-                    IA
-                </small>
-
-            </button>
-
-
-            <button class="nav-item">
-
-                <span>
-                    👤
-                </span>
-
-                <small>
-                    Profil
-                </small>
-
-            </button>
-
-        </nav>
-
-    </div>
-
-
-    <script src="/auth-client.js"></script>
-    <script src="app.js"></script>
-
-  
+<body class="sateer-experience sateer-home">
+  <div class="app">
+    <header class="header sx-home-header">
+      <div class="brand" aria-label="SATEER">SATEER</div>
+      <div class="header-actions">
+        <span class="sx-account-label">Mon espace personnel</span>
+        <button class="icon-button" id="notificationButton" type="button" aria-label="Voir mes notifications" aria-controls="notificationsContainer">
+          <span aria-hidden="true">🔔</span>
+          <span id="notificationBadge" class="badge hidden">0</span>
+        </button>
+        <div class="avatar" id="accountAvatar" aria-label="Compte connecté">·</div>
+      </div>
+    </header>
+
+    <main class="main sx-home-main">
+      <section class="welcome sx-home-welcome" aria-labelledby="welcomeTitle">
+        <p class="eyebrow">MON SATEER · ACCUEIL PERSONNEL</p>
+        <h1 id="welcomeTitle">Bonjour</h1>
+        <p class="subtitle" id="welcomeSubtitle">Un seul compte pour accéder à vos services et informations.</p>
+        <div class="sx-identity" id="identitySummary" aria-label="Identité du compte" aria-live="polite">
+          <span>Chargement de votre identité…</span>
+        </div>
+        <div class="sx-identity-entry"><a href="/mon-identite.html">Mon identité · Voir et compléter mon profil →</a></div>
+      </section>
+
+      <section class="sx-experience-section" aria-labelledby="experiencesTitle">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">MES EXPÉRIENCES</p>
+            <h2 id="experiencesTitle">Vos institutions, au même endroit</h2>
+            <p class="sx-section-intro">Consultez un résumé ici. Ouvrez une expérience pour retrouver toutes ses informations et démarches.</p>
+          </div>
+        </div>
+        <div class="experiences-grid" id="experiencesContainer" aria-live="polite">
+          <div class="empty">Chargement de vos expériences…</div>
+        </div>
+      </section>
+
+      <section id="professionnelsSection" class="sx-professional-section" aria-labelledby="professionnelsTitle" hidden>
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">ACCÈS SELON VOS AUTORISATIONS</p>
+            <h2 id="professionnelsTitle">Mes fonctions professionnelles</h2>
+            <p class="sx-section-intro">Ces accès sont distincts de vos expériences personnelles.</p>
+          </div>
+        </div>
+        <div class="experiences-grid" id="professionnelsContainer"></div>
+      </section>
+
+      <section class="panel sx-home-notifications" aria-labelledby="notificationsTitle">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">MES ALERTES</p>
+            <h2 id="notificationsTitle">Notifications</h2>
+            <p class="sx-section-intro">Les messages destinés à votre compte. Les publications officielles se lisent dans leur expérience.</p>
+          </div>
+        </div>
+        <div id="notificationsContainer" class="list" aria-live="polite">
+          <div class="empty">Chargement des notifications…</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <!-- La session est toujours contrôlée par le serveur et le client SATEER existants. -->
+  <script src="/auth-client.js"></script>
+  <script src="/app.js"></script>
 </body>
-
 </html>
