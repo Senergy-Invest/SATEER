@@ -11,8 +11,20 @@
     if (cls) el.className = cls;
     return el;
   };
+  const isConnectedAssociation = association =>
+    (!association?.type || String(association.type).toUpperCase() === 'ASSOCIATION')
+    && association?.relation_statut === 'ACTIVE'
+    && association?.relation_active === true;
+  const resolveTenant = (organisation, urlTenant, contextTenant) => {
+    const orgTenant = String(organisation?.tenant_code || '').trim();
+    const requested = String(urlTenant || '').trim();
+    if (orgTenant && requested && orgTenant !== requested) {
+      throw new Error('Contexte du Consulat incohérent. Retournez à Mon SATEER puis rouvrez cet espace.');
+    }
+    return orgTenant || requested || String(contextTenant || '').trim();
+  };
   if (typeof document === 'undefined') {
-    if (typeof module !== 'undefined') module.exports = { num, fmt };
+    if (typeof module !== 'undefined') module.exports = { num, fmt, isConnectedAssociation, resolveTenant };
     return;
   }
   const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
@@ -36,7 +48,8 @@
     const publish = link(actions, 'Publier une information', '#', 'sx-p2-primary');
     publish.id = 'sx-p2-publish';
     publish.hidden = true; // Montré seulement si le lien d'origine est autorisé.
-    link(actions, 'Suivre les demandes', '#sx-p2-categories', 'sx-p2-secondary');
+    const demandsAction = link(actions, 'Suivre les demandes', '#sx-p2-categories', 'sx-p2-secondary');
+    demandsAction.id = 'sx-p2-demands-action';
     const reload = put(actions, 'button', 'Actualiser', 'sx-p2-secondary');
     reload.type = 'button';
     reload.id = 'sx-p2-refresh';
@@ -45,6 +58,7 @@
     status.id = 'sx-p2-status'; status.setAttribute('role', 'status');
 
     const metrics = put(root, 'section', undefined, 'sx-p2-block');
+    metrics.id = 'sx-p2-activity';
     put(metrics, 'h2', 'Activité consulaire');
     const cards = put(metrics, 'div', undefined, 'sx-p2-metrics');
     for (const [id, name, hint] of [
@@ -70,9 +84,10 @@
     for (const name of ['Démarche', 'Reçues', 'En cours', 'Traitées']) { const th = put(thr, 'th', name); th.scope = 'col'; }
     put(table, 'tbody').id = 'sx-p2-category-rows';
     const comms = put(cols, 'section', undefined, 'sx-p2-block');
+    comms.id = 'sx-p2-communication';
     put(comms, 'h2', 'Communication officielle');
     const info = put(comms, 'div', undefined, 'sx-p2-summary');
-    for (const [id, label] of [['publications', 'Publications en ligne'], ['users', 'Sénégalais rattachés'], ['associations', 'Associations connectées']]) {
+    for (const [id, label] of [['publications', 'Publications en ligne'], ['users', 'Sénégalais rattachés']]) {
       const item = put(info, 'div', undefined, 'sx-p2-summary-item');
       put(item, 'strong', '—').id = `sx-p2-${id}`;
       put(item, 'span', label);
@@ -80,9 +95,10 @@
     put(comms, 'p', 'Les personnes rattachées forment une audience potentielle, pas un comptage de notifications remises.', 'sx-p2-help');
     const commLinks = put(comms, 'div', undefined, 'sx-p2-links');
     const p = link(commLinks, 'Publier une information', '#'); p.hidden = true; p.id = 'sx-p2-publish-secondary';
-    link(commLinks, 'Réseau des associations', '/ecosysteme.html');
+    // Un seul accès au réseau associatif, dans sa section dédiée ci-dessous.
 
     const lower = put(root, 'div', undefined, 'sx-p2-columns');
+    lower.id = 'sx-p2-case-lists';
     const latest = put(lower, 'section', undefined, 'sx-p2-block');
     put(latest, 'h2', 'Dernières demandes');
     put(latest, 'div', undefined, 'sx-p2-list').id = 'sx-p2-latest';
@@ -92,14 +108,33 @@
 
     const operation = put(root, 'div', undefined, 'sx-p2-columns');
     const teams = put(operation, 'section', undefined, 'sx-p2-block');
+    teams.id = 'sx-p2-teams-section';
     put(teams, 'h2', 'Activité des services');
     put(teams, 'div', undefined, 'sx-p2-list').id = 'sx-p2-teams';
     const network = put(operation, 'section', undefined, 'sx-p2-block');
-    put(network, 'h2', 'Associations connectées');
-    put(network, 'div', undefined, 'sx-p2-list').id = 'sx-p2-network';
-    link(network, 'Gérer le réseau institutionnel', '/ecosysteme.html');
+    network.id = 'sx-p2-association-section';
+    put(network, 'p', 'PARTENAIRES DU CONSULAT', 'sx-p2-section-eyebrow');
+    put(network, 'h2', 'Réseau associatif');
+    put(network, 'p', 'Associations indépendantes reliées au Consulat, invitations et relais autorisés.', 'sx-p2-help');
+    const networkStats = put(network, 'div', undefined, 'sx-p2-network-stats');
+    for (const [id, label] of [
+      ['associations', 'Associations connectées'],
+      ['pending', 'Demandes à examiner'],
+      ['relays', 'Relais officiels']
+    ]) {
+      const item = put(networkStats, 'div', undefined, 'sx-p2-network-stat');
+      put(item, 'strong', '—').id = `sx-p2-${id}`;
+      put(item, 'span', label);
+    }
+    put(network, 'div', undefined, 'sx-p2-list sx-p2-network-list').id = 'sx-p2-network';
+    const networkLink = link(network, 'Gérer les associations', '#', 'sx-p2-network-cta');
+    networkLink.id = 'sx-p2-partners-link';
+    networkLink.hidden = true; // Visible uniquement après autorisation API.
+    const networkNote = put(network, 'p', '', 'sx-p2-help');
+    networkNote.id = 'sx-p2-network-note';
 
     const admin = put(root, 'details', undefined, 'sx-p2-admin');
+    admin.id = 'sx-p2-admin';
     const summary = put(admin, 'summary', 'Administration et réglages');
     summary.setAttribute('aria-label', 'Ouvrir les fonctions administratives');
     const adminLinks = put(admin, 'div', undefined, 'sx-p2-links');
@@ -128,7 +163,7 @@
     items.slice(0, limit).forEach(item => { const [a,b,c] = map(item); showRow(parent,a,b,c); });
     if (items.length > limit) put(parent, 'p', `${fmt(items.length - limit)} autre(s) élément(s).`, 'sx-p2-help');
   }
-  function display(data, eco, units, orgId, tenant) {
+  function display(data, units) {
     const d = data.demandes || {};
     set('sx-p2-org', data.organisation?.nom || 'Organisation sélectionnée');
     set('sx-p2-new', fmt(d.nouvelles));
@@ -148,21 +183,56 @@
     if (arr.length > 15) put(tbody.parentElement.parentElement,'p', `${fmt(arr.length - 15)} catégories supplémentaires non affichées.`, 'sx-p2-help');
     set('sx-p2-publications', fmt(data.publications?.publiees));
     set('sx-p2-users', fmt(data.diaspora?.total_usagers));
-    const organisations = Array.isArray(eco?.organisations) ? eco.organisations : [];
-    const associations = organisations.filter(o => String(o.type).toUpperCase() === 'ASSOCIATION' && o.relation_statut === 'ACTIVE');
-    set('sx-p2-associations', fmt(associations.length));
-    fillList('sx-p2-network', associations, 'Aucune association active reliée dans les données du pilote.', o => [o.nom, 'Connectée']);
     const recent = Array.isArray(data.activiteRecente?.demandes) ? data.activiteRecente.demandes : [];
     fillList('sx-p2-latest', recent, 'Aucune demande récente.', x => [x.objet || x.categorie || 'Demande', x.statut || '—']);
     const alerts = Array.isArray(data.demandesASurveiller) ? data.demandesASurveiller : [];
     fillList('sx-p2-attention', alerts, 'Aucun dossier signalé.', x => [x.objet || 'Demande', x.priorite || x.statut || 'À vérifier', 'warn']);
     const services = Array.isArray(units) ? units.filter(u => u.canViewAnalytics && (num(u.total_cases) || num(u.urgent_cases))) : [];
     fillList('sx-p2-teams', services.sort((a,b)=>num(b.total_cases)-num(a.total_cases)), 'Aucune activité affectée aux services pour le moment.', u => [u.nom || 'Unité', `${fmt(u.total_cases)} dossiers · ${fmt(u.urgent_cases)} urgents`,num(u.urgent_cases)?'warn':undefined]);
-    const qs = new URLSearchParams({organisation:String(orgId),tenant});
-    for (const a of document.querySelectorAll('.sx-p2-root a[href^="/ecosysteme.html"],.sx-p2-root a[href^="/configuration-consulat.html"]')) {
-      a.href = a.pathname + '?' + qs.toString();
+  }
+  function setOperationsVisible(allowed) {
+    for (const id of [
+      'sx-p2-activity', 'sx-p2-categories', 'sx-p2-communication',
+      'sx-p2-case-lists', 'sx-p2-teams-section', 'sx-p2-admin',
+      'sx-p2-demands-action'
+    ]) {
+      const element = document.getElementById(id);
+      if (element) element.hidden = !allowed;
     }
   }
+
+  function displayPartners(data, requests, relays, orgId, tenant) {
+    const partnersLink = document.getElementById('sx-p2-partners-link');
+    const note = document.getElementById('sx-p2-network-note');
+    const query = new URLSearchParams({ organisation: String(orgId), tenant });
+    if (!data) {
+      set('sx-p2-associations', '—');
+      set('sx-p2-pending', '—');
+      set('sx-p2-relays', '—');
+      set('sx-p2-network', 'Accès au réseau associatif indisponible pour ce compte.');
+      partnersLink.hidden = true;
+      note.textContent = 'Les chiffres ne sont pas remplacés par des zéros en cas de refus d’accès.';
+      return;
+    }
+    partnersLink.href = '/associations-partenaires.html?' + query.toString();
+    partnersLink.hidden = false;
+    const list = Array.isArray(data.associations) ? data.associations : [];
+    const connected = list.filter(isConnectedAssociation);
+    set('sx-p2-associations', fmt(connected.length));
+    fillList('sx-p2-network', connected, 'Aucune association actuellement connectée.',
+      association => [association.nom, 'Connectée']);
+    set('sx-p2-pending', requests && Array.isArray(requests.demandes)
+      ? fmt(requests.demandes.length) : '—');
+    set('sx-p2-relays', relays && Array.isArray(relays.relais)
+      ? fmt(relays.relais.length) : '—');
+    const unavailable = [];
+    if (!requests) unavailable.push('demandes de rattachement');
+    if (!relays) unavailable.push('historique des relais');
+    note.textContent = unavailable.length
+      ? 'Accès non disponible : ' + unavailable.join(' et ') + '.'
+      : 'Les publications restent signées par leur institution d’origine.';
+  }
+
   async function load() {
     const status = document.getElementById('sx-p2-status');
     try {
@@ -170,27 +240,50 @@
       const context = await window.SATEER_CONTEXT_READY;
       const qs = new URLSearchParams(location.search);
       const preferred = Number(qs.get('organisation')) || null;
-      const org = await window.SATEER_choisirOrganisation(preferred);
-      if (!org || !Number.isSafeInteger(Number(org.id))) throw Error('Organisation non autorisée ou non sélectionnée.');
-      const tenant = String(context?.tenantCode || '');
-      if (!tenant) throw Error('Tenant absent du contexte authentifié.');
+      const org = await window.SATEER_choisirOrganisation(preferred, 'CONSULAT');
+      if (!org || !Number.isSafeInteger(Number(org.id)) || Number(org.id) < 1) {
+        throw Error('Consulat non autorisé ou non sélectionné.');
+      }
+      const tenant = resolveTenant(org, qs.get('tenant'), context?.tenantCode);
+      if (!tenant) throw Error('Tenant indisponible pour le Consulat sélectionné.');
       const orgId = Number(org.id);
-      const base = `/api/organisations/${orgId}`;
+      const base = `/api/organisations/${encodeURIComponent(orgId)}`;
       const param = '?tenant=' + encodeURIComponent(tenant);
-      const get = url => fetch(url,{credentials:'same-origin',cache:'no-store'});
-      const [dashboard, ecosystem, units] = await Promise.all([
-        get(base+'/dashboard-operationnel'+param),get(base+'/ecosysteme'+param),get(base+'/units/overview'+param)
+      set('sx-p2-org', org.nom || 'Consulat sélectionné');
+      // Les autorisations sont toujours appliquées par le backend, jamais déduites de l'UI.
+      const get = url => fetch(url, { credentials: 'same-origin', cache: 'no-store' });
+      const [dashboardResponse, partnersResponse, requestsResponse, relaysResponse] = await Promise.all([
+        get(base + '/dashboard-operationnel' + param),
+        get(base + '/association-partners' + param),
+        get(base + '/association-join-requests' + param),
+        get(base + '/association-relay-history' + param)
       ]);
-      if (!dashboard.ok) throw Error('Accès au dashboard impossible (HTTP '+dashboard.status+').');
-      const data = await dashboard.json();
-      const eco = ecosystem.ok ? await ecosystem.json() : null;
-      const u = units.ok ? await units.json() : null;
-      // L'absence de permission sur l'écosystème/les unités ne devient pas une fausse valeur zéro.
-      display(data, eco, u?.unites || u?.units || (Array.isArray(u)?u:[]),orgId,tenant);
-      if (!ecosystem.ok) { set('sx-p2-associations','—'); set('sx-p2-network','Accès aux associations non disponible.'); }
-      if (!units.ok) set('sx-p2-teams','Indicateurs des services non disponibles.');
+      const readJson = async response => response.ok ? response.json().catch(() => null) : null;
+      const [dashboard, partners, requests, relays] = await Promise.all([
+        readJson(dashboardResponse), readJson(partnersResponse),
+        readJson(requestsResponse), readJson(relaysResponse)
+      ]);
+      displayPartners(partners, requests, relays, orgId, tenant);
+      const adminConfig = document.querySelector('#sx-p2-admin a[href^="/configuration-consulat.html"]');
+      if (adminConfig) adminConfig.href = '/configuration-consulat.html?' + new URLSearchParams({organisation: String(orgId), tenant});
+      if (!dashboardResponse.ok || !dashboard) {
+        setOperationsVisible(false);
+        status.textContent = dashboardResponse.status === 403
+          ? 'Ce compte n’a pas accès au pilotage opérationnel. Le réseau associatif reste disponible selon ses autorisations.'
+          : `Pilotage opérationnel indisponible (HTTP ${dashboardResponse.status}).`;
+        return;
+      }
+      setOperationsVisible(true);
+      const unitsResponse = await get(base + '/units/overview' + param);
+      const unitsData = await readJson(unitsResponse);
+      const units = unitsData?.unites || unitsData?.units || (Array.isArray(unitsData) ? unitsData : []);
+      display(dashboard, units);
+      if (!unitsResponse.ok) set('sx-p2-teams', 'Indicateurs des services non disponibles pour ce compte.');
       status.textContent = 'Indicateurs actualisés.';
-    } catch (e) { status.textContent = 'Données indisponibles : '+(e?.message||'erreur inconnue'); }
+    } catch (e) {
+      status.textContent = 'Données indisponibles : ' + (e?.message || 'erreur inconnue');
+      setOperationsVisible(false);
+    }
   }
   function init() {
     if (!document.body.classList.contains('sateer-vice')) return;
@@ -208,6 +301,7 @@
         if (!a.hidden) a.href = url;
       }
     };
+    setOperationsVisible(false);
     updatePublish();
     if (original) new MutationObserver(updatePublish).observe(original, {attributes:true,attributeFilter:['hidden','href']});
     document.getElementById('sx-p2-refresh').addEventListener('click',load);

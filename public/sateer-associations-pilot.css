@@ -1,0 +1,44 @@
+/* Interface Bordeaux — réseau associatif, sans changement des permissions backend. */
+body.sateer-association-pilot{background:#f2f6f8;color:#173641;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body.sateer-association-pilot .wrap{max-width:1150px;margin-inline:auto;padding:28px 20px 78px}
+.partner-breadcrumb{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 23px;color:#66808b;font-size:12px;font-weight:700;letter-spacing:.01em}
+.partner-breadcrumb .back{margin:0;color:#0c6370;font-weight:750;min-height:42px;display:inline-flex;align-items:center}
+.partner-breadcrumb a:focus-visible,.sateer-association-pilot :is(a,button):focus-visible{outline:3px solid #087977;outline-offset:3px}
+.sateer-association-pilot .partner-hero{background:linear-gradient(118deg,#0a3846,#126c74 72%,#188077);box-shadow:0 15px 38px #123b4b17;border-radius:23px;padding:clamp(24px,4vw,43px)}
+.sateer-association-pilot .hero .eyebrow{color:#c8edec;font-size:11px;letter-spacing:.12em;font-weight:800}
+.sateer-association-pilot .hero h1{font-size:clamp(27px,3.3vw,41px);color:white;line-height:1.15;margin:12px 0 14px}
+.sateer-association-pilot .hero p{font-size:15px;color:#e9f9f7;max-width:725px;line-height:1.55}
+.partner-hero-notice{font-size:12px;line-height:1.5;margin-top:24px;padding:11px 16px;border:1px solid #a5d9d777;border-radius:12px;background:#ffffff14;color:#eefbfa;max-width:760px}
+.partner-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:23px 0 6px}
+.partner-stat{background:white;border:1px solid #d8e5e9;border-radius:17px;padding:19px 22px;box-shadow:0 4px 15px #17415308;display:flex;flex-direction:column;gap:9px;min-width:0}
+.partner-stat strong{font-size:35px;line-height:1;color:#0b5964;font-variant-numeric:tabular-nums}
+.partner-stat span{font-size:13px;font-weight:650;color:#496573}
+.sateer-association-pilot .partner-layout{display:grid;gap:20px;margin-top:22px}
+.sateer-association-pilot .panel{border-color:#d9e6e9;border-radius:19px;padding:clamp(18px,2.5vw,27px);box-shadow:0 5px 19px #183e5109}
+.partner-kicker{font-size:11px;font-weight:850;letter-spacing:.1em;color:#18747b;margin:0 0 8px;text-transform:uppercase}
+.sateer-association-pilot .panel h2{color:#173844;font-size:21px;letter-spacing:-.02em}
+.sateer-association-pilot .muted{color:#526d78}
+.partner-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sateer-association-pilot .chip{background:#e8f5f3;color:#135c61;border:1px solid #cce5e1;border-radius:99px;padding:6px 12px}
+.sateer-association-pilot button.partner-refresh{width:auto;background:#eaf4f5;border:1px solid #cde1e3;color:#125861;font-weight:800}
+.sateer-association-pilot button.partner-refresh:hover{background:#dbecef;color:#0d4e55}
+.sateer-association-pilot .partner-card{border-top:1px solid #e0eaed;padding:20px 0 18px;display:grid;gap:10px}
+.sateer-association-pilot .partner-card:first-child{border-top:0}
+.sateer-association-pilot .partner-top{display:flex;justify-content:space-between;gap:14px;align-items:start}
+.sateer-association-pilot .partner-top h3{color:#183c48;font-size:16px;line-height:1.45;margin:0;overflow-wrap:anywhere}
+.sateer-association-pilot .partner-sub{font-size:13px;color:#58717b;line-height:1.55;margin:0}
+.sateer-association-pilot .partner-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.sateer-association-pilot .partner-actions :is(button,a){min-height:41px;font-size:13px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;width:auto;line-height:1.25}
+.sateer-association-pilot button,.sateer-association-pilot .btn{background:#106a73;color:white;font-weight:750;border:1px solid #106a73}
+.sateer-association-pilot .btn-outline,.sateer-association-pilot button.btn-outline{background:#eef6f7;color:#145b64;border-color:#cce1e5}
+.sateer-association-pilot .btn-outline:hover,.sateer-association-pilot button.btn-outline:hover{background:#deeff1;color:#104b53}
+.sateer-association-pilot button:not(.btn-outline):not(.partner-refresh):hover{background:#0c5159}
+.sateer-association-pilot .partner-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.sateer-association-pilot .partner-history{border-bottom:1px solid #e1ebee;padding:14px 0;overflow-wrap:anywhere}
+.sateer-association-pilot .partner-history:last-child{border-bottom:0}
+.sateer-association-pilot .partner-history strong{display:block;color:#1c3c47;font-size:14px}
+.sateer-association-pilot .partner-history small{display:block;margin-top:7px;color:#627b86;line-height:1.5}
+.sateer-association-pilot .partner-status{min-height:22px;color:#13636e;overflow-wrap:anywhere}
+#historyPanel{scroll-margin-top:25px}
+@media(max-width:780px){.sateer-association-pilot .partner-two{grid-template-columns:1fr}.partner-breadcrumb>span{display:none}}
+@media(max-width:560px){.sateer-association-pilot .wrap{padding:14px 13px 48px}.partner-stats{grid-template-columns:1fr;gap:9px}.partner-stat{flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:15px}.partner-stat strong{font-size:28px}.sateer-association-pilot .partner-top{display:grid}.partner-toolbar{margin-top:10px}.sateer-association-pilot .toprow{align-items:start}}

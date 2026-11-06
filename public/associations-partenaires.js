@@ -11,7 +11,12 @@
     list.textContent = "Aucun Consulat autorisé n’a été sélectionné.";
     return;
   }
-  const tenant = organisation.tenant_code || context.tenantCode;
+  const requestedTenant = params.get("tenant");
+  if (organisation.tenant_code && requestedTenant && organisation.tenant_code !== requestedTenant) {
+    list.textContent = "Contexte du Consulat incohérent. Rouvrez l’espace depuis Mon SATEER.";
+    return;
+  }
+  const tenant = organisation.tenant_code || requestedTenant || context.tenantCode;
   if (!tenant) { list.textContent = "Contexte de l’organisation indisponible."; return; }
   document.getElementById("back").href = `/dashboard-vice-consul.html?${new URLSearchParams({organisation:String(organisation.id),tenant})}`;
   const base = `/api/organisations/${encodeURIComponent(organisation.id)}`;
@@ -26,13 +31,18 @@
     if (secondary) node.className = "btn-outline";
     node.addEventListener("click", action); return node;
   };
+  const setKpi = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
   async function load() {
     list.textContent = "Chargement…"; requests.textContent = "Chargement…"; history.textContent = "Chargement…";
+    setKpi("partnerConnectedCount", "—"); setKpi("partnerPendingCount", "—"); setKpi("partnerRelayCount", "—");
     try {
       const data = await call(`${base}/association-partners?tenant=${encodeURIComponent(tenant)}`);
-      list.replaceChildren(); document.getElementById("count").textContent = `${data.associations.length} association(s)`;
-      if (!data.associations.length) list.textContent = "Aucune association existante dans ce tenant.";
-      for (const association of data.associations) {
+      const all = Array.isArray(data.associations) ? data.associations : [];
+      const connectedCount = all.filter(a => a.relation_statut === "ACTIVE" && a.relation_active === true).length;
+      setKpi("partnerConnectedCount", String(connectedCount));
+      list.replaceChildren(); document.getElementById("count").textContent = `${all.length} association(s)`;
+      if (!all.length) list.textContent = "Aucune association existante dans ce tenant.";
+      for (const association of all) {
         const card = document.createElement("article"); card.className = "partner-card";
         const top = document.createElement("div"); top.className = "partner-top";
         const name = document.createElement("h3"); name.textContent = association.nom;
@@ -57,7 +67,7 @@
         }
         if (connected) {
           const relayed = document.createElement("a"); relayed.className = "btn btn-outline"; relayed.textContent = "Voir les relais";
-          relayed.href = `/publication-institutionnelle.html?${new URLSearchParams({organisation:String(organisation.id),tenant})}#publicationHistory`;
+          relayed.href = "#historyPanel";
           actions.append(relayed);
           actions.append(button("Révoquer la relation", async () => {
             if (!window.confirm(`Révoquer la relation avec ${association.nom} ?`)) return;
@@ -74,9 +84,11 @@
 
     try {
       const data = await call(`${base}/association-join-requests?tenant=${encodeURIComponent(tenant)}`);
+      const pending = Array.isArray(data.demandes) ? data.demandes : [];
+      setKpi("partnerPendingCount", String(pending.length));
       requests.replaceChildren();
-      if (!data.demandes.length) requests.textContent = "Aucune demande en attente.";
-      for (const request of data.demandes) {
+      if (!pending.length) requests.textContent = "Aucune demande en attente.";
+      for (const request of pending) {
         const card = document.createElement("article"); card.className = "partner-card";
         const title = document.createElement("h3"); title.textContent = request.association_nom;
         const note = document.createElement("p"); note.className = "partner-sub"; note.textContent = request.message || "Demande de rattachement au réseau institutionnel.";
@@ -89,22 +101,25 @@
         card.append(title,note,actions); requests.append(card);
       }
     } catch (error) {
-      requests.textContent = error.message === "ACCES_REFUSE" ? "Aucune demande en attente." : `Demandes indisponibles : ${error.message}`;
+      requests.textContent = error.message === "ACCES_REFUSE" ? "Accès aux demandes non autorisé pour ce profil." : `Demandes indisponibles : ${error.message}`;
     }
     try {
       const data = await call(`${base}/association-relay-history?tenant=${encodeURIComponent(tenant)}`);
+      const relays = Array.isArray(data.relais) ? data.relais : [];
+      setKpi("partnerRelayCount", String(relays.length));
       history.replaceChildren();
-      if (!data.relais.length) history.textContent = "Aucun relais effectué.";
-      for (const relay of data.relais) {
+      if (!relays.length) history.textContent = "Aucun relais effectué.";
+      for (const relay of relays) {
         const row = document.createElement("article"); row.className = "partner-history";
         const title = document.createElement("strong"); title.textContent = relay.titre;
         const details = document.createElement("small");
-        details.textContent = `Source officielle : ${relay.original_author_first_name} ${relay.original_author_last_name} · Relais par ${relay.association_nom} · ${new Date(relay.date_relais).toLocaleString()}`;
+        details.textContent = `Source officielle : ${relay.original_author_first_name} ${relay.original_author_last_name} · Relais par ${relay.association_nom} · ${new Date(relay.date_relais).toLocaleString("fr-FR")}`;
         row.append(title,details);
         if (relay.association_comment) { const comment = document.createElement("p"); comment.textContent = `Commentaire de l’association : ${relay.association_comment}`; row.append(comment); }
         history.append(row);
       }
     } catch (error) { history.textContent = `Historique indisponible : ${error.message}`; }
   }
+  document.getElementById("refreshPartners")?.addEventListener("click", load);
   await load();
 })().catch(error => console.error("Associations partenaires:", error));
