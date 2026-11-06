@@ -379,9 +379,21 @@ if (
             const contexte = await window.SATEER_CONTEXT_READY;
             const organisation = await window.SATEER_choisirOrganisation(CONSULAT_ID, "CONSULAT");
             if (!organisation) return;
+            // Le tenant appartient à l'organisation autorisée, même depuis
+            // un accueil Mon SATEER sans tenant explicite.
+            const tenant = organisation.tenant_code || contexte.tenantCode;
+            const tenantPage = new URLSearchParams(window.location.search).get("tenant");
+            if (!tenant || (tenantPage && tenantPage !== tenant) ||
+                (contexte.tenantCode && contexte.tenantCode !== tenant)) {
+                console.error("SATEER: tenant consulaire absent ou incohérent.");
+                return;
+            }
             CONSULAT_ID = Number(organisation.id);
-            window.location.href =
-                `/demande.html?organisation=${CONSULAT_ID}&tenant=${encodeURIComponent(contexte.tenantCode)}&source=MON_CONSULAT`;
+            const destination = new URL("/demande.html", window.location.origin);
+            destination.searchParams.set("organisation", String(CONSULAT_ID));
+            destination.searchParams.set("tenant", tenant);
+            destination.searchParams.set("source", "MON_CONSULAT");
+            window.location.href = destination.pathname + destination.search;
         }
     );
 }
@@ -442,15 +454,21 @@ async function chargerMonConsulat() {
                 "Sélectionnez un rattachement consulaire dans votre espace SATEER.";
             return;
         }
+        const tenant = organisation.tenant_code || contexte.tenantCode;
+        const tenantPage = new URLSearchParams(window.location.search).get("tenant");
+        if (!tenant || (tenantPage && tenantPage !== tenant) ||
+            (contexte.tenantCode && contexte.tenantCode !== tenant)) {
+            throw new Error("Contexte consulaire absent ou incohérent.");
+        }
         CONSULAT_ID = Number(organisation.id);
         const url = new URL(window.location.href);
         url.searchParams.set("organisation", String(CONSULAT_ID));
-        url.searchParams.set("tenant", contexte.tenantCode);
+        url.searchParams.set("tenant", tenant);
         window.history.replaceState({}, "", url);
 
         const reponse =
             await fetch(
-                `/api/mon-consulat/${contexte.personne.id}?tenant=${encodeURIComponent(contexte.tenantCode)}&organisation=${CONSULAT_ID}`,
+                `/api/mon-consulat/${contexte.personne.id}?tenant=${encodeURIComponent(tenant)}&organisation=${CONSULAT_ID}`,
                 { credentials: "same-origin", cache: "no-store" }
             );
 
@@ -472,7 +490,7 @@ async function chargerMonConsulat() {
         if (manageChannels) {
             const target = new URL("/mes-canaux.html", window.location.origin);
             target.searchParams.set("organisation", String(CONSULAT_ID));
-            target.searchParams.set("tenant", contexte.tenantCode);
+            target.searchParams.set("tenant", tenant);
             manageChannels.href = target.pathname + target.search;
         }
 

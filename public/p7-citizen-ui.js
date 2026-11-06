@@ -14,9 +14,24 @@
   const s=make('div','', 'p7-status');s.id='p7-status';s.setAttribute('role','status');panel.append(s);
  }
  async function init(){heading();status('Chargement des démarches…');
-  try{const ctx=await window.SATEER_CONTEXT_READY;const org=await window.SATEER_choisirOrganisation(new URLSearchParams(location.search).get('organisation'));
-   if(!ctx?.tenantCode||!org?.id)throw Error('Aucune organisation sélectionnée.');
-   state.org=Number(org.id);state.tenant=ctx.tenantCode;
+  try{
+   const query=new URLSearchParams(location.search);
+   const ctx=await window.SATEER_CONTEXT_READY;
+   const org=await window.SATEER_choisirOrganisation(query.get('organisation'),'CONSULAT');
+   if(!org?.id)throw Error('Aucun Consulat autorisé pour ce compte. Revenez à Mon SATEER.');
+   const tenant=org.tenant_code||ctx?.tenantCode;
+   const tenantPage=query.get('tenant');
+   if(!tenant||(tenantPage&&tenantPage!==tenant)||(ctx?.tenantCode&&ctx.tenantCode!==tenant))
+     throw Error('Contexte du Consulat absent ou incohérent. Revenez à Mon Consulat.');
+   state.org=Number(org.id);state.tenant=tenant;
+   // Une URL sans tenant peut provenir d'un lien ancien : utiliser le tenant
+   // confirmé par l'organisation du contexte authentifié et fixer l'URL.
+   if(!tenantPage&&window.history?.replaceState){
+     const canonique=new URL(window.location.href);
+     canonique.searchParams.set('organisation',String(state.org));
+     canonique.searchParams.set('tenant',tenant);
+     window.history.replaceState({},'',canonique.pathname+canonique.search+canonique.hash);
+   }
    const data=await api(url('catalogue',{organisationId:state.org,tenant:state.tenant}));state.catalogue=data.procedures;
    renderCatalogue();
   }catch(e){status('Impossible de préparer une démarche : '+e.message,true);}
