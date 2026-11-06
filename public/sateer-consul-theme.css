@@ -266,3 +266,37 @@ body.sateer-consul-refonte .page .sateer-consul-return:hover { background: #2055
     transition-duration: 0.01ms !important; animation-duration: 0.01ms !important;
   }
 }
+
+
+/* SATEER Bordeaux | Contraste renforcé du dashboard stratégique (2026-11-06).
+   Uniquement les textes sur fonds clairs; ne change ni les KPI ni les graphes. */
+body.sateer-consul-refonte {
+  --consul-teal: #193850;
+}
+/* Les petits surtitres verts doivent rester lisibles, y compris sur du blanc. */
+body.sateer-consul-refonte .page .eyebrow:not(.hero .eyebrow) {
+  color: #193850 !important;
+}
+/* Neutraliser les anciens verts (parfois définis en style inline) dans les
+   cartes blanches, sans changer les couleurs de fond ou les proportions. */
+body.sateer-consul-refonte .page :is(.section, .panel),
+body.sateer-consul-refonte .page :is(.section, .panel) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, b, em, li, dt, dd, label, output, a, div) {
+  color: #142e49 !important;
+}
+body.sateer-consul-refonte .page :is(.section, .panel) :is(.muted, .strategic-bar-value) {
+  color: #35475c !important;
+}
+/* Exceptions indispensables : le texte reste BLANC sur la carte bleu nuit,
+   et brun foncé sur la carte d'urgence à fond crème. */
+body.sateer-consul-refonte .page :is(.section, .panel) .sateer-strat-kpi--accent,
+body.sateer-consul-refonte .page :is(.section, .panel) .sateer-strat-kpi--accent :is(h1, h2, h3, h4, p, span, small, strong, b, em, label, output, a, div, [id^="kpi"]) {
+  color: #ffffff !important;
+}
+body.sateer-consul-refonte .page :is(.section, .panel) .sateer-strat-kpi--urgent :is(strong, b, output, [id^="kpi"]) {
+  color: #953d17 !important;
+}
+/* Bouton de retour: ne jamais remplacer son libellé blanc par du bleu nuit. */
+body.sateer-consul-refonte .page .sateer-consul-return,
+body.sateer-consul-refonte .page .sateer-consul-return :is(span, strong, b, em) {
+  color: #ffffff !important;
+}
