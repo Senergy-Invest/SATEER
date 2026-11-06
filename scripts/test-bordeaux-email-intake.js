@@ -1,0 +1,17 @@
+'use strict';
+const assert = require('assert');
+const {DEMO, proposerCategorie, empreinte, TENANT, ORG} = require('./bordeaux-email-intake-core');
+assert.deepStrictEqual(proposerCategorie('Renouvellement passeport', '').categorie, 'PASSEPORT');
+assert.deepStrictEqual(proposerCategorie('Acte de naissance', '').categorie, 'ETAT_CIVIL');
+assert.deepStrictEqual(proposerCategorie('Carte consulaire', '').categorie, 'CARTE_CONSULAIRE');
+assert.strictEqual(proposerCategorie('Passeport et carte consulaire', '').categorie, null);
+assert.strictEqual(proposerCategorie('Bonjour', 'Question générale').categorie, null);
+assert.strictEqual(proposerCategorie('Acte de naissance','').statut, 'PROPOSITION_A_VALIDER');
+const h = empreinte(DEMO.mailboxKey,DEMO.messageId);
+assert.strictEqual(h.length,64);
+assert.strictEqual(h,empreinte(DEMO.mailboxKey,DEMO.messageId));
+assert.notStrictEqual(h,empreinte('AUTRE_BOITE',DEMO.messageId));
+assert.throws(()=>empreinte('../secret',DEMO.messageId),/BOITE_INVALIDE/);
+assert.throws(()=>empreinte(DEMO.mailboxKey,'invalid'),/MESSAGE_ID_INVALIDE/);
+assert.strictEqual(TENANT,'P6V_3B5AC5AB9DB04657');assert.strictEqual(ORG,70);
+console.log('EMAIL_BORDEAUX_UNIT_PASS : 13/13 : catégorie déterministe, ambiguïté, dédoublonnage et périmètre');
