@@ -240,6 +240,40 @@ async function afficherAccesProfessionnels(contexte) {
             nbFonctions += 1;
         }
 
+        // Les agents ont des droits UNIT, distincts des droits de pilotage.
+        // Seule l'API, déjà filtrée par les permissions effectives de la session,
+        // décide des bureaux que cet utilisateur peut ouvrir.
+        // Les dashboards disposent déjà de leur navigation vers les unités.
+        if (org.type === "CONSULAT" && !dashboards.operationnel && !dashboards.strategique) {
+            try {
+                const response = await fetch(
+                    `/api/organisations/${encodeURIComponent(org.id)}/units/overview?tenant=${encodeURIComponent(tenant)}`,
+                    { credentials: "same-origin", cache: "no-store" }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    const unites = Array.isArray(data.unites) ? data.unites : [];
+                    for (const unite of unites) {
+                        const uniteId = Number(unite.id);
+                        if (!unite.canOpenWorkspace || !Number.isSafeInteger(uniteId) || uniteId <= 0
+                            || Number(unite.organisation_id) !== Number(org.id)) continue;
+                        const params = new URLSearchParams({
+                            organisation: String(org.id), unit: String(uniteId), tenant: String(tenant)
+                        });
+                        const lien = element("a", "sx-professional-card");
+                        lien.href = `/unit-workspace.html?${params.toString()}`;
+                        lien.append(element("strong", "", `Mon bureau · ${unite.nom || "Unité"}`));
+                        lien.append(element("span", "", `${org.nom || "Consulat"} · Consulter et traiter les dossiers autorisés`));
+                        lien.append(element("span", "sx-professional-arrow", "Ouvrir →"));
+                        container.append(lien);
+                        nbFonctions += 1;
+                    }
+                }
+            } catch (erreur) {
+                console.warn("Bureaux professionnels indisponibles :", erreur);
+            }
+        }
+
         // Le réseau associatif est une fonction professionnelle distincte du
         // dashboard opérationnel. Ne jamais déduire le droit à partir d'un
         // titre de fonction, d'un rôle supposé ou du simple rattachement.
