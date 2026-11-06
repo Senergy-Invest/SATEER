@@ -86,6 +86,20 @@
   try{const result=await api(url('envoyer'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({organisationId:state.org,tenantCode:state.tenant,code:state.procedure.code,documentIds:ids,note:$('p7-note').value,confirmation:true})});
    const done=$('p7-preview');done.replaceChildren();done.append(make('h3','Demande enregistrée'),make('p','Dossier n° '+result.demande.id+' · '+result.piecesJointes+' pièce(s) jointes.'));
    if(result.orientationAutomatique?.statut!=='ORIENTEE')done.append(make('p','Le dossier est enregistré mais son orientation reste à vérifier.','p7-warning'));
+   // Une fois le dossier transmis, offrir une navigation directe et contextuelle.
+   // Ne pas permettre un second envoi accidentel depuis le meme formulaire.
+   const selector=$('p7-procedure');if(selector)selector.disabled=true;
+   const contexte=new URLSearchParams({organisation:String(state.org),tenant:state.tenant});
+   const actions=make('div',undefined,'p7-buttons');
+   const numero=Number(result.demande?.id);
+   if(Number.isSafeInteger(numero)&&numero>0){
+     const detail=new URLSearchParams(contexte);detail.set('demande',String(numero));detail.set('source','MON_CONSULAT');
+     const lien=make('a','Suivre ce dossier','p7-secondary');lien.href='/demande-detail.html?'+detail.toString();actions.append(lien);
+   }
+   const autre=new URLSearchParams(contexte);autre.set('source','MON_CONSULAT');
+   const nouveau=make('a','Créer une autre demande','p7-primary');nouveau.href='/demande.html?'+autre.toString();actions.append(nouveau);
+   const retour=make('a','Revenir à Mon Consulat','p7-secondary');retour.href='/consulat.html?'+contexte.toString();actions.append(retour);
+   done.append(actions);
    status('Demande transmise. Vous pouvez suivre son avancement dans Mon Consulat.');
   }catch(e){const missing=e.detail?.pieces?.length?' : '+e.detail.pieces.map(x=>names[x]||x).join(', '):'';status('Envoi refusé : '+e.message+missing,true);$('p7-send').disabled=false;}
   finally{state.busy=false;}

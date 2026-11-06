@@ -126,8 +126,18 @@ backButton.addEventListener(
             "MON_CONSULAT"
         ) {
 
-            window.location.href =
-                "/consulat.html";
+            // Le retour doit conserver le contexte de la demarche P7.
+            // Sans tenant, /api/context ne sait plus quel Consulat charger.
+            const retour = new URL("/consulat.html", window.location.origin);
+            const tenant = params.get("tenant") || window.SATEER_CONTEXT?.tenantCode;
+            const organisationId = Number(params.get("organisation") || ORGANISATION_ID);
+            if (!tenant || !Number.isSafeInteger(organisationId) || organisationId <= 0) {
+                window.location.href = "/";
+                return;
+            }
+            retour.searchParams.set("organisation", String(organisationId));
+            retour.searchParams.set("tenant", tenant);
+            window.location.href = retour.pathname + retour.search;
 
             return;
         }
