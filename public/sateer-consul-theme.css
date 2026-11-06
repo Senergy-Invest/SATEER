@@ -1,0 +1,268 @@
+/* SATEER Bordeaux | Habillage du dashboard strategique uniquement.
+   Aucun changement des donnees, des permissions ou des calculs. */
+body.sateer-consul-refonte {
+  --consul-ink: #12243b;
+  --consul-muted: #40536b;
+  --consul-line: #dbe4ed;
+  --consul-blue: #153955;
+  --consul-teal: #006b62;
+  --consul-soft: #f4f8fb;
+  color: var(--consul-ink) !important;
+  background: #f1f5f9 !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body.sateer-consul-refonte *,
+body.sateer-consul-refonte *::before,
+body.sateer-consul-refonte *::after { box-sizing: border-box; }
+body.sateer-consul-refonte .page {
+  width: min(100% - 32px, 1190px) !important;
+  max-width: 1190px !important;
+  padding: 28px 0 70px !important;
+  margin: 0 auto !important;
+  color: var(--consul-ink);
+}
+body.sateer-consul-refonte .hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  min-height: 204px;
+  margin: 0 0 26px !important;
+  padding: clamp(26px, 4vw, 48px) !important;
+  border-radius: 24px;
+  border: 1px solid #153c54;
+  background: linear-gradient(120deg, #0f2a45 0%, #13455a 62%, #12605b 100%) !important;
+  box-shadow: 0 14px 34px rgba(15, 42, 69, .12);
+  overflow: hidden;
+}
+body.sateer-consul-refonte .hero::after {
+  content: "";
+  position: absolute;
+  width: 330px;
+  height: 330px;
+  border-radius: 50%;
+  top: -170px;
+  right: -90px;
+  background: rgba(255, 255, 255, .075);
+  pointer-events: none;
+  z-index: -1;
+}
+body.sateer-consul-refonte .hero .hero-content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 !important;
+  text-align: left;
+}
+body.sateer-consul-refonte .hero,
+body.sateer-consul-refonte .hero h1,
+body.sateer-consul-refonte .hero h2,
+body.sateer-consul-refonte .hero p,
+body.sateer-consul-refonte .hero .muted,
+body.sateer-consul-refonte .hero .eyebrow,
+body.sateer-consul-refonte .hero #organisationNom {
+  color: #fff !important;
+  text-shadow: none !important;
+}
+body.sateer-consul-refonte .hero h1 {
+  font-size: clamp(29px, 3.3vw, 43px) !important;
+  line-height: 1.12 !important;
+  letter-spacing: -.035em;
+  margin: 9px 0 12px;
+}
+body.sateer-consul-refonte .hero .eyebrow {
+  color: #c7f0e6 !important;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .13em;
+}
+body.sateer-consul-refonte .hero #organisationNom {
+  color: #e2f3f2 !important;
+  font-size: 16px;
+}
+body.sateer-consul-refonte .section {
+  width: 100%;
+  margin: 0 0 22px !important;
+  padding: clamp(20px, 2.7vw, 30px) !important;
+  border: 1px solid var(--consul-line) !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: 0 4px 17px rgba(26, 47, 74, .035);
+}
+body.sateer-consul-refonte .section-header {
+  margin-bottom: 20px;
+  gap: 12px;
+}
+body.sateer-consul-refonte .section h2,
+body.sateer-consul-refonte .section h3,
+body.sateer-consul-refonte .panel h2,
+body.sateer-consul-refonte .panel h3,
+body.sateer-consul-refonte h2,
+body.sateer-consul-refonte h3 { color: var(--consul-ink) !important; }
+body.sateer-consul-refonte .section h2 {
+  font-size: clamp(21px, 2.4vw, 28px) !important;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+  margin-top: 5px;
+}
+body.sateer-consul-refonte .eyebrow {
+  color: #006d68 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .12em;
+}
+body.sateer-consul-refonte .muted,
+body.sateer-consul-refonte .section p,
+body.sateer-consul-refonte .panel p,
+body.sateer-consul-refonte .dashboard-kpi span,
+body.sateer-consul-refonte .strategic-kpi span { color: var(--consul-muted) !important; }
+body.sateer-consul-refonte .page a { color: #005e65; font-weight: 650; text-underline-offset: 3px; }
+body.sateer-consul-refonte .page a:focus-visible,
+body.sateer-consul-refonte .page button:focus-visible {
+  outline: 3px solid #087f87 !important;
+  outline-offset: 3px;
+}
+body.sateer-consul-refonte :is(.dashboard-kpis, .strategic-kpis, .strategic-summary, .kpi-grid, .stats-grid, .sateer-consul-metrics) {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 14px !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+body.sateer-consul-refonte .sateer-strat-kpi {
+  min-width: 0;
+  margin: 0 !important;
+  padding: clamp(18px, 2.2vw, 25px) !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px !important;
+  background: linear-gradient(155deg, #fff 0%, #f7fafc 100%) !important;
+  color: var(--consul-ink) !important;
+  border: 1px solid #d9e3ec !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+body.sateer-consul-refonte .sateer-strat-kpi :is(span, p, small, label, div) {
+  color: #40536b !important;
+}
+body.sateer-consul-refonte .sateer-strat-kpi :is(strong, b, output, [id^="kpi"]) {
+  display: inline-block;
+  max-width: 100%;
+  color: #102c49 !important;
+  font-size: clamp(28px, 3vw, 39px) !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.03em;
+  overflow-wrap: anywhere;
+}
+body.sateer-consul-refonte .sateer-strat-kpi.sateer-strat-kpi--accent {
+  background: linear-gradient(125deg, #102d49, #174864) !important;
+  border-color: #174864 !important;
+}
+body.sateer-consul-refonte .sateer-strat-kpi--accent :is(span, p, small, label, div, strong, b, output, [id^="kpi"]) {
+  color: #fff !important;
+}
+body.sateer-consul-refonte .sateer-strat-kpi--urgent {
+  border-color: #e9cdb7 !important;
+  background: #fff9f3 !important;
+}
+body.sateer-consul-refonte .sateer-strat-kpi--urgent :is(strong, b, output, [id^="kpi"]) { color: #953d17 !important; }
+body.sateer-consul-refonte .dashboard-columns {
+  width: 100%;
+  max-width: none;
+  gap: 18px;
+}
+body.sateer-consul-refonte .panel {
+  margin: 0 !important;
+  padding: clamp(18px, 2.3vw, 25px) !important;
+  border: 1px solid var(--consul-line) !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  color: var(--consul-ink) !important;
+  box-shadow: none !important;
+}
+body.sateer-consul-refonte .dashboard-list-item {
+  border-bottom: 1px solid #e5ebf0;
+  gap: 15px;
+  padding: 12px 0;
+  color: var(--consul-ink) !important;
+}
+body.sateer-consul-refonte .dashboard-list-item span { color: #344860 !important; font-size: 14px !important; }
+body.sateer-consul-refonte .dashboard-list-item strong {
+  color: #102c49 !important;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+body.sateer-consul-refonte .strategic-bar-row {
+  display: grid;
+  grid-template-columns: minmax(85px, 112px) minmax(120px, 1fr) minmax(145px, auto);
+  align-items: center;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e7edf3;
+  min-width: 0;
+}
+body.sateer-consul-refonte .strategic-bar-row:last-child { border-bottom: 0; }
+body.sateer-consul-refonte .strategic-bar-label { color: #253e56 !important; font-weight: 650; }
+body.sateer-consul-refonte .strategic-bar-track {
+  min-width: 0;
+  width: 100%;
+  height: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #e5eef1 !important;
+}
+body.sateer-consul-refonte .strategic-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #08776d, #11a79b) !important;
+}
+body.sateer-consul-refonte .strategic-bar-value {
+  text-align: right;
+  color: #31445d !important;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+body.sateer-consul-refonte .page .sateer-consul-return {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 16px;
+  border-radius: 12px;
+  color: #fff !important;
+  background: #153955;
+  text-decoration: none;
+}
+body.sateer-consul-refonte .page .sateer-consul-return:hover { background: #205577; }
+@media (max-width: 850px) {
+  body.sateer-consul-refonte :is(.dashboard-kpis, .strategic-kpis, .strategic-summary, .kpi-grid, .stats-grid, .sateer-consul-metrics) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  body.sateer-consul-refonte .dashboard-columns { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 600px) {
+  body.sateer-consul-refonte .page { width: min(100% - 20px, 1190px) !important; padding: 12px 0 42px !important; }
+  body.sateer-consul-refonte .hero { min-height: 0; padding: 26px 23px !important; border-radius: 18px; }
+  body.sateer-consul-refonte .section { padding: 20px 16px !important; border-radius: 16px !important; }
+  body.sateer-consul-refonte :is(.dashboard-kpis, .strategic-kpis, .strategic-summary, .kpi-grid, .stats-grid, .sateer-consul-metrics) {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  body.sateer-consul-refonte .sateer-strat-kpi { min-height: 95px; }
+  body.sateer-consul-refonte .section-header { flex-direction: column; align-items: flex-start; }
+  body.sateer-consul-refonte .strategic-bar-row {
+    grid-template-columns: minmax(65px, 85px) minmax(0, 1fr);
+    gap: 7px 10px;
+  }
+  body.sateer-consul-refonte .strategic-bar-value { grid-column: 2; text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.sateer-consul-refonte *, body.sateer-consul-refonte *::before, body.sateer-consul-refonte *::after {
+    transition-duration: 0.01ms !important; animation-duration: 0.01ms !important;
+  }
+}
