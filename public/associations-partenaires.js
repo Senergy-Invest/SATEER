@@ -7,18 +7,29 @@
   const requests = document.getElementById("requests");
   const history = document.getElementById("history");
   const status = document.getElementById("status");
+  function showRestricted(message) {
+    const back = document.getElementById("back");
+    back.href = "/index.html";
+    back.textContent = "← Retour à Mon SATEER";
+    document.getElementById("accessGuardMessage").textContent = message;
+    document.getElementById("accessGuard").style.display = "block";
+    document.querySelector(".partner-stats").style.display = "none";
+    document.querySelector(".partner-layout").style.display = "none";
+  }
   if (!organisation) {
-    list.textContent = "Aucun Consulat autorisé n’a été sélectionné.";
+    showRestricted("Cet espace est réservé aux responsables habilités du Consulat. Pour consulter les informations de votre association, revenez dans Mon SATEER.");
     return;
   }
   const requestedTenant = params.get("tenant");
   if (organisation.tenant_code && requestedTenant && organisation.tenant_code !== requestedTenant) {
-    list.textContent = "Contexte du Consulat incohérent. Rouvrez l’espace depuis Mon SATEER.";
+    showRestricted("Le contexte du Consulat ne correspond pas à votre session. Revenez à Mon SATEER pour sélectionner la bonne organisation.");
     return;
   }
   const tenant = organisation.tenant_code || requestedTenant || context.tenantCode;
-  if (!tenant) { list.textContent = "Contexte de l’organisation indisponible."; return; }
-  document.getElementById("back").href = `/dashboard-vice-consul.html?${new URLSearchParams({organisation:String(organisation.id),tenant})}`;
+  if (!tenant) { showRestricted("Contexte de l’organisation indisponible. Revenez à Mon SATEER."); return; }
+  const back = document.getElementById("back");
+  back.href = `/dashboard-vice-consul.html?${new URLSearchParams({organisation:String(organisation.id),tenant})}`;
+  back.textContent = "← Retour au pilotage du Consulat";
   const base = `/api/organisations/${encodeURIComponent(organisation.id)}`;
   async function call(path, options = {}) {
     const response = await fetch(path, { credentials:"same-origin", cache:"no-store", ...options });
@@ -80,7 +91,13 @@
         }
         card.append(actions); list.append(card);
       }
-    } catch (error) { list.textContent = `Associations indisponibles : ${error.message}`; }
+    } catch (error) {
+      if (error.message === "ACCES_REFUSE" || error.message === "HTTP 403") {
+        showRestricted("Ce compte ne possède pas l’autorisation de gérer les associations du Consulat.");
+        return;
+      }
+      list.textContent = `Associations indisponibles : ${error.message}`;
+    }
 
     try {
       const data = await call(`${base}/association-join-requests?tenant=${encodeURIComponent(tenant)}`);
