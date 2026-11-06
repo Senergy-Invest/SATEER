@@ -438,11 +438,12 @@ router.get("/:organisationId/publications/:publicationId/association-relay-autho
   async (req, res) => {
     if (!VALID_ID(req.params.publicationId)) return res.status(400).json({ statut: "PUBLICATION_INVALIDE" });
     const { organisationId, tenantCode } = req.associationScope;
-    const result = await executerRequete(`
+    try {
+      const result = await executerRequete(`
       SELECT target.id AS association_id,target.nom AS association_nom,
-        (authorization.id IS NOT NULL AND authorization.revoked_at IS NULL) AS relay_authorized,
-        authorization.authorized_by_personne_id,authorization.authorized_at,
-        authorization.revoked_by_personne_id,authorization.revoked_at,
+        (relay_auth.id IS NOT NULL AND relay_auth.revoked_at IS NULL) AS relay_authorized,
+        relay_auth.authorized_by_personne_id,relay_auth.authorized_at,
+        relay_auth.revoked_by_personne_id,relay_auth.revoked_at,
         relay.id AS relay_id,relay.relayed_by_personne_id,relay.association_comment,relay.date_relais
       FROM publications pub
       JOIN tenants t ON t.id=pub.tenant_id AND t.code=$3
@@ -451,9 +452,9 @@ router.get("/:organisationId/publications/:publicationId/association-relay-autho
         AND relation.source_organisation_id=target.id AND relation.target_organisation_id=$1
         AND relation.type='COMMUNITY_MEMBER' AND relation.actif=TRUE AND relation.statut='ACTIVE'
         AND (relation.date_fin IS NULL OR relation.date_fin>CURRENT_TIMESTAMP)
-      LEFT JOIN communication_publication_relay_authorizations authorization
-        ON authorization.tenant_id=t.id AND authorization.source_organisation_id=$1
-        AND authorization.target_organisation_id=target.id AND authorization.publication_id=pub.id
+      LEFT JOIN communication_publication_relay_authorizations relay_auth
+        ON relay_auth.tenant_id=t.id AND relay_auth.source_organisation_id=$1
+        AND relay_auth.target_organisation_id=target.id AND relay_auth.publication_id=pub.id
       LEFT JOIN communication_publication_relays relay
         ON relay.publication_id=pub.id AND relay.target_organisation_id=target.id AND relay.tenant_id=t.id
       WHERE pub.id=$2 AND pub.organisation_id=$1 AND pub.statut='PUBLIEE'
@@ -465,7 +466,11 @@ router.get("/:organisationId/publications/:publicationId/association-relay-autho
           )))
       ORDER BY target.nom
     `, [organisationId, req.params.publicationId, tenantCode]);
-    return res.json({ statut: "AUTORISATIONS_RELAIS_CHARGEES", associations: result.rows });
+      return res.set("Cache-Control", "private, no-store").json({ statut: "AUTORISATIONS_RELAIS_CHARGEES", associations: result.rows });
+    } catch (error) {
+      console.error("Association relay authorization listing:", error);
+      return res.status(500).json({ statut: "ERREUR_AUTORISATIONS_RELAIS" });
+    }
   });
 
 router.put("/:organisationId/publications/:publicationId/association-relay-authorizations/:associationId",

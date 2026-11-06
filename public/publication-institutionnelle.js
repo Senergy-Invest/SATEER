@@ -13,6 +13,27 @@ const historyList = document.querySelector("#publicationHistoryList");
 const categoryLabels = { INFORMATION:"Information", ANNONCE:"Annonce", COMMUNIQUE:"Communiqué", ALERTE:"Alerte" };
 const audienceLabels = { TOUS:"Toutes les personnes autorisées", DEPARTEMENT:"Les personnes du territoire choisi", PROFIL:"Le groupe de personnes choisi", ASSOCIATION:"L’association choisie", ORGANISATIONS:"Les organisations choisies" };
 
+// Les endpoints de relais doivent répondre en JSON, même en cas d'erreur.
+// Ne jamais tenter de parser une page HTML d'erreur comme du JSON.
+async function lireJsonRelais(response) {
+    const contentType = (response.headers && response.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("application/json") && !contentType.includes("+json")) {
+        throw new Error(`Réponse serveur non JSON (HTTP ${response.status}). Vérifier le journal du serveur.`);
+    }
+    let data;
+    try { data = await response.json(); }
+    catch (_) { throw new Error(`Réponse JSON invalide (HTTP ${response.status}).`); }
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        throw new Error("Réponse de l’API de relais invalide.");
+    }
+    if (!response.ok) {
+        if (response.status === 401) throw new Error("Session expirée : reconnectez-vous.");
+        if (response.status === 403) throw new Error("Accès au relais refusé pour ce compte (permission TARGET_COMMUNICATION requise).");
+        throw new Error(`${data.statut || "ERREUR_RELAIS"} (HTTP ${response.status}).`);
+    }
+    return data;
+}
+
 async function chargerPublications() {
     if (!historyList || !historyStatus || !Number.isSafeInteger(organisationId) || organisationId <= 0 || !tenantCode) return;
     historyStatus.textContent = "Chargement des publications…";
@@ -52,8 +73,8 @@ async function chargerPublications() {
                         `/api/organisations/${organisationId}/publications/${publication.id}/association-relay-authorizations?tenant=${encodeURIComponent(tenantCode)}`,
                         { credentials:"same-origin", cache:"no-store" }
                     );
-                    const permissionData = await permissionResponse.json();
-                    if (!permissionResponse.ok) throw new Error(permissionData.statut || `HTTP ${permissionResponse.status}`);
+                    const permissionData = await lireJsonRelais(permissionResponse);
+                    if (!Array.isArray(permissionData.associations)) throw new Error("Liste des associations absente de la réponse API.");
                     if (!permissionData.associations.length) relayHelp.textContent = "Aucune association active n’est ciblée par cette publication.";
                     for (const association of permissionData.associations) {
                         const row = document.createElement("div"); row.className = "com-relay-permission-row";
@@ -69,8 +90,7 @@ async function chargerPublications() {
                                     method:"PUT", credentials:"same-origin", headers:{"Content-Type":"application/json"},
                                     body:JSON.stringify({tenantCode,enabled:!association.relay_authorized})
                                 });
-                                const updateData = await update.json();
-                                if (!update.ok) throw new Error(updateData.statut || `HTTP ${update.status}`);
+                                await lireJsonRelais(update);
                                 result.textContent = association.relay_authorized
                                     ? `Relais révoqué pour ${association.association_nom}.`
                                     : `Relais autorisé pour ${association.association_nom}.`;
