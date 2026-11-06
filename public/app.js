@@ -196,6 +196,8 @@ async function afficherAccesProfessionnels(contexte) {
     const container = document.getElementById("professionnelsContainer");
     if (!section || !container) return;
     container.replaceChildren();
+    let nbAssociations = 0;
+    let nbFonctions = 0;
     const orgs = Array.isArray(contexte.organisations) ? contexte.organisations : [];
     for (const org of orgs) {
         const tenant = org.tenant_code || contexte.tenantCode;
@@ -207,6 +209,7 @@ async function afficherAccesProfessionnels(contexte) {
             associationLink.append(element("span", "", `${org.nom || "Association"} · Canaux, communications et relais autorisés`));
             associationLink.append(element("span", "sx-professional-arrow", "Ouvrir →"));
             container.append(associationLink);
+            nbAssociations += 1;
         }
 
         let dashboards = {};
@@ -234,6 +237,7 @@ async function afficherAccesProfessionnels(contexte) {
             a.append(element("span", "", `${org.nom || "Organisation"} · ${explication}`));
             a.append(element("span", "sx-professional-arrow", "Ouvrir →"));
             container.append(a);
+            nbFonctions += 1;
         }
 
         // Le réseau associatif est une fonction professionnelle distincte du
@@ -253,11 +257,24 @@ async function afficherAccesProfessionnels(contexte) {
                     a.append(element("span", "", `${org.nom || "Consulat"} · Gestion du réseau associatif`));
                     a.append(element("span", "sx-professional-arrow", "Ouvrir →"));
                     container.append(a);
+                    nbFonctions += 1;
                 }
             } catch (erreur) {
                 console.warn("Accès au réseau associatif indisponible :", erreur);
             }
         }
+    }
+    const titre = document.getElementById("professionnelsTitle");
+    const description = document.getElementById("professionnelsDescription");
+    if (nbAssociations && !nbFonctions) {
+        if (titre) titre.textContent = "Mes associations";
+        if (description) description.textContent = "Retrouvez les communications de vos associations et les informations autorisées.";
+    } else if (nbAssociations && nbFonctions) {
+        if (titre) titre.textContent = "Mes associations et fonctions professionnelles";
+        if (description) description.textContent = "Accédez à vos associations et à vos fonctions selon vos autorisations.";
+    } else {
+        if (titre) titre.textContent = "Mes fonctions professionnelles";
+        if (description) description.textContent = "Ces accès sont distincts de vos expériences personnelles.";
     }
     section.hidden = !container.children.length;
 }

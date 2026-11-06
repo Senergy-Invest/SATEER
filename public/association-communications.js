@@ -154,28 +154,61 @@
   }
 
   async function loadConsulates() {
+    const section = document.getElementById("joinSection");
+    const form = document.getElementById("joinForm");
+    const info = document.getElementById("joinInfo");
+    const connectedInfo = document.getElementById("connectedConsulates");
     const select = document.getElementById("consulateSelect");
+    const button = document.getElementById("requestButton");
+    section.hidden = true;
+    form.hidden = true;
+    button.disabled = true;
+    select.replaceChildren(new Option("Choisir un Consulat…", ""));
     try {
+      // Seul un gestionnaire d'association dispose de ce droit côté serveur.
       const data = await call(`${assocBase}/available-consulates?tenant=${encodeURIComponent(tenant)}`);
-      select.replaceChildren(new Option("Choisir un Consulat…", ""));
-      for (const consulate of data.consulats) {
-        if (consulate.connected || consulate.request_pending) continue;
-        select.add(new Option(consulate.nom, String(consulate.id)));
+      const consulats = Array.isArray(data.consulats) ? data.consulats : [];
+      const connectes = consulats.filter(c => c.connected);
+      const enAttente = consulats.filter(c => !c.connected && c.request_pending);
+      const disponibles = consulats.filter(c => !c.connected && !c.request_pending);
+      connectedInfo.textContent = [
+        connectes.length ? `Déjà partenaire : ${connectes.map(c => c.nom).join(", ")}.` : "",
+        enAttente.length ? `Demandes en attente : ${enAttente.map(c => c.nom).join(", ")}.` : ""
+      ].filter(Boolean).join(" ");
+      section.hidden = false;
+      if (!disponibles.length) {
+        info.textContent = "Aucun nouveau Consulat disponible pour un rattachement.";
+        return;
       }
-      if (select.options.length === 1) select.options[0].textContent = "Aucun Consulat disponible";
-    } catch (error) { select.replaceChildren(new Option(`Demandes indisponibles : ${error.message}`, "")); }
+      info.textContent = "Vous pouvez demander un nouveau rattachement. Il ne sera actif qu'après acceptation par le Consulat.";
+      for (const consulate of disponibles) select.add(new Option(consulate.nom, String(consulate.id)));
+      form.hidden = false;
+      button.disabled = false;
+    } catch (error) {
+      // Échec fermé : aucun formulaire ni bouton pour un membre non habilité.
+      if (error.message === "ACCES_REFUSE") return;
+      section.hidden = false;
+      info.textContent = "Les rattachements sont temporairement indisponibles.";
+      connectedInfo.textContent = "";
+    }
   }
   document.getElementById("requestButton").addEventListener("click", async () => {
+      const section = document.getElementById("joinSection");
+      const form = document.getElementById("joinForm");
+      const button = document.getElementById("requestButton");
+      if (section.hidden || form.hidden || button.disabled) return;
       const select = document.getElementById("consulateSelect");
       const consulateId = Number(select.value);
       const status = document.getElementById("requestStatus");
       if (!Number.isSafeInteger(consulateId) || consulateId <= 0) { status.textContent = "Choisissez un Consulat."; return; }
       status.textContent = "Envoi de la demande…";
+      button.disabled = true;
       try {
         await call(`${assocBase}/communication-join-requests`, { method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tenantCode:tenant,targetOrganisationId:consulateId,message:document.getElementById("requestMessage").value.trim() || null}) });
         status.textContent = "Demande transmise. Le Consulat doit l’accepter avant l’activation de la relation.";
         await loadConsulates();
       } catch (error) { status.textContent = `Demande impossible : ${error.message}`; }
+      finally { if (!section.hidden && !form.hidden) button.disabled = false; }
   });
 
   async function loadAll() { await Promise.all([loadInvitations(),loadCommunications(),loadChannels(),loadConsulates()]); }
