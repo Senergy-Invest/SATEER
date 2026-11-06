@@ -7,8 +7,8 @@
     if (!doc.body || !doc.getElementById('dashboardContenu')) return;
     doc.body.classList.add('sateer-consul-finition');
 
-    // L'ancien correctif "rendreEnteteLisible" pose parfois un fond BLANC en inline !important.
-    // Appliquer le nouveau bandeau APRES cette regle, toujours sur cette seule page.
+    // Les anciens themes imposent parfois des couleurs en inline !important.
+    // Les remplacer ici sur le seul en-tete du dashboard, sans changer le metier.
     const title = Array.from(doc.querySelectorAll('h1')).find(el =>
       /dashboard strat[eé]gique/i.test(el.textContent || ''));
     const head = (title && (title.closest('header, .hero, .page-header, .dashboard-header') || title.parentElement)) ||
@@ -16,13 +16,13 @@
     if (head && head !== doc.body && head.id !== 'dashboardContenu') {
       head.classList.add('sateer-consul-bandeau-fini');
       if (head.style) {
-        head.style.setProperty('background', 'linear-gradient(115deg, #0c2841 0%, #17445f 66%, #075950 100%)', 'important');
-        head.style.setProperty('color', '#ffffff', 'important');
-        head.style.setProperty('border-color', '#0c2841', 'important');
+        head.style.setProperty('background', '#eaf1fa', 'important');
+        head.style.setProperty('color', '#16324f', 'important');
+        head.style.setProperty('border-color', '#cddce9', 'important');
       }
       for (const item of head.querySelectorAll('h1,h2,h3,h4,p,span,small,strong,b,.eyebrow,.muted,#organisationNom')) {
         if (!item.style) continue;
-        item.style.setProperty('color', item.classList?.contains('eyebrow') ? '#d3f6f0' : '#ffffff', 'important');
+        item.style.setProperty('color', item.classList?.contains('eyebrow') ? '#193850' : '#16324f', 'important');
         item.style.setProperty('opacity', '1', 'important');
         item.style.setProperty('text-shadow', 'none', 'important');
       }

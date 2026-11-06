@@ -12,7 +12,7 @@ const styleB = html.indexOf('sateer-consul-finition.css');
 const scriptA = html.indexOf('sateer-consul-theme.js');
 const scriptB = html.indexOf('sateer-consul-finition.js');
 assert(styleA>=0 && styleB>styleA && scriptA>=0 && scriptB>scriptA);
-assert.match(css,/background:\s*#dfeaf4\s*!important/);
+assert.match(css,/background:\s*#f6f8fb\s*!important/);
 assert.match(css,/\.page \.section[\s\S]*?border-left:\s*5px solid/i);
 assert.match(css,/\.sateer-strat-kpi--accent/);
 assert.match(css,/\.sateer-consul-return-visible/);
@@ -27,10 +27,10 @@ const contrast = (a,b) => {
   return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
 };
 for (const [foreground,background,name] of [
-  ['#ffffff','#0c2841','bandeau'],
+  ['#16324f','#eaf1fa','bandeau clair'],
   ['#ffffff','#143955','bouton retour'],
-  ['#102d49','#eaf2fb','section'],
-  ['#314b61','#e1ecf7','texte secondaire'],
+  ['#102d49','#edf4fb','section'],
+  ['#314b61','#e8f1fa','texte secondaire'],
   ['#10314d','#f6f9fd','chiffres'],
   ['#893312','#fff0df','urgence'],
 ]) {
@@ -55,17 +55,17 @@ const doc={readyState:'complete',body,getElementById(id){return id==='dashboardC
   querySelectorAll(q){if(q==='h1')return [heading];if(q==='a[href]')return [link];return [];},
   querySelector(){return null;}};
 vm.runInNewContext(js,{document:doc});
-assert.equal(hstyle.values.background,'linear-gradient(115deg, #0c2841 0%, #17445f 66%, #075950 100%)');
-assert.equal(tstyle.values.color,'#ffffff');
-assert.equal(eyebrow.style.values.color,'#d3f6f0');
+assert.equal(hstyle.values.background,'#eaf1fa');
+assert.equal(tstyle.values.color,'#16324f');
+assert.equal(eyebrow.style.values.color,'#193850');
 assert.equal(lstyle.values.color,'#ffffff');
 assert.equal(lstyle.values.background,'#143955');
 assert(link.classList.values.has('sateer-consul-return-visible'));
 assert.equal(link.getAttribute('href'),'/consulat.html?organisation=70&tenant=P6V_3B5AC5AB9DB04657');
-console.log('PASS: ancien en-tete blanc remplace et bouton retour visible, URL conservee');
+console.log('PASS: en-tete clair force apres anciens styles et bouton retour contraste');
 const otherBody={classList:{values:new Set(),add(x){this.values.add(x);}}};
 const otherDoc={...doc,body:otherBody,getElementById(){return null;}};
 vm.runInNewContext(js,{document:otherDoc});
 assert.equal(otherBody.classList.values.size,0);
 console.log('PASS: aucune intervention sur les autres pages');
-console.log('BORDEAUX_CONSUL_FINITION_V3_PASS : 4/4');
+console.log('BORDEAUX_CONSUL_FINITION_CLAIR_V4_PASS : 4/4');

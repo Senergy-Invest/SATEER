@@ -6,37 +6,37 @@ body.sateer-consul-finition {
   --scf-muted: #314b61;
   --scf-border: #b9ccdf;
   --scf-highlight: #006158;
-  background: #dfeaf4 !important;
+  background: #f6f8fb !important;
   color: var(--scf-ink) !important;
 }
 body.sateer-consul-finition .page {
   color: var(--scf-ink) !important;
 }
-/* Le premier bandeau structure l'ecran et casse le fond blanc uniforme. */
+/* En-tete clair et bien contraste : le JS final reinitialise aussi les anciens styles inline. */
 body.sateer-consul-finition .page .hero,
 body.sateer-consul-finition .page .hero.sateer-consul-entete-visible {
-  background: linear-gradient(115deg, #0c2841 0%, #17445f 66%, #075950 100%) !important;
-  border-color: #0c2841 !important;
-  box-shadow: 0 15px 35px rgba(12,40,65,.17) !important;
-  color: #ffffff !important;
+  background: #eaf1fa !important;
+  border-color: #cddce9 !important;
+  box-shadow: 0 6px 18px rgba(22,50,79,.065) !important;
+  color: #16324f !important;
 }
 body.sateer-consul-finition .page .hero :is(h1,h2,h3,h4,p,div,span,small,strong,b,#organisationNom,.muted) {
-  color: #ffffff !important;
+  color: #16324f !important;
   text-shadow: none !important;
 }
 body.sateer-consul-finition .page .hero .eyebrow {
-  color: #d3f6f0 !important;
+  color: #193850 !important;
 }
 /* Des sections colorees et delimitees plutot que des rectangles blancs. */
 body.sateer-consul-finition .page .section {
-  background: linear-gradient(135deg, #eaf2fb 0%, #e1ecf7 100%) !important;
+  background: linear-gradient(135deg, #edf4fb 0%, #e8f1fa 100%) !important;
   border: 1px solid var(--scf-border) !important;
   border-left: 5px solid #0b686a !important;
   box-shadow: 0 7px 18px rgba(16,45,73,.045) !important;
   color: var(--scf-ink) !important;
 }
 body.sateer-consul-finition .page .section:nth-of-type(even) {
-  background: linear-gradient(135deg, #e5f1f1 0%, #e3edf5 100%) !important;
+  background: linear-gradient(135deg, #ecf6f6 0%, #e9f2f9 100%) !important;
   border-left-color: #254f73 !important;
 }
 body.sateer-consul-finition .page .section :is(h1,h2,h3,h4) {
