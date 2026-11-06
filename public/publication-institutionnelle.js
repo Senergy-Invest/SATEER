@@ -52,6 +52,14 @@ async function chargerPublications() {
             const article = document.createElement("article");
             article.className = "com-sidecard";
             article.style.marginTop = "12px";
+            // Reference de la publication retournee par l'API, sans nouveau droit ni nouvel appel.
+            const publicationId = String(publication.id ?? "").trim();
+            const referenceValide = /^[1-9]\d*$/.test(publicationId);
+            const reference = referenceValide ? document.createElement("span") : null;
+            if (reference) {
+                reference.className = "com-pill";
+                reference.textContent = `Publication n°${publicationId}`;
+            }
             const title = document.createElement("h3"); title.textContent = publication.titre || "Information";
             const details = document.createElement("p");
             const date = publication.date_publication ? new Date(publication.date_publication).toLocaleString() : "Date indisponible";
@@ -59,6 +67,7 @@ async function chargerPublications() {
             const audience = audienceLabels[publication.audience_type] || "Les personnes autorisées";
             const target = publication.audience_valeur ? ` : ${publication.audience_valeur}` : "";
             details.textContent = `${categoryLabels[publication.categorie] || "Information"} · Canal « ${channel} » · Visible par : ${audience}${target} · ${publication.statut || "État indisponible"} · ${date}`;
+            if (reference) article.append(reference);
             article.append(title, details);
             if (["ASSOCIATION", "ORGANISATIONS"].includes(publication.audience_type)) {
                 const relayPanel = document.createElement("div");
