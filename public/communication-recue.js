@@ -13,6 +13,7 @@
     state.textContent=pubs.length?`${pubs.length} information(s) reçue(s).`:'Aucune publication destinée à votre profil.';
     for(const pub of pubs){
       const article=document.createElement('article');
+      article.id=`publication-${Number(pub.id)}`;
       const title=document.createElement('h2');title.textContent=pub.titre||"Information";
       const meta=document.createElement('p');meta.className='info';meta.textContent=(pub.categorie||'Information')+' · '+(pub.priorite||'Normale');
       const body=document.createElement('p');body.textContent=pub.contenu||'';

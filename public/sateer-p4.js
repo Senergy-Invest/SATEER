@@ -1,6 +1,6 @@
 /* SATEER Pilote P4 — Centre de configuration générique.
  * Seules les actions explicitement connectées à des API existantes sont persistantes.
- * Les règles de réception par sujet et les voix sont des démonstrations locales.
+ * Les fonctions génériques restent séparées des extensions P6 spécialisées.
  */
 (function () {
   'use strict';
@@ -81,7 +81,7 @@
     for(const id of ['sx-p4-edit-select','sx-p4-team-unit','sx-p4-demo-unit'])setOptions($(id),unitRows,'Sélectionner un bureau');
     setOptions($('sx-p4-new-parent'),unitRows,'Choisir un bureau responsable');
     setOptions($('sx-p4-move-parent'),unitRows,'Sans parent');
-    unitSelected(); loadTeam(); routePreview();
+    unitSelected(); loadTeam();
   }
   async function loadStructure(){
     const data=await api(url('/structure'));
@@ -239,15 +239,6 @@
       await loadTeam();
     });
   });
-  function routePreview(){
-    const name=$('sx-p4-demo-unit').selectedOptions[0]?.textContent || '';
-    const type=$('sx-p4-demo-type').value;
-    $('sx-p4-route-preview').textContent=$('sx-p4-demo-unit').value?
-      `Demande « ${type} » → bureau « ${name} » après enregistrement.` :
-      'Choisissez un bureau et enregistrez votre règle.';
-  }
-  $('sx-p4-demo-unit').addEventListener('change',routePreview);
-  $('sx-p4-demo-type').addEventListener('change',routePreview);
   // Dictée locale navigateur : pas de persistance SATEER. Le fournisseur du navigateur peut traiter la voix.
   let recognition=null;
   const stateVoice= msg => {$('sx-p4-voice-state').textContent=msg;};

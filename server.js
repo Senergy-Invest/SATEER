@@ -8,6 +8,7 @@ const {
     obtenirMonSateerDatabase,
     trouverOrganisationParIdEtTenantDatabase,
     listerPublicationsVisiblesPourPersonneDatabase,
+    listerPublicationsParOrganisationEtTenantDatabase,
     creerPublicationDatabase,
     obtenirPublicationPourMediaDatabase,
     ajouterMediaPublicationDatabase,
@@ -140,8 +141,8 @@ app.use(
 // Contexte derive de la session et des rattachements actifs.
 app.get("/api/context", exigerSession, async (req, res) => {
     try {
-        const tenantCode = String(req.query.tenant || "SN").trim();
-        if (!tenantCode || tenantCode.length > 50) return res.status(400).json({ statut: "TENANT_INVALIDE" });
+        const tenantCode = req.query.tenant == null ? null : String(req.query.tenant).trim();
+        if (tenantCode !== null && (!tenantCode || tenantCode.length > 50)) return res.status(400).json({ statut: "TENANT_INVALIDE" });
         const organisations = await listerOrganisationsPersonneDatabase(Number(req.auth.personneId), tenantCode);
         return res.set("Cache-Control", "no-store").json({
             statut: "CONTEXTE_CHARGE",
@@ -266,6 +267,12 @@ async function chargerContexteWorkspaceUnite(
         canReceiveIncoming:
             capabilityActive(capabilities, "RECEIVE_INCOMING")
             && permission("VIEW_INCOMING"),
+
+        // Unassigned cases require organization-scoped intake and routing rights;
+        // ordinary unit RECEIVE_INCOMING does not grant access to this queue.
+        canManageUnassignedCases:
+            (droits.permissionsOrganisation || []).includes("VIEW_INCOMING")
+            && (droits.permissionsOrganisation || []).includes("ROUTE_CASE"),
 
         canRouteCases:
             capabilityActive(capabilities, "ROUTE_CASES")
@@ -2673,7 +2680,8 @@ app.get(
                 organisationId,
                 tenantCode,
                 unitId,
-                contexte.features.canReceiveIncoming,
+                contexte.features.canManageUnassignedCases
+                    && contexte.features.canReceiveIncoming,
                 statut
             );
 
@@ -2744,7 +2752,8 @@ app.post(
                 unitId,
                 destinationUnitId,
                 motif,
-                Number(req.auth.personneId)
+                Number(req.auth.personneId),
+                contexte.features.canManageUnassignedCases
             );
 
             if (!resultat.succes) {
@@ -2753,7 +2762,8 @@ app.post(
                     ? 404
                     : (resultat.code === "DESTINATION_INVALIDE"
                         ? 400
-                        : (resultat.code === "DESTINATION_NON_AUTORISEE" ? 403 : 409));
+                        : (resultat.code === "DESTINATION_NON_AUTORISEE"
+                            || resultat.code === "GESTION_NON_AFFECTEES_INTERDITE" ? 403 : 409));
 
                 return res.status(status).json({
                     statut: resultat.code
@@ -4011,7 +4021,8 @@ app.get(
                 organisationId,
                 tenantCode,
                 unitId,
-                contexte.features.canReceiveIncoming,
+                contexte.features.canManageUnassignedCases
+                    && contexte.features.canReceiveIncoming,
                 statut
             );
 
@@ -4065,6 +4076,7 @@ app.get(
                 || !contexte.features.canViewInbox
                 || !contexte.features.canReceiveIncoming
                 || !contexte.features.canRouteCases
+                || !contexte.features.canManageUnassignedCases
             ) {
                 return res.status(403).json({
                     statut: "ACCES_REFUSE",
@@ -4076,7 +4088,8 @@ app.get(
                 organisationId,
                 tenantCode,
                 unitId,
-                true,
+                contexte.features.canManageUnassignedCases
+                    && contexte.features.canReceiveIncoming,
                 "NOUVELLE"
             );
 
@@ -4145,7 +4158,8 @@ app.post(
                 unitId,
                 destinationUnitId,
                 motif,
-                Number(req.auth.personneId)
+                Number(req.auth.personneId),
+                contexte.features.canManageUnassignedCases
             );
 
             if (!resultat.succes) {
@@ -4154,7 +4168,8 @@ app.post(
                     ? 404
                     : (resultat.code === "DESTINATION_INVALIDE"
                         ? 400
-                        : (resultat.code === "DESTINATION_NON_AUTORISEE" ? 403 : 409));
+                        : (resultat.code === "DESTINATION_NON_AUTORISEE"
+                            || resultat.code === "GESTION_NON_AFFECTEES_INTERDITE" ? 403 : 409));
 
                 return res.status(status).json({
                     statut: resultat.code || "ORIENTATION_IMPOSSIBLE"
@@ -4593,6 +4608,25 @@ app.get("/api/organisations/:organisationId/publications/:publicationId/media/:m
       } catch(e){console.error("Lecture media",e);if(!res.headersSent)return res.status(500).end();}
     }
 );
+app.get(
+    "/api/organisations/:organisationId/publications",
+    ...exigerPermission("TARGET_COMMUNICATION", "ORGANISATION"),
+    async (req,res) => {
+        try {
+            const organisationId=Number(req.params.organisationId);
+            const tenantCode=String(req.query.tenant||"").trim();
+            if(!Number.isSafeInteger(organisationId)||organisationId<=0||!tenantCode||tenantCode.length>50)
+                return res.status(400).json({statut:"CONTEXTE_INVALIDE"});
+            const organisation=await trouverOrganisationParIdEtTenantDatabase(organisationId,tenantCode);
+            if(!organisation)return res.status(404).json({statut:"ORGANISATION_INTROUVABLE"});
+            const publications=await listerPublicationsParOrganisationEtTenantDatabase(organisationId,tenantCode);
+            return res.set("Cache-Control","private, no-store").json({statut:"PUBLICATIONS_CHARGEES",publications});
+        }catch(error){
+            console.error("Erreur liste publications institutionnelles :",error);
+            return res.status(500).json({statut:"ERREUR_PUBLICATIONS"});
+        }
+    }
+);
 // =========================================================
 // PILOTE : PUBLICATION INSTITUTIONNELLE SECURISEE
 // =========================================================
@@ -4682,13 +4716,17 @@ app.post(
 
 app.use("/api/organisations", require("./communication-channels-router"));
 app.use("/api/organisations", require("./communication-targets-router"));
+app.use("/api/organisations", require("./association-communication-router"));
 
 // DÉMARRAGE
 // =========================================================
 
-app.listen(
-    PORT,
-    () => {
+const testListenHost = process.env.SATEER_LISTEN_HOST;
+if (testListenHost && testListenHost !== "127.0.0.1") {
+    throw new Error("SATEER_LISTEN_HOST autorisé uniquement sur 127.0.0.1.");
+}
+
+const onServerListening = () => {
 
         console.log("");
         console.log(
@@ -4708,5 +4746,11 @@ app.listen(
         );
 
         console.log("");
-    }
-);
+    };
+
+if (testListenHost) {
+    app.listen(PORT, testListenHost, onServerListening);
+} else {
+    // Conserve strictement le comportement d'écoute historique des instances.
+    app.listen(PORT, onServerListening);
+}

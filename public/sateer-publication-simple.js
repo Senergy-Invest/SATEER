@@ -68,15 +68,15 @@
     row.append(categorie,priorite);
     writing.append(titre,contenu,row);
 
-    const targets = section('02','Destinataires','Une publication peut être visible dans Mon Consulat sans déclencher d’e-mail ni de notification.');
+    const targets = section('02','Qui pourra lire cette information ?','Ce choix définit les personnes qui ont accès à la publication. Les droits d’accès de votre organisation restent appliqués.');
     // Le backend sait cibler TOUS, DEPARTEMENT, PROFIL et une ASSOCIATION à la fois.
     // Les options multiples / toutes associations ne sont volontairement pas simulées ici.
     const options = {
-      TOUS:'Tous les Sénégalais concernés par le Consulat',
-      DEPARTEMENT:'Un territoire / département',
-      PROFIL:'Un profil de public',
+      TOUS:'Toutes les personnes autorisées',
+      DEPARTEMENT:'Les personnes d’un territoire ou département',
+      PROFIL:'Un groupe de personnes',
       ASSOCIATION:'Une association connectée',
-      ORGANISATIONS:'Plusieurs organisations connectées'
+      ORGANISATIONS:'Les organisations sélectionnées'
     };
     if (![...audienceSelect.options].some(opt => opt.value === 'ORGANISATIONS'))
       audienceSelect.add(new Option(options.ORGANISATIONS,'ORGANISATIONS'));
@@ -84,7 +84,7 @@
       if (options[opt.value]) opt.textContent = options[opt.value];
     }
     const targetLabel = audience.firstChild;
-    if (targetLabel && targetLabel.nodeType === Node.TEXT_NODE) targetLabel.textContent = 'Public destinataire';
+    if (targetLabel && targetLabel.nodeType === Node.TEXT_NODE) targetLabel.textContent = 'Qui pourra lire ?';
     const associationBox = text('div', undefined, 'sx-cp-association-box');
     const associationLabel = text('label', 'Association connectée', 'sx-cp-select-label');
     const associationSelect = document.createElement('select');
@@ -104,35 +104,38 @@
     const orgInfo = text('p','Chargement des organisations autorisées…','sx-cp-help');
     orgBox.append(orgLabel,orgInfo);
     targets.append(audience,cible,associationBox,orgBox);
-    const limited = text('p','Pour adresser une information à plusieurs associations ou partenaires, choisissez « Plusieurs organisations connectées ».','sx-cp-help sx-cp-limit');
+    const limited = text('p','Pour choisir plusieurs associations ou partenaires, sélectionnez leurs organisations dans la liste.','sx-cp-help sx-cp-limit');
     targets.appendChild(limited);
-    // Le choix historique de canal n'est plus présenté. Un fil officiel reste conservé.
-    canal.hidden = true;
-    canal.setAttribute('aria-hidden','true');
+    canal.hidden = false;
+    canal.removeAttribute('aria-hidden');
+
+    const notifications = section('03','Qui recevra une notification ?','Les personnes qui suivent ce canal seront alertées seulement si elles font également partie de l’audience autorisée. Le choix du canal n’envoie pas un message à tous les citoyens.');
+    const channelLabel = canal.querySelector('select')?.previousSibling;
+    if (channelLabel && channelLabel.nodeType === Node.TEXT_NODE) channelLabel.textContent = 'Canal de notification';
+    notifications.append(canal);
 
     const mediaDetails = text('details',undefined,'sx-cp-attachments');
-    const summary = text('summary','03  Photos, PDF ou lien vidéo (facultatif)');
+    const summary = text('summary','04  Pièces jointes facultatives');
     const mediaWrap = text('div',undefined,'sx-cp-attachments-content');
     mediaWrap.append(media,externe);
     mediaDetails.append(summary,mediaWrap);
 
     const review = text('section',undefined,'sx-cp-review');
-    review.appendChild(text('h3','Avant publication'));
-    const summaryText = text('p','', 'sx-cp-review-text');
-    review.appendChild(summaryText);
-    review.appendChild(text('p','La publication sera enregistrée et visible aux personnes éligibles dans SATEER. Sa lecture et la remise de notifications ne sont pas encore mesurées.','sx-cp-small'));
+    review.appendChild(text('h3','Avant de publier'));
+    const summaryAudience = text('p','', 'sx-cp-review-text');
+    const summaryChannel = text('p','', 'sx-cp-small');
+    const summaryFiles = text('p','', 'sx-cp-small');
+    review.append(summaryAudience,summaryChannel,summaryFiles);
     action.textContent = 'Publier l’information';
     action.classList.add('sx-cp-submit');
     resultat.classList.add('sx-cp-result');
 
-    form.replaceChildren(writing,targets,mediaDetails,review,canal,action,resultat);
+    form.replaceChildren(writing,targets,notifications,mediaDetails,review,action,resultat);
     aside.replaceChildren();
     const help = text('section',undefined,'sx-cp-aside-card');
-    help.appendChild(text('h3','Diffusion officielle'));
+    help.appendChild(text('h3','Information officielle'));
     help.appendChild(text('p','Votre publication rejoint le fil Mon Consulat pour son audience autorisée.'));
-    const mode = text('div','Canal officiel unique','sx-cp-mode');
-    help.appendChild(mode);
-    const condition = text('p','La diffusion vers les associations et les notifications externes feront l’objet de fonctions distinctes, avec suivi et autorisations.','sx-cp-help');
+    const condition = text('p','Les notifications sont une préférence personnelle. Même sans notifications, les personnes peuvent consulter les informations officielles auxquelles elles ont droit.','sx-cp-help');
     help.appendChild(condition);
     aside.appendChild(help);
 
@@ -145,32 +148,51 @@
       orgSelect.required = choice === 'ORGANISATIONS';
       if (choice === 'ASSOCIATION') {
         cibleInput.type = 'hidden';
+        cibleInput.required = false;
         cibleInput.value = associationSelect.value || '';
         associationSelect.required = true;
         const tx = cible.firstChild;
         if (tx && tx.nodeType === Node.TEXT_NODE) tx.textContent = '';
       } else if (choice === 'ORGANISATIONS') {
         cibleInput.type = 'hidden';
+        cibleInput.required = false;
         cibleInput.value = '';
         associationSelect.required = false;
         orgSelect.required = true;
       } else {
         orgSelect.required = false;
         cibleInput.type = 'text';
+        cibleInput.required = choice !== 'TOUS';
         associationSelect.required = false;
         if (choice === 'DEPARTEMENT') {
-          cibleInput.placeholder = 'Nom exact du département';
+          cibleInput.placeholder = 'Saisissez le nom du territoire ou département';
         } else if (choice === 'PROFIL') {
-          cibleInput.placeholder = 'Nom exact du profil';
+          cibleInput.placeholder = 'Saisissez le groupe de personnes concerné';
         }
         const tx = cible.firstChild;
-        if (tx && tx.nodeType === Node.TEXT_NODE) tx.textContent = choice === 'DEPARTEMENT' ? 'Département ciblé ' : choice === 'PROFIL' ? 'Profil ciblé ' : '';
+        if (tx && tx.nodeType === Node.TEXT_NODE) tx.textContent = choice === 'DEPARTEMENT' ? 'Territoire ou département ' : choice === 'PROFIL' ? 'Groupe de personnes ' : '';
       }
-      const name = options[choice] || 'Sélection non reconnue';
-      const files = document.getElementById('publicationFichiers')?.files?.length || 0;
-      summaryText.textContent = `Destinataires : ${name}. ${files ? files + ' fichier(s) joint(s).' : 'Aucune pièce jointe.'}`;
+      let audienceName = options[choice] || 'Choix à vérifier';
+      if (choice === 'DEPARTEMENT' || choice === 'PROFIL') {
+        const value = cibleInput.value.trim();
+        audienceName += value ? ` : ${value}` : ' : précisez le groupe concerné';
+      } else if (choice === 'ASSOCIATION') {
+        audienceName += associationSelect.selectedOptions[0]?.textContent && associationSelect.value ? ` : ${associationSelect.selectedOptions[0].textContent}` : ' : choisissez une association';
+      } else if (choice === 'ORGANISATIONS') {
+        const names = [...orgSelect.selectedOptions].map(option => option.textContent);
+        audienceName = names.length ? names.join(', ') : 'choisissez une ou plusieurs organisations';
+      }
+      const selectedChannel = canalSelect.selectedOptions[0]?.textContent?.trim() || 'Informations générales du Consulat';
+      const files = document.getElementById('publicationFichiers')?.files || [];
+      const externalLink = document.getElementById('publicationLien')?.value.trim();
+      summaryAudience.textContent = `Qui pourra lire : ${audienceName}.`;
+      summaryChannel.textContent = `Qui recevra une alerte : les abonnés autorisés du canal « ${selectedChannel} ».`;
+      summaryFiles.textContent = `Pièces jointes : ${files.length ? `${files.length} fichier(s)` : 'aucune'}${externalLink ? (files.length ? ' et un lien externe' : 'un lien externe') : ''}.`;
     }
     audienceSelect.addEventListener('change',sync);
+    canalSelect.addEventListener('change',sync);
+    cibleInput.addEventListener('input',sync);
+    document.getElementById('publicationLien')?.addEventListener('input',sync);
     orgSelect.addEventListener('change',sync);
     associationSelect.addEventListener('change', () => {
       cibleInput.value = associationSelect.value;

@@ -1,6 +1,7 @@
 "use strict";
 // Moteur P3.1: organismes destinataires, sans logique consulaire ou association codée en dur.
-const { executerRequete } = require("./database");
+const { executerRequete, obtenirClientDatabase } = require("./database");
+const { notifierAbonnesPublication } = require("./communication-notifications");
 
 async function verifierOrganisationCible(tenantCode, organisationId, cibleId) {
   const r = await executerRequete(`
@@ -19,7 +20,10 @@ async function verifierOrganisationCible(tenantCode, organisationId, cibleId) {
 
 async function creerPublicationMultiOrganisationsDatabase({tenantCode,organisationId,personneId,titre,contenu,categorie,priorite,medias,communicationChannelId,cibles}) {
   // Une seule instruction SQL, atomique: une publication ne peut exister sans ses cibles.
-  const r=await executerRequete(`
+  const client=await obtenirClientDatabase();
+  try {
+  await client.query('BEGIN');
+  const r=await client.query(`
     WITH scope AS (
       SELECT t.id AS tenant_id
       FROM tenants t JOIN organisations puborg ON puborg.tenant_id=t.id
@@ -62,6 +66,13 @@ async function creerPublicationMultiOrganisationsDatabase({tenantCode,organisati
     FROM nouvelle_publication p
   `,[tenantCode,organisationId,personneId,titre,contenu,categorie,priorite,
      JSON.stringify(medias||[]),communicationChannelId,cibles]);
-  return r.rows[0]||null;
+  if(!r.rows[0]){await client.query('ROLLBACK');return null;}
+  if(r.rows[0].communication_channel_id!=null)await notifierAbonnesPublication(client,r.rows[0].id);
+  await client.query('COMMIT');
+  return r.rows[0];
+  } catch(error) {
+    await client.query('ROLLBACK').catch(()=>{});
+    throw error;
+  } finally { client.release(); }
 }
 module.exports={verifierOrganisationCible,creerPublicationMultiOrganisationsDatabase};

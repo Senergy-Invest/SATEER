@@ -43,6 +43,8 @@ function classeStatut(
 // =========================================================
 
 let publicationsConsulat = [];
+const libellesCategoriePublication = { INFORMATION: "Information", ANNONCE: "Annonce", COMMUNIQUE: "Communiqué", ALERTE: "Alerte" };
+const libellesPrioritePublication = { NORMALE: "Normale", HAUTE: "Importante", URGENTE: "Urgente" };
 function afficherPublications(publications) {
     const container = document.getElementById("publicationsContainer");
     const filtre = document.getElementById("filtreCanalConsulat");
@@ -75,9 +77,10 @@ function afficherPublicationsFiltrees() {
     for (const pub of liste) {
         const item = document.createElement("article");
         item.className = "publication-card";
+        item.id = `publication-${pub.id}`;
         const top = document.createElement("div");
         top.className = "publication-top";
-        for (const [cls, valeur] of [["publication-category", pub.categorie], ["publication-priority", pub.priorite]]) {
+        for (const [cls, valeur] of [["publication-category", libellesCategoriePublication[pub.categorie] || "Information"], ["publication-priority", libellesPrioritePublication[pub.priorite] || "Normale"]]) {
             const badge = document.createElement("span");
             badge.className = cls;
             badge.textContent = valeur || "";
@@ -115,6 +118,9 @@ function afficherPublicationsFiltrees() {
         }
         item.appendChild(pied);
         container.appendChild(item);
+    }
+    if (window.location.hash.startsWith("#publication-")) {
+        requestAnimationFrame(() => document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView({ block: "start" }));
     }
 }
 document.getElementById("filtreCanalConsulat").addEventListener("change", afficherPublicationsFiltrees);
@@ -277,8 +283,7 @@ function afficherNotifications(
         );
 
 
-    container.innerHTML =
-        "";
+    container.replaceChildren();
 
 
     if (
@@ -286,11 +291,10 @@ function afficherNotifications(
         notifications.length === 0
     ) {
 
-        container.innerHTML = `
-            <div class="empty">
-                Aucune notification du Consulat.
-            </div>
-        `;
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "Aucune notification du Consulat.";
+        container.appendChild(empty);
 
         return;
     }
@@ -311,25 +315,29 @@ function afficherNotifications(
             "notification";
 
 
-        item.innerHTML = `
-
-            <div class="notification-icon">
-                🔔
-            </div>
-
-
-            <div>
-
-                <p class="notification-title">
-                    ${notification.titre}
-                </p>
-
-                <p class="notification-message">
-                    ${notification.message}
-                </p>
-
-            </div>
-        `;
+        const icon = document.createElement("div");
+        icon.className = "notification-icon";
+        icon.textContent = "🔔";
+        const content = document.createElement("div");
+        const title = document.createElement("p");
+        title.className = "notification-title";
+        title.textContent = notification.titre || "Notification";
+        const message = document.createElement("p");
+        message.className = "notification-message";
+        message.textContent = notification.message || "";
+        content.append(title, message);
+        if (notification.type === "PUBLICATION_CANAL" && notification.reference_type === "PUBLICATION" && Number.isSafeInteger(Number(notification.reference_id)) && Number(notification.reference_id) > 0) {
+            const link = document.createElement("a");
+            const target = new URL("/consulat.html", window.location.origin);
+            target.searchParams.set("organisation", String(CONSULAT_ID));
+            const tenant = new URLSearchParams(window.location.search).get("tenant");
+            if (tenant) target.searchParams.set("tenant", tenant);
+            target.hash = `publication-${Number(notification.reference_id)}`;
+            link.href = target.pathname + target.search + target.hash;
+            link.textContent = "Ouvrir l'information →";
+            content.appendChild(link);
+        }
+        item.append(icon, content);
 
 
         container.appendChild(
@@ -447,6 +455,14 @@ async function chargerMonConsulat() {
 
         const data =
             await reponse.json();
+
+        const manageChannels = document.getElementById("manageChannelsLink");
+        if (manageChannels) {
+            const target = new URL("/mes-canaux.html", window.location.origin);
+            target.searchParams.set("organisation", String(CONSULAT_ID));
+            target.searchParams.set("tenant", contexte.tenantCode);
+            manageChannels.href = target.pathname + target.search;
+        }
 
 
         document

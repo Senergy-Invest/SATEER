@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><title>Communications de l’association · SATEER</title>
+  <link rel="stylesheet" href="/sateer-canaux.css">
+  <style>
+    .association-content{display:grid;gap:20px;margin-top:22px}.association-section{background:#fff;border:1px solid #dfebe2;border-radius:20px;padding:25px;box-shadow:0 5px 25px #213f2610}.association-section h2{margin:0 0 8px}.association-note{font-size:13px;color:#60756a;line-height:1.6}.association-item{border-top:1px solid #e3eee6;padding:19px 0;display:grid;gap:10px}.association-item:first-child{border-top:0}.association-item h3{margin:0}.association-body{white-space:pre-wrap;line-height:1.65;color:#263f34}.association-meta{font-size:12px;line-height:1.5;color:#536e60}.official-source{border-left:3px solid #176b50;background:#eff8f2;padding:10px 12px;color:#145b43;font-size:13px}.association-comment{background:#f2f5f8;border-left:3px solid #718399;border-radius:0 8px 8px 0;padding:12px;color:#3e5364;white-space:pre-wrap}.association-item textarea{min-height:75px}.association-item .actions{margin-top:3px}.association-empty{color:#60756a;padding:11px 0}.association-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.association-status{min-height:22px;margin:8px 0;color:#176543}.association-toggle{display:flex;align-items:center;gap:10px;margin:12px 0;color:#264c3d;font-size:14px}.association-toggle input{width:auto}@media(max-width:760px){.association-grid{grid-template-columns:1fr}.association-section{padding:20px}}
+  </style>
+</head>
+<body><main class="wrap">
+  <a class="back" id="back" href="/index.html">← Retour à Mon SATEER</a>
+  <header class="hero"><div class="eyebrow">SATEER · Espace de l’association</div><h1 id="associationName">Communications officielles</h1>
+    <p>Consultez les informations accessibles à votre association. Seul un relais explicitement autorisé peut être transmis à vos membres; le texte officiel reste intact.</p>
+  </header>
+  <div class="association-content">
+    <section class="association-section" id="invitationsSection" hidden><h2>Invitation du Consulat</h2><p class="association-note">Accepter une invitation crée une relation officielle entre les deux organisations.</p><div id="invitations"></div></section>
+    <section class="association-section"><div class="toprow"><h2>Communications reçues</h2><span class="chip" id="feedCount">Chargement…</span></div><p class="association-note">L’émetteur officiel et les autorisations de relais sont indiqués pour chaque publication.</p><p class="association-status" id="feedStatus" role="status"></p><div id="communications"></div></section>
+    <div class="association-grid">
+      <section class="association-section"><h2>Notifications par canal</h2><p class="association-note">Activez ou désactivez les alertes pour votre compte. Le réglage ne change pas les publications auxquelles vous avez accès.</p><div id="channels"></div><p class="association-status" id="channelStatus" role="status"></p></section>
+      <section class="association-section"><h2>Demander un rattachement</h2><p class="association-note">Vous pouvez demander une relation au Consulat. Elle ne devient active qu’après validation.</p><label class="field">Consulat<select id="consulateSelect"><option value="">Chargement…</option></select></label><label class="field">Message facultatif<textarea id="requestMessage" maxlength="500" placeholder="Présentez brièvement votre demande"></textarea></label><div class="actions"><button type="button" id="requestButton">Demander le rattachement</button></div><p class="association-status" id="requestStatus" role="status"></p></section>
+    </div>
+  </div>
+</main><script src="/auth-client.js"></script><script src="/association-communications.js"></script></body>
+</html>

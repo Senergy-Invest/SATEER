@@ -72,7 +72,7 @@ function afficherResumeConsulat(container, data) {
     const actualites = element("div", "sx-recent-news");
     actualites.append(element("h4", "", "À la une du Consulat"));
     if (!publications.length) {
-        actualites.append(element("p", "sx-summary-empty", "Aucune information officielle publiée pour le moment."));
+        actualites.append(element("p", "sx-summary-empty", "Aucune information officielle accessible à votre profil pour le moment."));
     } else {
         // L'API renvoie exclusivement les publications visibles par ce compte.
         const visibles = [...publications].sort((a, b) => {
@@ -99,11 +99,44 @@ async function chargerApercuConsulat({ organisation, tenantCode, personneId, res
         if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
         const donnees = await reponse.json();
         afficherResumeConsulat(resume, donnees);
+        return Array.isArray(donnees.publications) ? donnees.publications.map(p => ({...p, issuer_id:organisation.id})) : [];
     } catch (erreur) {
         console.warn("Résumé consulaire indisponible :", erreur);
         resume.replaceChildren(element("p", "sx-summary-empty",
             "Résumé indisponible momentanément. Ouvrez Mon Consulat pour accéder à vos services."));
+        return [];
     }
+}
+
+async function afficherRelaisAssociatifs(organisations, tenantCode, publicationsDirectes) {
+    const section = document.getElementById("associationRelaysSection");
+    const container = document.getElementById("associationRelaysContainer");
+    if (!section || !container) return;
+    const directs = new Set(publicationsDirectes.map(p => `${p.issuer_id || p.organisation_id || ""}:${p.id}`));
+    const seen = new Set();
+    for (const association of organisations.filter(o => o.type === "ASSOCIATION" && o.id != null)) {
+        const tenant = association.tenant_code || tenantCode;
+        if (!tenant) continue;
+        try {
+            const response = await fetch(`/api/organisations/${encodeURIComponent(association.id)}/association-relays?tenant=${encodeURIComponent(tenant)}`, {credentials:"same-origin",cache:"no-store"});
+            if (!response.ok) continue;
+            const data = await response.json();
+            for (const relay of data.relais || []) {
+                const key = `${relay.source_organisation_id}:${relay.publication_id}`;
+                if (directs.has(key) || seen.has(key)) continue;
+                seen.add(key);
+                const card = element("article", "sx-consulat-card");
+                card.append(element("p", "sx-card-kicker", "RELAIS ASSOCIATIF · CONTENU OFFICIEL"));
+                card.append(element("h3", "sx-card-title", relay.titre || "Information officielle"));
+                card.append(element("p", "sx-card-subtitle", `Source officielle : ${relay.issuer_name} · ${[relay.original_author_first_name, relay.original_author_last_name].filter(Boolean).join(" ") || "Auteur institutionnel"}`));
+                card.append(element("p", "sx-card-description", relay.contenu || ""));
+                card.append(element("p", "sx-summary-footnote", `Relayée par ${association.nom} · ${[relay.relay_author_first_name, relay.relay_author_last_name].filter(Boolean).join(" ") || "responsable associatif"}${relay.date_relais ? ` · ${new Date(relay.date_relais).toLocaleString()}` : ""}`));
+                if (relay.association_comment) card.append(element("p", "sx-summary-footnote", `Commentaire de l’association : ${relay.association_comment}`));
+                container.append(card);
+            }
+        } catch (error) { console.warn("Relais associatifs indisponibles :", error); }
+    }
+    section.hidden = !container.children.length;
 }
 
 function afficherIdentite(personne, organisations) {
@@ -142,6 +175,17 @@ function afficherNotifications(notifications) {
         texte.append(element("strong", "", notification.titre || "Notification"));
         texte.append(element("p", "", notification.message || ""));
         if (notification.organisation) texte.append(element("small", "", notification.organisation));
+        if (notification.type === "PUBLICATION_CANAL" && notification.reference_type === "PUBLICATION"
+            && Number.isSafeInteger(Number(notification.organisation_id))
+            && Number.isSafeInteger(Number(notification.reference_id)) && notification.tenant_code) {
+            const link = element("a", "", "Ouvrir l'information →");
+            const destination = new URL("/communication-recue.html", window.location.origin);
+            destination.searchParams.set("organisation", String(notification.organisation_id));
+            destination.searchParams.set("tenant", notification.tenant_code);
+            destination.hash = `publication-${Number(notification.reference_id)}`;
+            link.href = destination.pathname + destination.search + destination.hash;
+            texte.append(link);
+        }
         item.append(element("span", "sx-notification-symbol", "🔔"), texte);
         cible.append(item);
     }
@@ -151,8 +195,17 @@ async function afficherAccesProfessionnels(contexte) {
     const section = document.getElementById("professionnelsSection");
     const container = document.getElementById("professionnelsContainer");
     const orgs = Array.isArray(contexte.organisations) ? contexte.organisations : [];
-    const tenant = contexte.tenantCode;
     for (const org of orgs) {
+        const tenant = org.tenant_code || contexte.tenantCode;
+        if (!tenant) continue;
+        if (org.type === "ASSOCIATION") {
+            const associationLink = element("a", "sx-professional-card");
+            associationLink.href = lienVers("/association-communications.html", org.id, tenant);
+            associationLink.append(element("strong", "", "Communications de l’association"));
+            associationLink.append(element("span", "", `${org.nom || "Association"} · Canaux, communications et relais autorisés`));
+            associationLink.append(element("span", "sx-professional-arrow", "Ouvrir →"));
+            container.append(associationLink);
+        }
         try {
             const response = await fetch(
                 `/api/organisations/${encodeURIComponent(org.id)}/dashboards/acces?tenant=${encodeURIComponent(tenant)}`,
@@ -185,7 +238,6 @@ async function chargerMonSateer() {
     try {
         const contexte = await window.SATEER_CONTEXT_READY;
         const organisations = Array.isArray(contexte.organisations) ? contexte.organisations : [];
-        const tenant = contexte.tenantCode;
         const personneId = contexte.personne.id;
 
         // On n'affiche jamais Mon Consulat à partir d'une organisation non consulaire.
@@ -193,26 +245,33 @@ async function chargerMonSateer() {
         const apercus = [];
         experiencesContainer.replaceChildren();
         for (const org of consulats) {
+            const tenant = org.tenant_code || contexte.tenantCode;
+            if (!tenant) continue;
             const { carte, resume } = carteConsulat(org, tenant);
             experiencesContainer.append(carte);
             apercus.push({ organisation: org, tenantCode: tenant, personneId, resume });
         }
-        if (!consulats.length) {
+        if (!apercus.length) {
             experiencesContainer.append(element("div", "sx-empty-experience",
                 "Aucun Consulat rattaché à ce compte. Les expériences disponibles apparaîtront ici après rattachement."));
         }
         afficherIdentite(contexte.personne || {}, organisations);
 
         // La page personnelle reste utilisable même si l'API du résumé échoue.
-        const response = await fetch(
-            `/api/mon-sateer/${encodeURIComponent(personneId)}?tenant=${encodeURIComponent(tenant)}`,
-            { credentials: "same-origin", cache: "no-store" }
-        );
-        if (!response.ok) throw new Error(`Mon SATEER HTTP ${response.status}`);
-        const data = await response.json();
+        const tenants = [...new Set(organisations.map(org => org.tenant_code || contexte.tenantCode).filter(Boolean))];
+        const responses = await Promise.all(tenants.map(async tenant => {
+            const response = await fetch(
+                `/api/mon-sateer/${encodeURIComponent(personneId)}?tenant=${encodeURIComponent(tenant)}`,
+                { credentials: "same-origin", cache: "no-store" }
+            );
+            if (!response.ok) throw new Error(`Mon SATEER HTTP ${response.status}`);
+            return response.json();
+        }));
+        const data = responses[0] || {};
         if (data.personne) afficherIdentite(data.personne, organisations);
-        afficherNotifications(data.notifications || []);
-        await Promise.all(apercus.map(chargerApercuConsulat));
+        afficherNotifications(responses.flatMap(item => item.notifications || []));
+        const directLists = await Promise.all(apercus.map(chargerApercuConsulat));
+        await afficherRelaisAssociatifs(organisations, contexte.tenantCode, directLists.flat());
         await afficherAccesProfessionnels(contexte);
     } catch (erreur) {
         console.error("Erreur Mon SATEER :", erreur);

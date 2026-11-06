@@ -73,8 +73,11 @@ window.SATEER_CONTEXT_READY = (async function verifierSessionInterface() {
         }
         const data = await response.json();
         window.SATEER_USER = data.personne;
-        const tenant = new URLSearchParams(window.location.search).get("tenant") || "SN";
-        const contextResponse = await fetch("/api/context?tenant=" + encodeURIComponent(tenant), {
+        const tenant = new URLSearchParams(window.location.search).get("tenant");
+        const contextUrl = tenant
+            ? "/api/context?tenant=" + encodeURIComponent(tenant)
+            : "/api/context";
+        const contextResponse = await fetch(contextUrl, {
             credentials: "same-origin",
             headers: { "Accept": "application/json" },
             cache: "no-store"

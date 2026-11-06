@@ -6,6 +6,11 @@
   "scripts": {
     "test": "node scripts/security-static-check.js && node scripts/generic-context-static-check.js",
     "test:p3.1": "node scripts/communication-p3-1-api-test.js",
+    "test:p6": "node scripts/p6-routing-api-test.js",
+    "test:association-relay": "node scripts/association-relay-demo.js test",
+    "fixture:association-relay:setup": "node scripts/association-relay-demo.js setup",
+    "fixture:association-relay:verify": "node scripts/association-relay-demo.js verify",
+    "fixture:association-relay:cleanup": "node scripts/association-relay-demo.js cleanup",
     "test:integration": "node scripts/integration-http-test.js",
     "test:workflow": "node scripts/workflow-e2e-test.js",
     "test:multitenant": "node scripts/multitenant-isolation-test.js",

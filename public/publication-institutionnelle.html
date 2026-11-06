@@ -40,6 +40,11 @@
     .com-steps li{display:flex;align-items:flex-start;gap:12px;color:#40574a;font-size:13px;line-height:1.45}
     .com-num{display:grid;place-items:center;flex:none;width:25px;height:25px;border-radius:9px;background:#e3f1e8;color:#087a4b;font-size:12px;font-weight:800}
     .com-notice{border-left:3px solid #d0a249;background:#fff9eb;padding:15px 16px;border-radius:0 12px 12px 0;color:#78623e;font-size:12px;line-height:1.65}
+    .com-relay-permissions{display:grid;gap:10px;margin-top:16px;padding:16px;border:1px solid #d8e8de;border-radius:14px;background:#f5faf6;font-size:13px}
+    .com-relay-permissions p{margin:0;color:var(--sub);line-height:1.55}
+    .com-relay-permission-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:9px;border-top:1px solid #e0ebe3}
+    .com-relay-permission-row button{width:auto;border:0;border-radius:9px;padding:9px 12px;font:inherit;font-weight:700;cursor:pointer}
+    .com-relay-allow{background:#087a4b;color:#fff}.com-relay-revoke{background:#f6e9e7;color:#923d31}
     [hidden]{display:none!important}
     @media(max-width:830px){.com-shell{grid-template-columns:1fr}.com-aside{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.com-page{padding:20px 13px 54px}.com-banner{padding:29px 24px;border-radius:20px}.com-panel{padding:23px 20px}.com-grid,.com-aside{grid-template-columns:1fr}.com-shell{gap:15px}}
@@ -57,7 +62,7 @@
     <div class="com-shell">
       <section class="com-panel" aria-labelledby="com-form-title">
         <div class="com-heading"><span class="com-icon" aria-hidden="true">✎</span><h2 id="com-form-title">Nouvelle publication</h2></div>
-        <p class="com-muted">Rédigez votre message et choisissez les personnes auxquelles il s’adresse.</p>
+        <p class="com-muted">Rédigez l’information, choisissez qui peut la lire, puis qui peut recevoir une alerte.</p>
         <form id="formPublication" class="com-form">
           <label class="com-field">Titre de la publication
             <input name="titre" maxlength="255" placeholder="Ex. Informations pratiques pour les démarches consulaires" autocomplete="off" required>
@@ -77,7 +82,7 @@
           </div>
           <label class="com-field">Canal de diffusion
             <select name="communicationChannelId" id="communicationChannelId"><option value="">Informations générales du Consulat</option></select>
-            <small>La publication restera dans le fil unique de Mon Consulat. Choisir un canal permet de la classer par thème.</small>
+          <small>Choisir un canal permet aux personnes abonnées de recevoir une notification. Les publications restent visibles aux personnes autorisées, même sans abonnement.</small>
           </label>
           <label class="com-field">Public concerné
             <select name="audienceType" id="audienceType"><option value="TOUS">Tous les utilisateurs concernés</option><option value="DEPARTEMENT">Un département</option><option value="PROFIL">Un profil</option><option value="ASSOCIATION">Une association</option></select>
@@ -111,11 +116,16 @@
         </section>
         <section class="com-sidecard">
           <h3>À venir dans le pilote</h3>
-          <p>Les notifications, les relais associatifs et les échanges par e-mail restent à finaliser.</p>
+          <p>Les personnes qui ont activé les notifications du canal et font partie de l’audience autorisée reçoivent une alerte dans SATEER. Aucun e-mail n’est envoyé dans ce parcours.</p>
         </section>
-        <p class="com-notice">Publier enregistre une information dans SATEER. Cela ne signifie pas qu’un e-mail ou une notification a été envoyé.</p>
+        <p class="com-notice">Le canal règle les notifications ; l’audience règle l’accès à la publication. Ces deux choix restent indépendants.</p>
       </aside>
     </div>
+    <section class="com-panel" id="publicationHistory" aria-labelledby="publicationHistoryTitle">
+      <div class="com-heading"><span class="com-icon" aria-hidden="true">≡</span><h2 id="publicationHistoryTitle">Publications de l’organisation</h2></div>
+      <p id="publicationHistoryStatus" class="com-muted" role="status" aria-live="polite">Chargement des publications…</p>
+      <div id="publicationHistoryList"></div>
+    </section>
   </main>
   <script src="/auth-client.js"></script>
   <script src="/publication-institutionnelle.js"></script>

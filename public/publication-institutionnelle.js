@@ -8,6 +8,92 @@ const organisationId = Number(params.get("organisation"));
 const tenantCode = params.get("tenant") || "";
 
 const canalSelect = document.querySelector("#communicationChannelId");
+const historyStatus = document.querySelector("#publicationHistoryStatus");
+const historyList = document.querySelector("#publicationHistoryList");
+const categoryLabels = { INFORMATION:"Information", ANNONCE:"Annonce", COMMUNIQUE:"Communiqué", ALERTE:"Alerte" };
+const audienceLabels = { TOUS:"Toutes les personnes autorisées", DEPARTEMENT:"Les personnes du territoire choisi", PROFIL:"Le groupe de personnes choisi", ASSOCIATION:"L’association choisie", ORGANISATIONS:"Les organisations choisies" };
+
+async function chargerPublications() {
+    if (!historyList || !historyStatus || !Number.isSafeInteger(organisationId) || organisationId <= 0 || !tenantCode) return;
+    historyStatus.textContent = "Chargement des publications…";
+    try {
+        const response = await fetch(`/api/organisations/${organisationId}/publications?tenant=${encodeURIComponent(tenantCode)}`, { credentials:"same-origin", cache:"no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.statut || `HTTP ${response.status}`);
+        historyList.replaceChildren();
+        const publications = Array.isArray(data.publications) ? data.publications : [];
+        if (!publications.length) {
+            historyStatus.textContent = "Aucune publication enregistrée pour cette organisation.";
+            return;
+        }
+        historyStatus.textContent = `${publications.length} publication(s) enregistrée(s).`;
+        for (const publication of publications) {
+            const article = document.createElement("article");
+            article.className = "com-sidecard";
+            article.style.marginTop = "12px";
+            const title = document.createElement("h3"); title.textContent = publication.titre || "Information";
+            const details = document.createElement("p");
+            const date = publication.date_publication ? new Date(publication.date_publication).toLocaleString() : "Date indisponible";
+            const channel = publication.communication_channel_nom || "Informations générales du Consulat";
+            const audience = audienceLabels[publication.audience_type] || "Les personnes autorisées";
+            const target = publication.audience_valeur ? ` : ${publication.audience_valeur}` : "";
+            details.textContent = `${categoryLabels[publication.categorie] || "Information"} · Canal « ${channel} » · Visible par : ${audience}${target} · ${publication.statut || "État indisponible"} · ${date}`;
+            article.append(title, details);
+            if (["ASSOCIATION", "ORGANISATIONS"].includes(publication.audience_type)) {
+                const relayPanel = document.createElement("div");
+                relayPanel.className = "com-relay-permissions";
+                const relayTitle = document.createElement("strong");
+                relayTitle.textContent = "Relais vers les membres d’une association";
+                const relayHelp = document.createElement("p");
+                relayHelp.textContent = "Autorisez ou révoquez le relais de cette publication. Le texte officiel ne sera jamais modifié.";
+                relayPanel.append(relayTitle, relayHelp);
+                try {
+                    const permissionResponse = await fetch(
+                        `/api/organisations/${organisationId}/publications/${publication.id}/association-relay-authorizations?tenant=${encodeURIComponent(tenantCode)}`,
+                        { credentials:"same-origin", cache:"no-store" }
+                    );
+                    const permissionData = await permissionResponse.json();
+                    if (!permissionResponse.ok) throw new Error(permissionData.statut || `HTTP ${permissionResponse.status}`);
+                    if (!permissionData.associations.length) relayHelp.textContent = "Aucune association active n’est ciblée par cette publication.";
+                    for (const association of permissionData.associations) {
+                        const row = document.createElement("div"); row.className = "com-relay-permission-row";
+                        const label = document.createElement("span");
+                        label.textContent = `${association.association_nom} · ${association.relay_authorized ? "Relais autorisé" : "Relais non autorisé"}${association.relay_id ? " · Déjà relayée" : ""}`;
+                        const button = document.createElement("button"); button.type = "button";
+                        button.textContent = association.relay_authorized ? "Révoquer le relais" : "Autoriser le relais";
+                        button.className = association.relay_authorized ? "com-relay-revoke" : "com-relay-allow";
+                        button.addEventListener("click", async () => {
+                            button.disabled = true;
+                            try {
+                                const update = await fetch(`/api/organisations/${organisationId}/publications/${publication.id}/association-relay-authorizations/${association.association_id}?tenant=${encodeURIComponent(tenantCode)}`, {
+                                    method:"PUT", credentials:"same-origin", headers:{"Content-Type":"application/json"},
+                                    body:JSON.stringify({tenantCode,enabled:!association.relay_authorized})
+                                });
+                                const updateData = await update.json();
+                                if (!update.ok) throw new Error(updateData.statut || `HTTP ${update.status}`);
+                                result.textContent = association.relay_authorized
+                                    ? `Relais révoqué pour ${association.association_nom}.`
+                                    : `Relais autorisé pour ${association.association_nom}.`;
+                                await chargerPublications();
+                            } catch (error) {
+                                result.textContent = `Autorisation non modifiée : ${error.message}`;
+                                button.disabled = false;
+                            }
+                        });
+                        row.append(label,button); relayPanel.append(row);
+                    }
+                } catch (error) {
+                    relayHelp.textContent = `État du relais indisponible : ${error.message}`;
+                }
+                article.append(relayPanel);
+            }
+            historyList.append(article);
+        }
+    } catch (error) {
+        historyStatus.textContent = `Historique indisponible : ${error.message}`;
+    }
+}
+
 async function chargerCanauxPublication() {
     try {
         const reponse = await fetch(`/api/organisations/${organisationId}/channels?tenant=${encodeURIComponent(tenantCode)}`, { credentials: "same-origin" });
@@ -22,6 +108,7 @@ async function chargerCanauxPublication() {
             canalSelect.appendChild(option);
         }
         if (publics.length === 1) canalSelect.value=String(publics[0].id);
+        canalSelect.dispatchEvent(new Event("change", { bubbles:true }));
         if (publics.length > 1) {
             const field = canalSelect.closest('.com-field');
             if (field) {field.hidden=false;field.removeAttribute('aria-hidden');}
@@ -31,6 +118,7 @@ async function chargerCanauxPublication() {
     }
 }
 if (Number.isSafeInteger(organisationId) && organisationId > 0) chargerCanauxPublication();
+chargerPublications();
 function synchroniserCiblage() {
     ciblage.hidden = audience.value === "TOUS";
     document.querySelector("#audienceValeur").required = !ciblage.hidden;
@@ -61,7 +149,8 @@ form.addEventListener("submit", async event => {
         delete fields.audienceValeur;
     }
 
-
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
     try {
         const response = await fetch(`/api/organisations/${organisationId}/publications`, {
             method: "POST", credentials: "same-origin",
@@ -78,6 +167,7 @@ form.addEventListener("submit", async event => {
           if (uploaded.ok) ok++; else echecs++;
         }
         result.textContent = `Publication enregistrée (#${data.publication.id}). ${ok} fichier(s) joint(s).` + (echecs ? ` ATTENTION : ${echecs} fichier(s) non joints. Ne republiez pas tout le message.` : "");
+        await chargerPublications();
         if (!echecs) {
             form.reset();
             synchroniserCiblage();
@@ -86,5 +176,7 @@ form.addEventListener("submit", async event => {
         }
     } catch (error) {
         result.textContent = `Échec : ${error.message}`;
+    } finally {
+        if (submitButton) submitButton.disabled = false;
     }
 });

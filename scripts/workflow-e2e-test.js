@@ -21,6 +21,7 @@ const {
 const { creerCompteAuthentificationDatabase } = require("../auth-database");
 
 const TENANT = "SN";
+const AUTHORIZED_SYSTEM_ID = "7699611241381229531";
 let PORT = Number(process.env.SATEER_WORKFLOW_TEST_PORT || 0);
 let BASE_URL = `http://127.0.0.1:${PORT}`;
 const RUN_ID = randomUUID().replace(/-/g, "").slice(0, 12);
@@ -43,6 +44,7 @@ let serviceUnitId = null;
 let createdPersonIds = [];
 let createdMemberships = [];
 let createdOrgAssignments = [];
+let createdTestRoleIds = [];
 
 function check(condition, message) {
     if (!condition) throw new Error(message);
@@ -283,6 +285,40 @@ async function provision() {
             createdMemberships.push([ACTORS[key].personId, unitId, roleId]);
         }
 
+        // The secretariat unit role only grants unit-scoped access. The
+        // unassigned queue is organization-scoped, so this workflow actor
+        // receives a temporary role with exactly the two permissions the
+        // endpoint requires for that queue.
+        const queuePermissions = await client.query(`
+            SELECT id, code FROM permissions
+            WHERE actif = TRUE AND code = ANY($1::text[])
+            ORDER BY code
+        `, [["VIEW_INCOMING", "ROUTE_CASE"]]);
+        check(queuePermissions.rowCount === 2,
+            "Permissions minimales de la file non orientée disponibles");
+        const queueRole = await client.query(`
+            INSERT INTO organisation_roles
+                (organisation_id, code, nom, description, scope)
+            VALUES ($1, $2, $3, $4, 'ORGANISATION')
+            RETURNING id
+        `, [orgId, `WF_INTAKE_${RUN_ID}`, "Coordination synthétique de réception",
+            "Rôle temporaire du test : file non orientée et orientation uniquement."]);
+        const queueRoleId = Number(queueRole.rows[0].id);
+        createdTestRoleIds.push(queueRoleId);
+        for (const permission of queuePermissions.rows) {
+            await client.query(
+                "INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)",
+                [queueRoleId, permission.id]
+            );
+        }
+        await client.query(`
+            INSERT INTO relations_personne_organisation_roles
+                (personne_id, organisation_id, role_id, actif)
+            VALUES ($1, $2, $3, TRUE)
+        `, [ACTORS.secretariat.personId, orgId, queueRoleId]);
+        createdOrgAssignments.push([ACTORS.secretariat.personId, queueRoleId]);
+        console.log("OK - Rôle synthétique de file globale limité à VIEW_INCOMING + ROUTE_CASE");
+
         await client.query("COMMIT");
         console.log("OK - 5 acteurs synthétiques et leurs rattachements créés dans sateer_test");
     } catch (error) {
@@ -322,7 +358,7 @@ async function cleanup() {
         if (server.exitCode === null) server.kill("SIGKILL");
     }
 
-    if (createdPersonIds.length) {
+    if (createdPersonIds.length || createdTestRoleIds.length) {
         const client = await obtenirClientDatabase();
         try {
             await client.query("BEGIN");
@@ -347,6 +383,16 @@ async function cleanup() {
                 "DELETE FROM relations_personne_organisation_roles WHERE personne_id = ANY($1::integer[])",
                 [createdPersonIds]
             );
+            if (createdTestRoleIds.length) {
+                await client.query(
+                    "DELETE FROM role_permissions WHERE role_id = ANY($1::integer[])",
+                    [createdTestRoleIds]
+                );
+                await client.query(
+                    "DELETE FROM organisation_roles WHERE id = ANY($1::integer[])",
+                    [createdTestRoleIds]
+                );
+            }
             await client.query(
                 "DELETE FROM relations_personne_organisation WHERE personne_id = ANY($1::integer[])",
                 [createdPersonIds]
@@ -365,12 +411,49 @@ async function cleanup() {
             client.release();
         }
     }
+
+    const verify = await obtenirClientDatabase();
+    try {
+        const identity = await verify.query(`
+            SELECT current_database() AS name,
+                (SELECT system_identifier::text FROM pg_control_system()) AS system_identifier
+        `);
+        check(identity.rows[0].name === "sateer_test"
+            && identity.rows[0].system_identifier === AUTHORIZED_SYSTEM_ID,
+        "La vérification finale reste sur l’instance sateer_test autorisée");
+        const residues = await verify.query(`
+            SELECT
+                (SELECT count(*) FROM personnes WHERE id = ANY($1::integer[])) AS personnes,
+                (SELECT count(*) FROM auth_accounts WHERE personne_id = ANY($1::integer[])) AS comptes,
+                (SELECT count(*) FROM auth_sessions s JOIN auth_accounts a ON a.id=s.compte_id
+                    WHERE a.personne_id = ANY($1::integer[])) AS sessions,
+                (SELECT count(*) FROM relations_personne_organisation_unit WHERE personne_id = ANY($1::integer[])) AS rattachements_unite,
+                (SELECT count(*) FROM relations_personne_organisation_roles WHERE personne_id = ANY($1::integer[])) AS affectations_roles,
+                (SELECT count(*) FROM relations_personne_organisation WHERE personne_id = ANY($1::integer[])) AS rattachements_organisation,
+                (SELECT count(*) FROM demandes WHERE objet = $2) AS demandes,
+                (SELECT count(*) FROM notifications WHERE personne_id = ANY($1::integer[])) AS notifications,
+                (SELECT count(*) FROM organisation_roles WHERE id = ANY($3::integer[])) AS roles_synthetiques
+        `, [createdPersonIds, DEMAND_OBJECT, createdTestRoleIds]);
+        const counts = Object.values(residues.rows[0]).map(Number);
+        check(counts.every(count => count === 0),
+            "Vérification indépendante : aucun résidu synthétique après nettoyage");
+    } catch (error) {
+        console.error("ATTENTION - Vérification indépendante des résidus impossible : " + error.message);
+        process.exitCode = 1;
+    } finally {
+        verify.release();
+    }
 }
 
 async function main() {
-    const targetDb = await executerRequete("SELECT current_database() AS name");
+    const targetDb = await executerRequete(`
+        SELECT current_database() AS name,
+            (SELECT system_identifier::text FROM pg_control_system()) AS system_identifier
+    `);
     check(targetDb.rows[0].name === "sateer_test",
         "La base ciblée est exclusivement sateer_test");
+    check(targetDb.rows[0].system_identifier === AUTHORIZED_SYSTEM_ID,
+        "L’instance PostgreSQL de test autorisée est confirmée avant écriture");
 
     await provision();
     PORT = await choisirPortLibre();

@@ -2,6 +2,7 @@ const {
     executerRequete,
     obtenirClientDatabase
 } = require("./database");
+const { notifierAbonnesPublication } = require("./communication-notifications");
 
 
 const permissionsParRole = {
@@ -289,9 +290,11 @@ async function creerPublicationDatabase(
     medias = [],
     communicationChannelId = null
 ) {
-
-    const resultatTenant =
-        await executerRequete(
+    const client = await obtenirClientDatabase();
+    try {
+        await client.query("BEGIN");
+        const resultatTenant =
+        await client.query(
             `
             SELECT id
             FROM tenants
@@ -303,19 +306,18 @@ async function creerPublicationDatabase(
         );
 
 
-    if (
-        resultatTenant.rows.length === 0
-    ) {
-        return undefined;
-    }
+        if (resultatTenant.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return undefined;
+        }
 
 
     const tenantId =
         resultatTenant.rows[0].id;
 
 
-    const resultat =
-        await executerRequete(
+        const resultat =
+        await client.query(
             `
             INSERT INTO publications (
                 tenant_id,
@@ -387,7 +389,22 @@ async function creerPublicationDatabase(
         );
 
 
-    return resultat.rows[0];
+        const publication = resultat.rows[0];
+        if (!publication) {
+            await client.query("ROLLBACK");
+            return undefined;
+        }
+        if (publication.communication_channel_id != null) {
+            await notifierAbonnesPublication(client, publication.id);
+        }
+        await client.query("COMMIT");
+        return publication;
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 // Medias du pilote : metadata en JSONB, fichiers binaires hors public/.
 async function obtenirPublicationPourMediaDatabase(tenantCode, organisationId, publicationId) {
@@ -428,10 +445,13 @@ async function listerPublicationsParOrganisationEtTenantDatabase(
                 p.priorite,
                 p.audience_type,
                 p.audience_valeur,
+                p.communication_channel_id,
                 p.medias,
                 p.statut,
                 p.statut_diffusion_diaspora,
                 p.date_publication,
+
+                ch.nom AS communication_channel_nom,
 
                 o.nom AS organisation_nom,
 
@@ -444,6 +464,11 @@ async function listerPublicationsParOrganisationEtTenantDatabase(
 
             INNER JOIN tenants t
                 ON t.id = p.tenant_id
+
+            LEFT JOIN communication_channels ch
+                ON ch.id=p.communication_channel_id
+                AND ch.tenant_id=p.tenant_id
+                AND ch.organisation_id=p.organisation_id
 
             WHERE
                 p.organisation_id = $1
@@ -2698,6 +2723,7 @@ async function listerNotificationsPersonneDatabase(
             `
             SELECT
                 n.id,
+                n.organisation_id,
                 n.type,
                 n.titre,
                 n.message,
@@ -2707,6 +2733,8 @@ async function listerNotificationsPersonneDatabase(
                 n.statut,
                 n.date_creation,
                 n.date_lecture,
+
+                t.code AS tenant_code,
 
                 o.nom AS organisation
 
@@ -9752,7 +9780,8 @@ async function orienterDemandeWorkspaceUnitDatabase(
     sourceUnitId,
     destinationUnitId,
     motif,
-    orienteePar
+    orienteePar,
+    peutGererDemandesNonAffectees = false
 ) {
     const client = await obtenirClientDatabase();
 
@@ -9791,6 +9820,14 @@ async function orienterDemandeWorkspaceUnitDatabase(
         }
 
         const demande = demandeResult.rows[0];
+
+        if (
+            demande.destination_unit_id === null
+            && peutGererDemandesNonAffectees !== true
+        ) {
+            await client.query("ROLLBACK");
+            return { succes: false, code: "GESTION_NON_AFFECTEES_INTERDITE" };
+        }
 
         if (!["NOUVELLE", "EN_COURS"].includes(demande.statut)) {
             await client.query("ROLLBACK");
@@ -10025,7 +10062,8 @@ async function orienterDemandeWorkspaceUnitDatabase(
 // CONTEXTE INSTITUTIONNEL DE LA PERSONNE CONNECTEE
 // =========================================================
 // Retourne uniquement les organisations auxquelles la personne
-// est explicitement rattachee dans le tenant demande.
+// est explicitement rattachee. Sans tenant demande, le contexte
+// personnel peut agréger les rattachements de plusieurs tenants.
 // L'identite provient de la session, jamais du navigateur.
 async function listerOrganisationsPersonneDatabase(personneId, tenantCode) {
     const resultat = await executerRequete(
@@ -10042,11 +10080,11 @@ async function listerOrganisationsPersonneDatabase(personneId, tenantCode) {
             ON t.id = o.tenant_id
         WHERE
             rel.personne_id = $1
-            AND t.code = $2
+            AND ($2::text IS NULL OR t.code = $2)
             AND t.actif = TRUE
         ORDER BY o.nom, o.id
         `,
-        [Number(personneId), String(tenantCode)]
+        [Number(personneId), tenantCode == null ? null : String(tenantCode)]
     );
     return resultat.rows;
 }

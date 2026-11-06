@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><title>Associations partenaires · SATEER</title>
+  <link rel="stylesheet" href="/sateer-canaux.css">
+  <style>
+    .partner-layout{display:grid;gap:22px;margin-top:22px}.partner-card{border-top:1px solid #e3eee6;padding:17px 0;display:grid;gap:10px}.partner-card:first-child{border-top:0}.partner-top{display:flex;justify-content:space-between;gap:12px;align-items:start}.partner-top h3{margin:0}.partner-actions{display:flex;gap:8px;flex-wrap:wrap}.partner-actions button{width:auto}.partner-sub{font-size:13px;color:#60756a;line-height:1.5}.partner-empty{color:#60756a;padding:12px 0}.partner-two{display:grid;grid-template-columns:1fr 1fr;gap:20px}.partner-status{min-height:22px}.partner-history{border-bottom:1px solid #e3eee6;padding:12px 0}.partner-history strong,.partner-history small{display:block}.partner-history small{color:#60756a;margin-top:4px}@media(max-width:700px){.partner-two{grid-template-columns:1fr}.partner-top{display:grid}}
+  </style>
+</head>
+<body><main class="wrap">
+  <a class="back" id="back" href="/dashboard-vice-consul.html">← Retour au pilotage</a>
+  <header class="hero"><div class="eyebrow">SATEER · Espace professionnel</div><h1>Associations partenaires</h1>
+    <p>Reliez une association existante au Consulat. Elle reste une organisation indépendante et doit accepter l’invitation avant de recevoir les communications ciblées.</p>
+  </header>
+  <div class="partner-layout">
+    <section class="panel"><div class="toprow"><h2>Associations du réseau</h2><span class="chip" id="count">Chargement…</span></div>
+      <p class="muted">Les publications et autorisations de relais restent séparées de la relation entre organisations.</p>
+      <div id="associations" aria-live="polite"></div><p id="status" class="status partner-status" role="status"></p>
+    </section>
+    <div class="partner-two">
+      <section class="panel"><h2>Demandes de rattachement</h2><p class="muted">Une association peut aussi demander à rejoindre le réseau.</p><div id="requests"></div></section>
+      <section class="panel"><h2>Historique des relais</h2><p class="muted">Les contenus originaux restent signés par leur auteur institutionnel.</p><div id="history"></div></section>
+    </div>
+  </div>
+</main><script src="/auth-client.js"></script><script src="/associations-partenaires.js"></script></body>
+</html>

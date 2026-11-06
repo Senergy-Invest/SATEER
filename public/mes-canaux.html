@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="fr">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>Retour à Mon Consulat · SATEER</title>
-</head><body>
-<p>Les informations officielles sont désormais centralisées dans <a id="retour" href="/consulat.html">Mon Consulat</a>.</p>
-<script>
-(function () {
-  const params = new URLSearchParams(window.location.search);
-  const destination = new URL('/consulat.html', window.location.origin);
-  for (const key of ['organisation', 'tenant']) {
-    const value = params.get(key);
-    if (value) destination.searchParams.set(key, value);
-  }
-  document.getElementById('retour').href = destination.pathname + destination.search;
-  window.location.replace(destination.pathname + destination.search);
-})();
-</script>
-</body></html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex"><title>Notifications par canal · SATEER</title>
+  <link rel="stylesheet" href="/sateer-canaux.css">
+</head>
+<body><main class="wrap">
+  <a class="back" id="back" href="/consulat.html">← Retour à Mon Consulat</a>
+  <header class="hero"><div class="eyebrow">SATEER · Mon Consulat</div><h1>Notifications par canal</h1>
+    <p>Choisissez les canaux pour lesquels vous souhaitez être prévenu. Même sans notifications, vous pouvez consulter toutes les informations officielles auxquelles vous avez droit.</p>
+  </header>
+  <section class="panel" style="margin-top:24px">
+    <div class="toprow"><h2>Canaux disponibles</h2><span class="chip" id="count">Chargement…</span></div>
+    <p class="muted" id="org"></p><div id="channels" aria-live="polite">Chargement…</div>
+    <p class="status" id="status" role="status"></p>
+  </section>
+</main><script src="/auth-client.js"></script><script src="/mes-canaux.js"></script></body>
+</html>

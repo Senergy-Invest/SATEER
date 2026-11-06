@@ -1254,13 +1254,20 @@ async function revoquerAccesDashboard(personneId) {
 async function initialiserDashboardOperationnel() {
     try {
         const contexte = await window.SATEER_CONTEXT_READY;
-        tenant = contexte.tenantCode;
         const organisation = await window.SATEER_choisirOrganisation(organisationId);
         if (!organisation) throw new Error("Organisation non sélectionnée ou non autorisée.");
         organisationId = Number(organisation.id);
+        tenant = organisation.tenant_code || contexte.tenantCode;
+        if (!tenant) throw new Error("Le contexte du tenant de cette organisation est indisponible.");
         const lienGestion = document.getElementById("lienGestionCanaux");
         if (lienGestion) {
             lienGestion.href = `/gestion-canaux.html?organisation=${encodeURIComponent(organisationId)}&tenant=${encodeURIComponent(tenant)}`;
+        }
+        const lienAssociations = document.getElementById("lienAssociationsPartenaires");
+        if (lienAssociations) {
+            lienAssociations.href = `/associations-partenaires.html?organisation=${encodeURIComponent(organisationId)}&tenant=${encodeURIComponent(tenant)}`;
+            const relationAccess = await fetch(`/api/organisations/${encodeURIComponent(organisationId)}/association-partners?tenant=${encodeURIComponent(tenant)}`, {credentials:"same-origin",cache:"no-store"});
+            lienAssociations.hidden = !relationAccess.ok;
         }
         const lienPublication = document.getElementById("lienPublicationInstitutionnelle");
         if (lienPublication) {

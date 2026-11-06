@@ -57,7 +57,7 @@ function installRoutingRoutes(app, exigerSession) {
         FROM organisation_routing_rules r JOIN organisation_units u ON u.id=r.destination_unit_id
         JOIN organisations o ON o.id=r.organisation_id AND o.id=u.organisation_id
         JOIN tenants t ON t.id=o.tenant_id AND t.id=r.tenant_id
-        WHERE r.organisation_id=$1 AND t.code=$2 AND r.source=$3 AND r.actif=TRUE ORDER BY r.category_key`,[org,tenant,CHANNEL]);
+        WHERE r.organisation_id=$1 AND t.code=$2 AND r.source=$3 ORDER BY r.category_key`,[org,tenant,CHANNEL]);
       return res.set('Cache-Control','no-store').json({statut:'REGLES_CHARGEES',regles:data.rows});
     } catch(e){ console.error('P6 listing',e);return res.status(500).json({statut:'ERREUR_REGLES'}); }
   });
@@ -133,9 +133,9 @@ async function routeNewCitizenCase({ demandeId, organisationId, tenantCode, cate
       WHERE id=$3 AND organisation_id=$4 AND destination_unit_id IS NULL RETURNING id`,[r.destination_unit_id,'Orientation automatique par catégorie ('+r.category_key+')',id,org]);
     if(!updated.rowCount){await client.query('ROLLBACK');return {statut:'DOSSIER_DEJA_AFFECTE'};}
     await client.query(`INSERT INTO demande_orientations(demande_id,ancienne_unit_id,nouvelle_unit_id,orientee_par,motif,metadata)
-      VALUES($1,NULL,$2,NULL,'Orientation automatique par règle',jsonb_build_object('automatique',true,'ruleId',$3,'categorie',$4))`,[id,r.destination_unit_id,r.rule_id,cat]);
+      VALUES($1,NULL,$2,NULL,'Orientation automatique par règle',jsonb_build_object('automatique',true,'ruleId',$3::bigint,'categorie',$4::text))`,[id,r.destination_unit_id,r.rule_id,cat]);
     await client.query(`INSERT INTO demande_history(tenant_id,demande_id,auteur_personne_id,ancien_statut,nouveau_statut,action,commentaire,metadata)
-      VALUES($1,$2,NULL,$3,$3,'ORIENTATION_AUTOMATIQUE','Demande dirigée vers un bureau configuré.',jsonb_build_object('ruleId',$4,'destinationUnitId',$5))`,[d.rows[0].tenant_id,id,d.rows[0].statut,r.rule_id,r.destination_unit_id]);
+      VALUES($1,$2,NULL,$3,$3,'ORIENTATION_AUTOMATIQUE','Demande dirigée vers un bureau configuré.',jsonb_build_object('ruleId',$4::bigint,'destinationUnitId',$5::integer))`,[d.rows[0].tenant_id,id,d.rows[0].statut,r.rule_id,r.destination_unit_id]);
     await client.query('COMMIT');return {statut:'ORIENTEE',destinationUnitId:r.destination_unit_id,bureau:r.bureau};
   }catch(e){await client.query('ROLLBACK').catch(()=>{});console.error('P6 auto routing failure',e);return {statut:'ORIENTATION_EN_ATTENTE'};}finally{client.release();}
 }

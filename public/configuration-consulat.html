@@ -127,7 +127,7 @@
     <section role="tabpanel" data-panel="routage" class="sx-p4-panel" hidden>
       <div class="sx-p4-heading"><div><h2>Qui reçoit quoi ?</h2><p>Choisissez le type de demande et le bureau qui doit la recevoir automatiquement.</p></div></div>
       <div class="sx-p4-box sx-p51-main-card">
-        <div class="sx-p4-form sx-p4-two">
+        <form id="sx-p6-rule-form" class="sx-p4-form sx-p4-two">
           <label>Quand un Sénégalais demande…
             <select id="sx-p4-demo-type">
               <option value="PASSEPORT">Passeport</option><option value="CARTE_CONSULAIRE">Carte consulaire</option>
@@ -139,12 +139,12 @@
           <label>Quel bureau doit recevoir la demande ?
             <select id="sx-p4-demo-unit"><option value="">Choisir un bureau autorisé</option></select>
           </label>
-        </div>
-        <p id="sx-p4-route-preview" class="sx-p4-preview" role="status">Choisissez un bureau.</p>
-        <div class="sx-p6-actions"><button type="button" class="sx-p4-primary" id="sx-p6-save">Enregistrer cette règle</button>
-          <button type="button" class="sx-p4-button" id="sx-p6-refresh">Actualiser les règles</button></div>
+          <div class="sx-p6-actions"><button type="submit" class="sx-p4-primary" id="sx-p6-save">Enregistrer cette règle</button>
+            <button type="button" class="sx-p4-button" id="sx-p6-refresh">Actualiser les règles</button></div>
+        </form>
         <p id="sx-p6-status" role="status" aria-live="polite">Chargement des règles enregistrées…</p>
-        <p class="sx-p6-info">Une règle s'applique uniquement aux <strong>nouvelles demandes</strong> créées dans Mon Consulat. Le bureau doit disposer des activités « Recevoir des entrées » et « Consulter une boîte de réception ». Les agents doivent avoir les permissions et les affectations nécessaires.</p>
+        <p class="sx-p6-info">Une règle s'applique uniquement aux <strong>nouvelles demandes</strong> créées dans Mon Consulat. Sans destination valide, la demande reste en attente ; les bureaux ordinaires ne la voient pas. Seuls les acteurs autorisés à gérer les demandes non affectées à l'échelle de l'organisation peuvent les consulter et les orienter. Configurez <strong>Toutes les catégories sans règle</strong> pour envoyer les autres demandes à la file de qualification. Le bureau destinataire doit disposer des activités « Recevoir des entrées » et « Consulter une boîte de réception ».</p>
+        <p class="sx-p4-muted">« Désactiver » conserve une règle inactive ; utilisez « Réactiver » dans la liste ou enregistrez de nouveau la même catégorie pour la remettre en vigueur.</p>
       </div>
       <div class="sx-p4-box"><h3>Règles actuellement enregistrées</h3>
         <p class="sx-p4-muted">Les documents exigés et le délai indicatif se définissent dans le catalogue des démarches. La liste doit être validée par le Consulat.</p>
@@ -160,7 +160,7 @@
     </section>
   </section>
 </main>
-<script src="/auth-client.js"></script><script defer src="/sateer-p4.js"></script><script defer src="/p6-routing-ui.js"></script>
+<script src="/auth-client.js"></script><script defer src="/sateer-p4.js?v=p6-form-sync-2"></script><script defer src="/p6-routing-ui.js?v=p6-form-sync-2"></script>
 <script defer src="/p61-activites.js"></script>
 <script defer src="/p62-agents.js"></script>
 <script defer src="/p63-invitations.js"></script>
