@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="/sateer-p2.css">
 <!-- SATEER_EMAIL_VICE_ENTRY_V1 -->
 <link rel="stylesheet" href="/sateer-vice-email-entry.css">
-<script src="/sateer-vice-email-entry.js" defer></script>
+<script src="/sateer-vice-email-entry.js?v=p2fix1" defer></script>
 </head>
 
 <body class="sateer-experience sateer-vice">
@@ -734,7 +734,7 @@
   (function(){const p=new URLSearchParams(location.search),a=document.getElementById("verificationProButton"),box=document.getElementById("identityVerificationAdmin");if(!a||!box)return;const org=p.get("organisation"),tenant=p.get("tenant")||"SN";if(!/^\d+$/.test(org||"")){box.hidden=true;return;}const u=new URL(a.href);u.searchParams.set("organisation",org);u.searchParams.set("tenant",tenant);a.href=u.pathname+u.search;box.hidden=true;fetch("/api/verifications-identite/instruction?organisation="+encodeURIComponent(org)+"&tenant="+encodeURIComponent(tenant),{credentials:"same-origin",cache:"no-store"}).then(r=>{if(r.ok)box.hidden=false}).catch(()=>{});})();
 </script>
     <script src="/sateer-pilotage-demandes.js" defer></script>
-    <script src="/sateer-p2.js" defer></script>
+    <script src="/sateer-p2.js?v=p2fix1" defer></script>
 </body>
 
 </html>

@@ -27,3 +27,24 @@
 .sateer-vice-email-entry-hint {color: #e1f0f5 !important;font-weight: 500 !important;font-size: .77rem !important;}
 .sateer-vice-email-entry[aria-disabled="true"] {opacity: .65 !important;cursor: not-allowed !important;}
 @media(max-width: 520px){.sateer-vice-email-entry{display: flex !important;width: 100% !important; margin: .6rem 0 !important;}}
+
+
+/* SATEER_VICE_EMAIL_P2_CONTRASTE_V1 */
+/* Le bloc compact sx-p2-root remplace les anciennes sections cachées. */
+body.sateer-vice #sx-p2-root .sx-p2-actions a.sateer-vice-email-entry,
+body.sateer-vice #sx-p2-root .sx-p2-actions a.sateer-vice-email-entry:visited {
+  display: inline-flex !important;
+  background: #16324f !important;
+  color: #ffffff !important;
+  border-color: #16324f !important;
+  text-decoration: none !important;
+}
+body.sateer-vice #sx-p2-root .sx-p2-actions a.sateer-vice-email-entry:hover,
+body.sateer-vice #sx-p2-root .sx-p2-actions a.sateer-vice-email-entry:focus-visible {
+  background: #214e72 !important;
+  color: #ffffff !important;
+  border-color: #214e72 !important;
+}
+body.sateer-vice #sx-p2-root .sx-p2-actions a.sateer-vice-email-entry .sateer-vice-email-entry-hint {
+  color: #e5f2f8 !important;
+}

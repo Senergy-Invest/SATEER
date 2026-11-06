@@ -62,7 +62,7 @@
     put(metrics, 'h2', 'Activité consulaire');
     const cards = put(metrics, 'div', undefined, 'sx-p2-metrics');
     for (const [id, name, hint] of [
-      ['new', 'Nouvelles', 'À orienter'], ['doing', 'En cours', 'En traitement'],
+      ['new', 'Nouvelles', 'À prendre en charge'], ['doing', 'En cours', 'En traitement'],
       ['done', 'Traitées', 'Clôturées'], ['alert', 'À surveiller', 'Prioritaires']
     ]) {
       const c = put(cards, 'article', undefined, 'sx-p2-metric');
@@ -183,10 +183,16 @@
     if (arr.length > 15) put(tbody.parentElement.parentElement,'p', `${fmt(arr.length - 15)} catégories supplémentaires non affichées.`, 'sx-p2-help');
     set('sx-p2-publications', fmt(data.publications?.publiees));
     set('sx-p2-users', fmt(data.diaspora?.total_usagers));
+    /* SATEER_VICE_P2_REFERENCES_VISIBLES_V1 */
+    const refDossier = x => {
+      const libelle = x.objet || x.categorie || 'Demande';
+      const raw = String(x.id ?? x.demande_id ?? x.demandeId ?? '');
+      return /^[1-9][0-9]{0,14}$/.test(raw) ? `Dossier n°${raw} · ${libelle}` : libelle;
+    };
     const recent = Array.isArray(data.activiteRecente?.demandes) ? data.activiteRecente.demandes : [];
-    fillList('sx-p2-latest', recent, 'Aucune demande récente.', x => [x.objet || x.categorie || 'Demande', x.statut || '—']);
+    fillList('sx-p2-latest', recent, 'Aucune demande récente.', x => [refDossier(x), x.statut || '—']);
     const alerts = Array.isArray(data.demandesASurveiller) ? data.demandesASurveiller : [];
-    fillList('sx-p2-attention', alerts, 'Aucun dossier signalé.', x => [x.objet || 'Demande', x.priorite || x.statut || 'À vérifier', 'warn']);
+    fillList('sx-p2-attention', alerts, 'Aucun dossier signalé.', x => [refDossier(x), x.priorite || x.statut || 'À vérifier', 'warn']);
     const services = Array.isArray(units) ? units.filter(u => u.canViewAnalytics && (num(u.total_cases) || num(u.urgent_cases))) : [];
     fillList('sx-p2-teams', services.sort((a,b)=>num(b.total_cases)-num(a.total_cases)), 'Aucune activité affectée aux services pour le moment.', u => [u.nom || 'Unité', `${fmt(u.total_cases)} dossiers · ${fmt(u.urgent_cases)} urgents`,num(u.urgent_cases)?'warn':undefined]);
   }
