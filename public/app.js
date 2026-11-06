@@ -194,10 +194,12 @@ function afficherNotifications(notifications) {
 async function afficherAccesProfessionnels(contexte) {
     const section = document.getElementById("professionnelsSection");
     const container = document.getElementById("professionnelsContainer");
+    if (!section || !container) return;
+    container.replaceChildren();
     const orgs = Array.isArray(contexte.organisations) ? contexte.organisations : [];
     for (const org of orgs) {
         const tenant = org.tenant_code || contexte.tenantCode;
-        if (!tenant) continue;
+        if (!tenant || org.id == null) continue;
         if (org.type === "ASSOCIATION") {
             const associationLink = element("a", "sx-professional-card");
             associationLink.href = lienVers("/association-communications.html", org.id, tenant);
@@ -206,28 +208,55 @@ async function afficherAccesProfessionnels(contexte) {
             associationLink.append(element("span", "sx-professional-arrow", "Ouvrir →"));
             container.append(associationLink);
         }
+
+        let dashboards = {};
         try {
             const response = await fetch(
                 `/api/organisations/${encodeURIComponent(org.id)}/dashboards/acces?tenant=${encodeURIComponent(tenant)}`,
                 { credentials: "same-origin", cache: "no-store" }
             );
-            if (!response.ok) continue;
-            const data = await response.json();
-            const dashboards = data.dashboards || {};
-            for (const [autorise, titre, path, explication] of [
-                [dashboards.operationnel, "Pilotage opérationnel", "/dashboard-vice-consul.html", "Superviser les services et les demandes"],
-                [dashboards.strategique, "Pilotage stratégique", "/dashboard-consul.html", "Suivre l'activité générale de la mission"]
-            ]) {
-                if (!autorise) continue;
-                const a = element("a", "sx-professional-card");
-                a.href = lienVers(path, org.id, tenant);
-                a.append(element("strong", "", titre));
-                a.append(element("span", "", `${org.nom || "Organisation"} · ${explication}`));
-                a.append(element("span", "sx-professional-arrow", "Ouvrir →"));
-                container.append(a);
+            if (response.ok) {
+                const data = await response.json();
+                dashboards = data.dashboards || {};
             }
         } catch (erreur) {
-            console.warn("Accès professionnel indisponible :", erreur);
+            console.warn("Accès dashboards indisponibles :", erreur);
+        }
+
+        for (const [autorise, titre, path, explication] of [
+            [dashboards.operationnel, "Pilotage opérationnel", "/dashboard-vice-consul.html", "Superviser les services et les demandes"],
+            [dashboards.strategique, "Pilotage stratégique", "/dashboard-consul.html", "Suivre l'activité générale de la mission"]
+        ]) {
+            if (!autorise) continue;
+            const a = element("a", "sx-professional-card");
+            a.href = lienVers(path, org.id, tenant);
+            a.append(element("strong", "", titre));
+            a.append(element("span", "", `${org.nom || "Organisation"} · ${explication}`));
+            a.append(element("span", "sx-professional-arrow", "Ouvrir →"));
+            container.append(a);
+        }
+
+        // Le réseau associatif est une fonction professionnelle distincte du
+        // dashboard opérationnel. Ne jamais déduire le droit à partir d'un
+        // titre de fonction, d'un rôle supposé ou du simple rattachement.
+        // L'API applique MANAGE_ORGANISATION_RELATIONSHIPS côté serveur.
+        if (org.type === "CONSULAT" && !dashboards.operationnel && !dashboards.strategique) {
+            try {
+                const response = await fetch(
+                    `/api/organisations/${encodeURIComponent(org.id)}/association-partners?tenant=${encodeURIComponent(tenant)}`,
+                    { credentials: "same-origin", cache: "no-store" }
+                );
+                if (response.ok) {
+                    const a = element("a", "sx-professional-card");
+                    a.href = lienVers("/dashboard-vice-consul.html", org.id, tenant);
+                    a.append(element("strong", "", "Mon espace professionnel"));
+                    a.append(element("span", "", `${org.nom || "Consulat"} · Gestion du réseau associatif`));
+                    a.append(element("span", "sx-professional-arrow", "Ouvrir →"));
+                    container.append(a);
+                }
+            } catch (erreur) {
+                console.warn("Accès au réseau associatif indisponible :", erreur);
+            }
         }
     }
     section.hidden = !container.children.length;
@@ -260,16 +289,27 @@ async function chargerMonSateer() {
         // La page personnelle reste utilisable même si l'API du résumé échoue.
         const tenants = [...new Set(organisations.map(org => org.tenant_code || contexte.tenantCode).filter(Boolean))];
         const responses = await Promise.all(tenants.map(async tenant => {
-            const response = await fetch(
-                `/api/mon-sateer/${encodeURIComponent(personneId)}?tenant=${encodeURIComponent(tenant)}`,
-                { credentials: "same-origin", cache: "no-store" }
-            );
-            if (!response.ok) throw new Error(`Mon SATEER HTTP ${response.status}`);
-            return response.json();
+            try {
+                const response = await fetch(
+                    `/api/mon-sateer/${encodeURIComponent(personneId)}?tenant=${encodeURIComponent(tenant)}`,
+                    { credentials: "same-origin", cache: "no-store" }
+                );
+                if (!response.ok) throw new Error(`Mon SATEER HTTP ${response.status}`);
+                return await response.json();
+            } catch (erreur) {
+                // L'indisponibilité d'un résumé personnel ne doit pas bloquer
+                // les espaces institutionnels du compte authentifié.
+                console.warn("Résumé Mon SATEER indisponible :", erreur);
+                return { notifications: [], resumeIndisponible: true };
+            }
         }));
         const data = responses[0] || {};
         if (data.personne) afficherIdentite(data.personne, organisations);
         afficherNotifications(responses.flatMap(item => item.notifications || []));
+        if (responses.length && responses.every(item => item.resumeIndisponible)) {
+            document.getElementById("notificationsContainer").replaceChildren(
+                element("div", "sx-notification-empty", "Notifications indisponibles pour le moment."));
+        }
         const directLists = await Promise.all(apercus.map(chargerApercuConsulat));
         await afficherRelaisAssociatifs(organisations, contexte.tenantCode, directLists.flat());
         await afficherAccesProfessionnels(contexte);
