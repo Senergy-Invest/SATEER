@@ -212,8 +212,10 @@ function afficherDemandes(
             "list-subtitle";
 
 
+        // Référence stable pour distinguer des demandes au titre identique.
+        // textContent conserve l'échappement des valeurs métier.
         sousTitre.textContent =
-            demande.categorie;
+            `Dossier n°${demande.id} · ${demande.categorie || "—"}`;
 
 
         contenu.appendChild(
