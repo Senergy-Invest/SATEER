@@ -1,0 +1,141 @@
+/* SATEER Bordeaux – finition du dashboard Consul, 2026-11-06.
+   Feuille chargee APRES les themes precedents; styles confines au tableau strategique.
+   Aucune influence sur les calculs, le routage, les droits ou les autres espaces. */
+body.sateer-consul-finition {
+  --scf-ink: #102d49;
+  --scf-muted: #314b61;
+  --scf-border: #b9ccdf;
+  --scf-highlight: #006158;
+  background: #dfeaf4 !important;
+  color: var(--scf-ink) !important;
+}
+body.sateer-consul-finition .page {
+  color: var(--scf-ink) !important;
+}
+/* Le premier bandeau structure l'ecran et casse le fond blanc uniforme. */
+body.sateer-consul-finition .page .hero,
+body.sateer-consul-finition .page .hero.sateer-consul-entete-visible {
+  background: linear-gradient(115deg, #0c2841 0%, #17445f 66%, #075950 100%) !important;
+  border-color: #0c2841 !important;
+  box-shadow: 0 15px 35px rgba(12,40,65,.17) !important;
+  color: #ffffff !important;
+}
+body.sateer-consul-finition .page .hero :is(h1,h2,h3,h4,p,div,span,small,strong,b,#organisationNom,.muted) {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+body.sateer-consul-finition .page .hero .eyebrow {
+  color: #d3f6f0 !important;
+}
+/* Des sections colorees et delimitees plutot que des rectangles blancs. */
+body.sateer-consul-finition .page .section {
+  background: linear-gradient(135deg, #eaf2fb 0%, #e1ecf7 100%) !important;
+  border: 1px solid var(--scf-border) !important;
+  border-left: 5px solid #0b686a !important;
+  box-shadow: 0 7px 18px rgba(16,45,73,.045) !important;
+  color: var(--scf-ink) !important;
+}
+body.sateer-consul-finition .page .section:nth-of-type(even) {
+  background: linear-gradient(135deg, #e5f1f1 0%, #e3edf5 100%) !important;
+  border-left-color: #254f73 !important;
+}
+body.sateer-consul-finition .page .section :is(h1,h2,h3,h4) {
+  color: var(--scf-ink) !important;
+}
+body.sateer-consul-finition .page .section .eyebrow {
+  color: #174b65 !important;
+}
+body.sateer-consul-finition .page :is(.section,.panel) :is(.muted, .strategic-bar-value, p) {
+  color: var(--scf-muted) !important;
+}
+body.sateer-consul-finition .page .panel {
+  background: #f4f8fd !important;
+  border: 1px solid #bbccdc !important;
+  box-shadow: 0 3px 9px rgba(16,45,73,.035) !important;
+  color: var(--scf-ink) !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi {
+  background: #f6f9fd !important;
+  border: 1px solid #bed0e0 !important;
+  box-shadow: 0 3px 8px rgba(16,45,73,.045) !important;
+  color: var(--scf-ink) !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi:nth-child(even):not(.sateer-strat-kpi--accent):not(.sateer-strat-kpi--urgent) {
+  background: #e4eff9 !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi :is(span, p, small, label, div) {
+  color: #28455f !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi :is(strong,b,output,[id^="kpi"]) {
+  color: #10314d !important;
+}
+/* Cas speciaux : carte principale sombre et urgence chaleureuse. */
+body.sateer-consul-finition .page .sateer-strat-kpi.sateer-strat-kpi--accent {
+  background: linear-gradient(130deg, #113753, #07594f) !important;
+  border-color: #113753 !important;
+  color: #ffffff !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi--accent :is(span,p,small,label,div,strong,b,output,[id^="kpi"]) {
+  color: #ffffff !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi.sateer-strat-kpi--urgent {
+  background: #fff0df !important;
+  border-color: #e4ba97 !important;
+}
+body.sateer-consul-finition .page .sateer-strat-kpi--urgent :is(strong,b,output,[id^="kpi"]) {
+  color: #893312 !important;
+}
+body.sateer-consul-finition .page .dashboard-list-item {
+  border-bottom-color: #c7d6e4 !important;
+}
+body.sateer-consul-finition .page .strategic-bar-track {
+  background: #c4d9e5 !important;
+}
+body.sateer-consul-finition .page .strategic-bar-fill {
+  background: linear-gradient(90deg, #0b575a, #107c7b) !important;
+}
+/* Le lien retour doit TOUJOURS ressembler a un vrai bouton contraste.
+   Cette regle est prioritaire sur les anciens liens verts. */
+body.sateer-consul-finition .page a.sateer-consul-return,
+body.sateer-consul-finition .page a.sateer-consul-return-visible {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: .5rem !important;
+  width: fit-content !important;
+  min-height: 46px !important;
+  padding: 12px 20px !important;
+  border: 2px solid #0d2942 !important;
+  border-radius: 12px !important;
+  background: #143955 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-decoration: none !important;
+  text-shadow: none !important;
+  font-weight: 750 !important;
+  line-height: 1.3 !important;
+  box-shadow: 0 5px 12px rgba(16,45,73,.14) !important;
+}
+body.sateer-consul-finition .page a.sateer-consul-return :is(span,strong,b,em,small),
+body.sateer-consul-finition .page a.sateer-consul-return-visible :is(span,strong,b,em,small) {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+body.sateer-consul-finition .page a.sateer-consul-return:hover,
+body.sateer-consul-finition .page a.sateer-consul-return-visible:hover {
+  background: #205675 !important;
+  color: #ffffff !important;
+}
+body.sateer-consul-finition .page a.sateer-consul-return:focus-visible,
+body.sateer-consul-finition .page a.sateer-consul-return-visible:focus-visible {
+  outline: 3px solid #c0761e !important;
+  outline-offset: 4px !important;
+}
+@media (max-width: 600px) {
+  body.sateer-consul-finition .page .section { border-left-width: 4px !important; }
+  body.sateer-consul-finition .page a.sateer-consul-return-visible {
+    max-width: 100%;
+    white-space: normal;
+    justify-content: center;
+  }
+}
