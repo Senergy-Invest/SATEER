@@ -6,6 +6,7 @@ const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
 const {Client}=require('pg');
+const {AuditAuthCache}=require('./bordeaux-recette-auth-cache');
 const ROOT=process.cwd();
 const ORG=70, TENANT='P6V_3B5AC5AB9DB04657';
 const DB='sateer_test', SYS='7699611241381229531';
@@ -36,12 +37,7 @@ async function req(url,cookie,options={}){
   try {body=raw?JSON.parse(raw):{};}catch{body=null;}
   return {status:res.status,body, contentType:res.headers.get('content-type')||'',rawLength:raw.length,headers:res.headers};
 }
-async function login(user){
-  const res=await req('/api/auth/login',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiant:user.login,motDePasse:user.password})});
-  if(res.status!==200)return null;
-  const cookies=typeof res.headers.getSetCookie==='function'?res.headers.getSetCookie():[res.headers.get('set-cookie')||''];
-  return cookies.map(x=>x.split(';')[0]).find(x=>x.startsWith('sateer_session='))||null;
-}
+
 function jsView(f,needle){
   if (!fs.existsSync(f))return fail('UI '+f,'fichier manquant');
   const data=fs.readFileSync(f,'utf8');
@@ -95,15 +91,26 @@ async function run(){
     ['Membre association','MEMBRE_ASSOCIATION',assoRaw,'association']
   ];
   const identities={}; const cookies={};
+  const cache=new AuditAuthCache(path.join(ROOT,'.sateer-backups','recette-sessions-temporaires.json'));
+  let ipLimitReached=false;
   for(const [name,label,raw,kind] of persona){
+    if(ipLimitReached){skip('Authentification '+name,'non relancee : plafond HTTP 429 atteint pour cette IP');continue;}
     const user=credentials(raw,label);
     if(!user){skip(name,'identifiants de recette introuvables');continue;}
-    const cookie=await login(user);
-    if(!cookie){fail(name,'connexion refusée');continue;}
-    const me=await req('/api/auth/me',cookie);
+    const auth=await cache.authenticate(label,user,req);
+    if(!auth.ok){
+      const diagnostic='HTTP '+auth.status+' / '+auth.code;
+      if(auth.rateLimited){
+        ipLimitReached=true;
+        skip('Authentification '+name,diagnostic+' (10 connexions/IP sur 15 min ; ne pas bloquer les comptes)');
+      }else fail('Authentification '+name,diagnostic);
+      continue;
+    }
+    const cookie=auth.cookie;
+    const me=auth.me;
     const person=Number(me.body?.personne?.id||me.body?.personneId||me.body?.personne_id||0);
     if(me.status!==200 || !me.body){fail(name,'/api/auth/me non disponible');continue;}
-    pass('Authentification '+name,'HTTP 200');
+    pass('Authentification '+name,auth.cached?'session de recette verifiee':'HTTP 200');
     identities[name]={person,kind};cookies[name]=cookie;
     if(kind==='citizen'){
       if(!person){fail(name+' identité','personne.id absent');continue;}
@@ -182,6 +189,10 @@ async function run(){
   fs.writeFileSync(out,JSON.stringify(summary,null,2)+'\n',{mode:0o600});
   console.log(`\n=== RECETTE_MULTI_PROFILS : ${tested} OK / ${failCount} ECHEC / ${warnings.length} NON_TESTE ===`);
   console.log('Rapport JSON (sans mot de passe) : '+out);
-  if(failCount>0)process.exitCode=1;
+  if(failCount>0) process.exitCode=1;
+  else if(warnings.length>0) {
+    console.log('RECETTE_PARTIELLE : profils non testes, ne pas declarer validation complete.');
+    process.exitCode=2;
+  }
 }
 run().catch(err=>{console.error('STOP_RECETTE_MULTI_PROFILS : '+err.message);process.exitCode=1;});
