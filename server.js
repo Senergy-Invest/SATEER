@@ -105,6 +105,12 @@ app.use(
     "/api/auth",
     authRouter
 );
+// Boîte e-mail entièrement synthétique du pilote Bordeaux, non montée hors sateer_test.
+if (process.env.PGDATABASE === 'sateer_test') {
+    const { createEmailDemoRouter } = require('./bordeaux-email-demo-http');
+    app.use('/api/bordeaux-email-demo', exigerSession, createEmailDemoRouter());
+}
+
 // Lot 1R - Identité personnelle SATEER Core (session obligatoire côté route).
 const { identityRouter } = require("./identity-http");
 app.use("/api/mon-identite", identityRouter);
