@@ -105,7 +105,7 @@ function setup(app,exigerSession){
    const missing=proc.piecesObligatoires.filter(cat=>!provided.has(cat));
    if(missing.length){await client.query('ROLLBACK');return status(res,409,'PIECES_MANQUANTES',{pieces:missing});}
    const create=await client.query(`INSERT INTO demandes(tenant_id,organisation_id,personne_id,categorie,objet,description,statut,priorite,canal,metadata)
-    SELECT t.id,o.id,$3,$4,$5,$6,'NOUVELLE','NORMALE','MON_CONSULAT',jsonb_build_object('procedureCode',$7,'catalogueMisAJour',$8::text,'piecesPartagees',$9::int,'delaiIndicatifJours',$10::int,'piecesObligatoires',$11::text[])
+    SELECT t.id,o.id,$3,$4,$5,$6,'NOUVELLE','NORMALE','MON_CONSULAT',jsonb_build_object('procedureCode',$7::text,'catalogueMisAJour',$8::text,'piecesPartagees',$9::int,'delaiIndicatifJours',$10::int,'piecesObligatoires',$11::text[])
     FROM organisations o JOIN tenants t ON t.id=o.tenant_id WHERE o.id=$1 AND t.code=$2
     RETURNING id,tenant_id`,[org,tenant,req.auth.personneId,proc.categorie,proc.titre,`Démarche guidée : ${proc.titre}. ${note}`.slice(0,1500),code,String(proc.maj),documents.length,proc.delaiIndicatifJours,proc.piecesObligatoires]);
    if(!create.rowCount)throw Error('ORG_ABSENTE');caseId=create.rows[0].id;
@@ -122,7 +122,7 @@ function setup(app,exigerSession){
      VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,[sharedId,caseId,req.auth.personneId,d.id,d.categorie,d.nom_original,d.mime_type,d.taille_octets]);
    }
    await client.query(`INSERT INTO demande_history(tenant_id,demande_id,auteur_personne_id,action,commentaire,metadata)
-     VALUES($1,$2,$3,'PIECES_TRANSMISES','Pièces jointes au dossier selon la sélection du citoyen.',jsonb_build_object('nombre',$4))`,[create.rows[0].tenant_id,caseId,req.auth.personneId,documents.length]);
+     VALUES($1,$2,$3,'PIECES_TRANSMISES','Pièces jointes au dossier selon la sélection du citoyen.',jsonb_build_object('nombre',$4::int))`,[create.rows[0].tenant_id,caseId,req.auth.personneId,documents.length]);
    await client.query('COMMIT');client.release();client=null;
    // Le routage P6 demeure responsable de l'orientation; un echec n'annule pas un dossier enregistre.
    let orientation={statut:'NON_ORIENTEE'};
