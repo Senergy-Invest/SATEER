@@ -300,3 +300,21 @@ body.sateer-consul-refonte .page .sateer-consul-return,
 body.sateer-consul-refonte .page .sateer-consul-return :is(span, strong, b, em) {
   color: #ffffff !important;
 }
+
+
+/* Pilote Bordeaux - lisibilite de l'en-tete institutionnel sur fond blanc.
+   Ce correctif est limite au dashboard Consul et ne touche aucune donnee. */
+body.sateer-consul-refonte .sateer-consul-entete-visible,
+body.sateer-consul-refonte .hero.sateer-consul-entete-visible {
+  background: #ffffff !important;
+  color: #142e49 !important;
+  border: 1px solid #dbe4ed !important;
+  box-shadow: 0 4px 17px rgba(26,47,74,.045) !important;
+}
+body.sateer-consul-refonte .sateer-consul-entete-visible :is(h1, h2, p, span, small, strong, b, .eyebrow, .muted, #organisationNom) {
+  color: #142e49 !important;
+  text-shadow: none !important;
+}
+body.sateer-consul-refonte .sateer-consul-entete-visible .eyebrow {
+  color: #193850 !important;
+}

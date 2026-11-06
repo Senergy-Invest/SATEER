@@ -20,7 +20,28 @@
     }
     return best;
   }
+
+  // Stabilise le contraste de l'en-tete de la page Consul, sans changer le dashboard.
+  // Les anciens styles peuvent imposer du texte clair sur un fond blanc.
+  function rendreEnteteLisible() {
+    if (typeof document.querySelector !== 'function') return;
+    const titre = document.querySelector('h1');
+    if (!titre || !/dashboard strat[eé]gique/i.test(titre.textContent || '')) return;
+    const entete = (typeof titre.closest === 'function' &&
+      titre.closest('header, .hero, .page-header, .dashboard-header')) || titre.parentElement;
+    if (!entete || entete === document.body || entete.id === 'dashboardContenu' || !entete.style) return;
+    entete.classList.add('sateer-consul-entete-visible');
+    // Couleurs imposees sur cet en-tete uniquement, meme face a des styles anciens.
+    entete.style.setProperty('background', '#ffffff', 'important');
+    entete.style.setProperty('color', '#142e49', 'important');
+    if (typeof entete.querySelectorAll === 'function') {
+      for (const noeud of entete.querySelectorAll('h1, h2, p, span, small, strong, b, .eyebrow, .muted, #organisationNom')) {
+        if (noeud.style) noeud.style.setProperty('color', '#142e49', 'important');
+      }
+    }
+  }
   function apply() {
+    rendreEnteteLisible();
     if (!document.body || !document.getElementById('dashboardContenu')) return;
     document.body.classList.add('sateer-consul-refonte');
     const cards = new Set();
