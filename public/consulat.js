@@ -256,8 +256,20 @@ function afficherDemandes(
             "click",
             () => {
 
-                window.location.href =
-                    `/demande-detail.html?demande=${demande.id}&organisation=${CONSULAT_ID}&source=MON_CONSULAT`;
+                // Le tenant doit accompagner le lien : sinon /api/context
+                // renvoie tenantCode=null et le detail est refuse a tort.
+                const destination = new URL("/demande-detail.html", window.location.origin);
+                const tenant = new URLSearchParams(window.location.search).get("tenant")
+                    || window.SATEER_CONTEXT?.tenantCode;
+                if (!tenant) {
+                    console.error("SATEER: contexte tenant absent pour le detail de demande.");
+                    return;
+                }
+                destination.searchParams.set("demande", String(demande.id));
+                destination.searchParams.set("organisation", String(CONSULAT_ID));
+                destination.searchParams.set("tenant", tenant);
+                destination.searchParams.set("source", "MON_CONSULAT");
+                window.location.href = destination.pathname + destination.search;
             }
         );
 

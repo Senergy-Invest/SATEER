@@ -164,8 +164,11 @@ backButton.addEventListener(
             "MON_CONSULAT"
         ) {
 
-            window.location.href =
-                "/consulat.html";
+            const retour = new URL("/consulat.html", window.location.origin);
+            if (ORGANISATION_ID) retour.searchParams.set("organisation", String(ORGANISATION_ID));
+            const tenant = params.get("tenant");
+            if (tenant) retour.searchParams.set("tenant", tenant);
+            window.location.href = retour.pathname + retour.search;
 
             return;
         }
@@ -675,9 +678,16 @@ async function chargerDetailDemande() {
         }
 
 
+        // Refuser un contexte absent ou contradictoire, sans jamais
+        // affaiblir les controles d'acces du backend.
+        const tenant = params.get("tenant");
+        if (!tenant || contexte.tenantCode !== tenant) {
+            throw new Error("Contexte du Consulat absent ou incoherent. Revenez a Mon Consulat et ouvrez la demande de nouveau.");
+        }
         const reponse =
             await fetch(
-                `/api/demandes/${DEMANDE_ID}?organisationId=${ORGANISATION_ID}&tenant=${encodeURIComponent(contexte.tenantCode)}`
+                `/api/demandes/${DEMANDE_ID}?organisationId=${ORGANISATION_ID}&tenant=${encodeURIComponent(tenant)}`,
+                { credentials: "same-origin", cache: "no-store" }
             );
 
 
