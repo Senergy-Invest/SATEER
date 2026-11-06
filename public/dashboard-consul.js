@@ -90,6 +90,9 @@
         renderEvolution(data.evolution_mensuelle);
         renderSimpleList("categoriesDemandes", data.demandes_par_categorie, "categorie", "total", "Aucune demande enregistrée.");
         renderSimpleList("couvertureTerritoriale", data.couverture_territoriale, "territoire", "personnes", "Aucune couverture territoriale renseignée.");
+        // Le chargement des indicateurs a reussi : ne laisser visible aucune alerte precedente.
+        const erreurDashboard = document.getElementById("dashboardErreur");
+        if (erreurDashboard) erreurDashboard.hidden = true;
         document.getElementById("dashboardContenu").hidden = false;
     }
 
@@ -127,7 +130,14 @@
                 throw new Error(message);
             }
             afficherDashboard(data);
-            await chargerAccesOperationnel();
+            // L'acces au dashboard operationnel est une fonctionnalite facultative.
+            // Une erreur reseau sur cet appel ne doit jamais rendre le dashboard
+            // strategique indisponible alors que ses indicateurs sont deja charges.
+            try {
+                await chargerAccesOperationnel();
+            } catch (erreurSecondaire) {
+                console.warn("Acces operationnel facultatif non charge :", erreurSecondaire);
+            }
         } catch (erreur) {
             document.getElementById("dashboardErreurMessage").textContent = erreur.message || "Erreur de chargement.";
             document.getElementById("dashboardErreur").hidden = false;

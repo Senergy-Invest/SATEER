@@ -139,3 +139,9 @@ body.sateer-consul-finition .page a.sateer-consul-return-visible:focus-visible {
     justify-content: center;
   }
 }
+
+/* SATEER : respecter les panneaux masques du dashboard strategique. */
+#dashboardErreur[hidden],
+#dashboardContenu[hidden] {
+  display: none !important;
+}
