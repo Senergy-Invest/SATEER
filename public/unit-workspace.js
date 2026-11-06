@@ -336,7 +336,7 @@
             const meta = creerElement(
                 "span",
                 "unit-workspace-case-meta",
-                `${citizen || "Usager"} · ${demande.statut || "—"}`
+                `Dossier n°${demande.id} · ${citizen || "Usager"} · ${demande.statut || "—"}`
             );
 
             const priority = creerElement(
@@ -393,6 +393,7 @@
         top.append(title, status);
         detail.appendChild(top);
 
+        addDetailLine(detail, "N° de dossier", `n°${demande.id}`);
         addDetailLine(
             detail,
             "Usager",
