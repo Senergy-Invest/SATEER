@@ -718,6 +718,17 @@ function afficherDernieresDemandes(
             informations.appendChild(
                 titre
             );
+            // SATEER_REF_PILOTE_BORDEAUX : référence stable sur toutes les listes.
+            const numeroDossier = Number(demande.id);
+            if (Number.isSafeInteger(numeroDossier) && numeroDossier > 0) {
+                const referenceDossier = document.createElement("span");
+                referenceDossier.className = "dashboard-reference";
+                referenceDossier.style.display = "block";
+                referenceDossier.style.fontSize = "0.85rem";
+                referenceDossier.style.fontWeight = "600";
+                referenceDossier.textContent = `Dossier n°${numeroDossier}`;
+                informations.appendChild(referenceDossier);
+            }
 
 
             informations.appendChild(
@@ -846,6 +857,17 @@ function afficherSurveillance(
             informations.appendChild(
                 titre
             );
+            // SATEER_REF_PILOTE_BORDEAUX : référence stable sur toutes les listes.
+            const numeroDossier = Number(demande.id);
+            if (Number.isSafeInteger(numeroDossier) && numeroDossier > 0) {
+                const referenceDossier = document.createElement("span");
+                referenceDossier.className = "dashboard-reference";
+                referenceDossier.style.display = "block";
+                referenceDossier.style.fontSize = "0.85rem";
+                referenceDossier.style.fontWeight = "600";
+                referenceDossier.textContent = `Dossier n°${numeroDossier}`;
+                informations.appendChild(referenceDossier);
+            }
 
 
             informations.appendChild(
