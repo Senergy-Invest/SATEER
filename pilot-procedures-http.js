@@ -14,7 +14,7 @@ const CATEGORY_SET=new Set(['PASSEPORT','CARTE_CONSULAIRE','ETAT_CIVIL','RENDEZ_
 const DOCUMENT_SET=new Set(['CNI_RECTO','CNI_VERSO','PASSEPORT','CARTE_CONSULAIRE','ACTE_NAISSANCE','JUSTIFICATIF_DOMICILE','AUTRE']);
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const validId=x=>Number.isSafeInteger(Number(x))&&Number(x)>0?Number(x):null;
-const validTenant=x=>typeof x==='string'&&/^[A-Z][A-Z0-9_-]{1,15}$/.test(x)?x:null;
+const validTenant=x=>typeof x==='string'&&/^[A-Z][A-Z0-9_-]{1,49}$/.test(x)?x:null;
 const validCode=x=>typeof x==='string'&&/^[A-Z][A-Z0-9_]{2,63}$/.test(x)?x:null;
 const status=(res,http,code,extra={})=>res.status(http).json({statut:code,...extra});
 const isTest=()=>process.env.PGDATABASE==='sateer_test';
