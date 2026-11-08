@@ -74,7 +74,7 @@
     const options = {
       TOUS:'Toutes les personnes autorisées',
       DEPARTEMENT:'Les personnes d’un territoire ou département',
-      PROFIL:'Un groupe de personnes',
+      PROFIL:'Un profil de personnes',
       ASSOCIATION:'Une association connectée',
       ORGANISATIONS:'Les organisations sélectionnées'
     };
@@ -167,10 +167,10 @@
         if (choice === 'DEPARTEMENT') {
           cibleInput.placeholder = 'Saisissez le nom du territoire ou département';
         } else if (choice === 'PROFIL') {
-          cibleInput.placeholder = 'Saisissez le groupe de personnes concerné';
+          cibleInput.placeholder = 'Saisissez le profil de personnes concerné';
         }
         const tx = cible.firstChild;
-        if (tx && tx.nodeType === Node.TEXT_NODE) tx.textContent = choice === 'DEPARTEMENT' ? 'Territoire ou département ' : choice === 'PROFIL' ? 'Groupe de personnes ' : '';
+        if (tx && tx.nodeType === Node.TEXT_NODE) tx.textContent = choice === 'DEPARTEMENT' ? 'Territoire ou département ' : choice === 'PROFIL' ? 'Profil de personnes ' : '';
       }
       let audienceName = options[choice] || 'Choix à vérifier';
       if (choice === 'DEPARTEMENT' || choice === 'PROFIL') {

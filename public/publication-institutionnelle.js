@@ -11,7 +11,11 @@ const canalSelect = document.querySelector("#communicationChannelId");
 const historyStatus = document.querySelector("#publicationHistoryStatus");
 const historyList = document.querySelector("#publicationHistoryList");
 const categoryLabels = { INFORMATION:"Information", ANNONCE:"Annonce", COMMUNIQUE:"Communiqué", ALERTE:"Alerte" };
-const audienceLabels = { TOUS:"Toutes les personnes autorisées", DEPARTEMENT:"Les personnes du territoire choisi", PROFIL:"Le groupe de personnes choisi", ASSOCIATION:"L’association choisie", ORGANISATIONS:"Les organisations choisies" };
+const audienceLabels = { TOUS:"Toutes les personnes autorisées", DEPARTEMENT:"Les personnes du territoire choisi", PROFIL:"Le profil de personnes choisi", ASSOCIATION:"L’association choisie", ORGANISATIONS:"Les organisations choisies" };
+
+// Le choix PROFIL correspond a personnes.profil, pas a un groupe configurable.
+const optionProfilPublication = audience?.querySelector('option[value="PROFIL"]');
+if (optionProfilPublication) optionProfilPublication.textContent = "Un profil de personnes";
 
 // Les endpoints de relais doivent répondre en JSON, même en cas d'erreur.
 // Ne jamais tenter de parser une page HTML d'erreur comme du JSON.
