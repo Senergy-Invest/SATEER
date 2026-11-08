@@ -13,9 +13,7 @@ document
     .addEventListener(
         "click",
         () => {
-
-            window.location.href =
-                "/";
+          window.location.assign("/index.html");
         }
     );
 
