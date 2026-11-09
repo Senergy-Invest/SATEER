@@ -5,3 +5,8 @@ node_modules/
 *.log
 dist/
 coverage/
+
+# SATEER — sauvegardes locales et artefacts, jamais du code source
+.sateer-backups/
+/sateer-server.pid
+/server.js.*.bak
