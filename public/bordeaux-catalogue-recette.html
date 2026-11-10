@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>SATEER Bordeaux — Simulation de catalogue, non officielle</title>
+<style>
+:root{font:16px/1.5 system-ui,Arial,sans-serif;color:#162c35;background:#f3f7f8}
+body{margin:0}main{max-width:970px;margin:28px auto;padding:0 18px}h1{font-size:1.65rem}
+.banner{background:#fff2d6;border:2px solid #c47815;padding:16px;border-radius:10px}
+.card{border:1px solid #bad1d5;background:white;border-radius:10px;padding:16px;margin:12px 0}
+button{padding:9px 13px;margin:3px 4px 3px 0;cursor:pointer;border-radius:7px;border:1px solid #4b6c72;background:#eaf4f5;color:#18383d}
+button:disabled{cursor:not-allowed;opacity:.5}.state{font-weight:bold}.error{color:#9b1818}
+small{display:block;color:#415f66}section{margin-top:24px}
+</style></head><body><main>
+<div class="banner"><strong>SIMULATION DE RECETTE — NON OFFICIELLE</strong>
+<p>Ce parcours ne certifie aucune exigence consulaire, n'émet aucune information officielle, ne notifie aucun citoyen et ne modifie pas PostgreSQL. Les validations simulées disparaissent au redémarrage du serveur.</p></div>
+<h1>Bordeaux · Démonstration du catalogue des démarches</h1>
+<p>Organisation de recette 70 · Consultation réservée aux sessions locales authentifiées.</p>
+<p id="status" role="status">Chargement du catalogue fictif…</p>
+<section><h2>1. Vue Vice-Consul · validation et publication simulées</h2>
+<div id="admin-list"></div></section>
+<section><h2>2. Aperçu citoyen de recette</h2>
+<p>Cette zone montre uniquement les fiches publiées <em>dans la simulation</em>. Elle ne correspond pas au catalogue citoyen officiel.</p>
+<div id="citizen-list"></div></section>
+<p><button id="reload" type="button">Actualiser la simulation</button>
+<nav aria-label="Navigation du pilote Bordeaux" style="display:flex;flex-wrap:wrap;gap:14px;margin:14px 0">
+<a href="http://127.0.0.1:3200/dashboard-vice-consul.html?organisation=70&amp;tenant=P6V_3B5AC5AB9DB04657">← Pilotage du Vice-Consul (port 3200)</a>
+<a href="http://127.0.0.1:3200/catalogue-demarches.html?organisation=70&amp;tenant=P6V_3B5AC5AB9DB04657">Catalogue institutionnel (sans publier)</a>
+</nav></p>
+</main><script src="/bordeaux-catalogue-recette.js" defer></script></body></html>
