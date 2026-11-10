@@ -88,6 +88,8 @@ const {
 } = require("./auth-authorization");
 
 const { creerPublicationMultiOrganisationsDatabase } = require("./communication-targets");
+// Composition des modules du pilote, sans logique métier dans le bootstrap.
+const pilotModuleRegistry = require("./pilot-module-registry");
 const app = express();
 
 const PORT = Number(process.env.PORT || 3000);
@@ -105,11 +107,8 @@ app.use(
     "/api/auth",
     authRouter
 );
-// Boîte e-mail entièrement synthétique du pilote Bordeaux, non montée hors sateer_test.
-if (process.env.PGDATABASE === 'sateer_test') {
-    const { createEmailDemoRouter } = require('./bordeaux-email-demo-http');
-    app.use('/api/bordeaux-email-demo', exigerSession, createEmailDemoRouter());
-}
+// Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
+pilotModuleRegistry.installEmailDemo(app, exigerSession);
 
 // Lot 1R - Identité personnelle SATEER Core (session obligatoire côté route).
 const { identityRouter } = require("./identity-http");
@@ -763,12 +762,8 @@ app.post(
         }
     }
 );
-// SATEER P6 : règle de réception par catégorie (périmètre citoyen uniquement).
-const { installRoutingRoutes, routeNewCitizenCase } = require("./pilot-routing-rules");
-installRoutingRoutes(app, exigerSession);
-// SATEER P7 : catalogue des démarches, coffre partagé explicitement et dossier guidé.
-const { setup: setupPilotProcedures } = require('./pilot-procedures-http');
-setupPilotProcedures(app, exigerSession);
+// P6 et P7 restent installés dans le même ordre et exposent le même routage.
+const { routeNewCitizenCase } = pilotModuleRegistry.installCitizenIntake(app, exigerSession);
 
 // =========================================================
 // API - CRÉER UNE DEMANDE
@@ -1562,8 +1557,7 @@ app.post(
     }
 );
 // =========================================================
-require("./pilot-office-agent-directory").installOfficeAgentDirectory(app);
-require("./pilot-staff-invitations").installStaffInvitations(app);
+pilotModuleRegistry.installStaffAdministration(app);
 // API - ADMINISTRATION GÉNÉRIQUE DES MEMBRES D'UNE UNITÉ
 // =========================================================
 
