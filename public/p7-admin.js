@@ -1,37 +1,147 @@
-(()=>{'use strict';
- const $=id=>document.getElementById(id),names={CNI_RECTO:'Carte d’identité : recto',CNI_VERSO:'Carte d’identité : verso',PASSEPORT:'Ancien passeport / page identité',CARTE_CONSULAIRE:'Carte consulaire',ACTE_NAISSANCE:'Acte de naissance',JUSTIFICATIF_DOMICILE:'Justificatif de domicile',AUTRE:'Autre pièce à préciser'};
- let org,tenant,records=[];
- const status=(s,err=false)=>{const e=$('catalogue-status');e.textContent=s;e.classList.toggle('error',err);};
- const make=(tag,t)=>{const n=document.createElement(tag);if(t!==undefined)n.textContent=String(t);return n;};
- const api=async (sub,opts)=>{const r=await fetch('/api/pilot-procedures/'+sub,{credentials:'same-origin',cache:'no-store',...(opts||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.statut||'HTTP '+r.status);return j;};
- function slug(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,58);}
- const fields=$('proc-docs');for(const [id,label] of Object.entries(names)){const l=make('label');const c=make('input');c.type='checkbox';c.value=id;c.className='p7-piecetype';l.append(c,document.createTextNode(label));fields.append(l);}
- function reset(){const f=$('catalogue-form');f.reset();$('proc-code').value='';delete $('proc-code').dataset.fixed;status('Nouvelle démarche : indiquez son nom puis les pièces exigées.');}
- function choose(p){$('proc-code').dataset.fixed='1';$('proc-title').value=p.titre;$('proc-code').value=p.code;$('proc-cat').value=p.categorie;
-  $('proc-days').value=p.delaiIndicatifJours??'';$('proc-active').checked=!!p.actif;$('proc-validated').checked=false;
-  fields.querySelectorAll('input').forEach(i=>{i.checked=(p.piecesObligatoires||[]).includes(i.value);});
-  status('Modification de '+p.titre+'. Confirmez à nouveau la validité de la liste avant l’activation.');$('proc-title').focus();}
- async function load(){const j=await api('administration?'+new URLSearchParams({organisationId:org,tenant}));records=j.procedures;
-  const list=$('catalogue-list');list.replaceChildren();if(!records.length){list.append(make('p','Aucune démarche configurée. Commencez par en créer une.'));return;}
-  for(const p of records){const div=make('div');div.className='entry';const strong=make('strong',p.titre+' · '+(p.actif?'Accessible aux citoyens':'Brouillon'));
-   const sub=make('p',(p.piecesObligatoires||[]).map(x=>names[x]||x).join(' · ')||'Aucune pièce obligatoire');sub.className='muted';
-   const button=make('button','Modifier');button.type='button';button.addEventListener('click',()=>choose(p));div.append(strong,sub,button);list.append(div);}
- }
- $('proc-new').addEventListener('click',reset);
- $('proc-title').addEventListener('input',()=>{if(!$('proc-code').dataset.fixed)$('proc-code').value=slug($('proc-title').value);});
- $('catalogue-form').addEventListener('submit',async ev=>{ev.preventDefault();
-  const code=$('proc-code').value||slug($('proc-title').value),pieces=[...fields.querySelectorAll('input:checked')].map(x=>x.value);
-  if(!code||code.length<3)return status('Donnez un nom plus précis à la démarche.',true);
-  if($('proc-active').checked&&!$('proc-validated').checked)return status('La validation officielle est obligatoire avant activation.',true);
-  if($('proc-active').checked&&$('proc-cat').value==='PASSEPORT'&&!pieces.length)return status('La liste des pièces de cette démarche passeport ne peut pas être vide.',true);
-  try{await api('administration/'+encodeURIComponent(code),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({organisationId:org,tenantCode:tenant,categorie:$('proc-cat').value,titre:$('proc-title').value.trim(),piecesObligatoires:pieces,delaiIndicatifJours:$('proc-days').value||null,actif:$('proc-active').checked})});
-   status('Démarche enregistrée. Elle sera proposée aux citoyens si elle est activée.');await load();$('proc-code').dataset.fixed='1';}
-  catch(e){status('Enregistrement refusé : '+e.message,true);}
- });
- (async()=>{try{const ctx=await window.SATEER_CONTEXT_READY;const u=new URLSearchParams(location.search);const selected=await window.SATEER_choisirOrganisation(u.get('organisation'));
-  if(!ctx?.tenantCode||!selected?.id)throw Error('Organisation non sélectionnée.');org=selected.id;tenant=ctx.tenantCode;
-  $('p7-back').href='/configuration-consulat.html?'+new URLSearchParams({organisation:org,tenant})+'#routage';
-  await load();status('Vous pouvez ajouter une démarche. Les documents exacts sont décidés par le Consulat.');}
-  catch(e){status('Accès aux démarches impossible : '+e.message,true);}
- })();
+(() => {
+  'use strict';
+  // P3.3.5Q : une fiche ne devient officielle qu'après validation ET publication.
+  // Les données et les droits sont vérifiés par l'API, pas par ces boutons.
+  const el = id => document.getElementById(id);
+  const pieceNames = {
+    CNI_RECTO: 'Carte d’identité : recto', CNI_VERSO: 'Carte d’identité : verso',
+    PASSEPORT: 'Ancien passeport / page identité', CARTE_CONSULAIRE: 'Carte consulaire',
+    ACTE_NAISSANCE: 'Acte de naissance', JUSTIFICATIF_DOMICILE: 'Justificatif de domicile',
+    AUTRE: 'Autre pièce à préciser'
+  };
+  const statusNames = {BROUILLON:'Brouillon', VALIDEE:'Validée — non publiée',
+    PUBLIEE:'Publiée', A_REVALIDER:'À revalider — publication historique non certifiée'};
+  let organisation, tenant, records = [], selectedCode = null, busy = false;
+
+  const make = (tag, value) => {
+    const node = document.createElement(tag);
+    if (value !== undefined) node.textContent = String(value);
+    return node;
+  };
+  const status = (message, error=false) => {
+    const node = el('catalogue-status');
+    node.textContent = message; node.classList.toggle('error', error);
+  };
+  const slug = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,58);
+  const current = () => records.find(p => p.code === selectedCode) || null;
+  async function api(route, options={}) {
+    const response = await fetch('/api/pilot-procedures/'+route, {
+      credentials:'same-origin',cache:'no-store',...options
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw Error(body.statut || 'HTTP '+response.status);
+    return body;
+  }
+  function updateButtons() {
+    const p = current();
+    el('proc-validate').disabled = busy || !p || p.etat !== 'BROUILLON';
+    el('proc-publish').disabled = busy || !p || p.etat !== 'VALIDEE';
+    el('proc-unpublish').disabled = busy || !p || p.etat !== 'PUBLIEE';
+    el('proc-save').disabled = busy;
+  }
+  const fields = el('proc-docs');
+  for (const [code, label] of Object.entries(pieceNames)) {
+    const row = make('label'); const box = make('input');
+    box.type='checkbox'; box.value=code; box.className='p7-piecetype';
+    row.append(box, document.createTextNode(label)); fields.append(row);
+  }
+  function reset() {
+    el('catalogue-form').reset(); selectedCode=null;
+    el('proc-code').value=''; delete el('proc-code').dataset.fixed;
+    el('proc-selected-state').textContent='Nouvelle fiche — brouillon';
+    status('Saisissez les informations, puis enregistrez le brouillon.');
+    updateButtons();
+  }
+  function choose(p) {
+    selectedCode=p.code; el('proc-code').dataset.fixed='1';
+    el('proc-code').value=p.code; el('proc-title').value=p.titre;
+    el('proc-cat').value=p.categorie; el('proc-days').value=p.delaiIndicatifJours ?? '';
+    el('proc-validated').checked=false;
+    fields.querySelectorAll('input').forEach(box => {
+      box.checked=(p.piecesObligatoires||[]).includes(box.value);
+    });
+    el('proc-selected-state').textContent='État : '+(statusNames[p.etat]||p.etat);
+    status(p.etat==='A_REVALIDER'
+      ? 'Ancienne publication sans validation explicite vérifiable : enregistrer comme brouillon, puis faire valider et publier par une personne habilitée.'
+      : 'Pour modifier cette fiche, enregistrez d’abord un brouillon. Toute modification annule la précédente validation et publication.');
+    updateButtons(); el('proc-title').focus();
+  }
+  async function load() {
+    const response=await api('administration?'+new URLSearchParams({organisationId:organisation,tenant}));
+    records=response.procedures||[];
+    const list=el('catalogue-list'); list.replaceChildren();
+    if (!records.length) list.append(make('p','Aucune démarche configurée.'));
+    for (const p of records) {
+      const row=make('article'); row.className='entry';
+      const label=make('strong',p.titre+' · '+(statusNames[p.etat]||p.etat));
+      const pieces=(p.piecesObligatoires||[]).map(x => pieceNames[x]||x).join(' · ');
+      const description=make('p',pieces||'Aucune pièce obligatoire');description.className='muted';
+      const button=make('button','Ouvrir la fiche');button.type='button';
+      button.addEventListener('click',()=>choose(p));
+      row.append(label,description,button);list.append(row);
+    }
+    updateButtons();
+  }
+  async function withBusy(task) {
+    if (busy) return;busy=true;updateButtons();
+    try {await task();}catch(err){status('Opération refusée : '+err.message,true);}
+    finally{busy=false;updateButtons();}
+  }
+  el('proc-new').addEventListener('click',reset);
+  el('proc-title').addEventListener('input',()=>{
+    if (!el('proc-code').dataset.fixed)el('proc-code').value=slug(el('proc-title').value);
+  });
+  el('catalogue-form').addEventListener('submit',event=>{
+    event.preventDefault();
+    withBusy(async()=>{
+      const code=el('proc-code').value||slug(el('proc-title').value);
+      if (!/^[A-Z][A-Z0-9_]{2,63}$/.test(code))return status('Donnez un nom plus précis à la démarche.',true);
+      const old=current();
+      if (old?.etat==='PUBLIEE' && !window.confirm('Cette modification retirera immédiatement la fiche de la publication. Continuer ?'))return;
+      const pieces=[...fields.querySelectorAll('input:checked')].map(box=>box.value);
+      await api('administration/'+encodeURIComponent(code),{
+        method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({organisationId:organisation,tenantCode:tenant,
+          categorie:el('proc-cat').value,titre:el('proc-title').value.trim(),
+          piecesObligatoires:pieces,delaiIndicatifJours:el('proc-days').value||null,
+          revision:old?.revision||null})
+      });
+      selectedCode=code;await load();choose(current());
+      status('Brouillon enregistré. La validation institutionnelle puis la publication sont deux étapes distinctes.');
+    });
+  });
+  async function action(suffix,warning,ok) {
+    const p=current();
+    if (!p)return status('Choisissez une fiche.',true);
+    if (!el('proc-validated').checked)return status('Cochez d’abord la confirmation explicite.',true);
+    if (!window.confirm(warning))return;
+    await withBusy(async()=>{
+      await api('administration/'+encodeURIComponent(p.code)+'/'+suffix,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({organisationId:organisation,tenantCode:tenant,
+          revision:p.revision,confirmation:true})
+      });
+      await load();choose(current());status(ok);el('proc-validated').checked=false;
+    });
+  }
+  el('proc-validate').addEventListener('click',()=>action('valider',
+    'Je confirme avoir vérifié la liste de cette démarche avec l’autorité consulaire compétente. Valider ?',
+    'Fiche validée. Elle reste invisible aux citoyens tant qu’elle n’est pas publiée.'));
+  el('proc-publish').addEventListener('click',()=>action('publier',
+    'Publier cette fiche validée dans le catalogue des démarches guidées ? Les pièces enregistrées y seront visibles.',
+    'Fiche publiée dans le catalogue citoyen authentifié. Aucun e-mail ne sera envoyé automatiquement.'));
+  el('proc-unpublish').addEventListener('click',()=>action('retirer',
+    'Retirer cette fiche du catalogue citoyen ? Elle ne pourra plus alimenter de brouillon e-mail.',
+    'Publication retirée. La validation reste enregistrée.'));
+  (async()=>{
+    try {
+      const contexte=await window.SATEER_CONTEXT_READY;
+      const selected=await window.SATEER_choisirOrganisation(Number(new URLSearchParams(location.search).get('organisation'))||null,'CONSULAT');
+      if (!contexte?.tenantCode||!selected?.id)throw Error('Organisation non sélectionnée.');
+      organisation=selected.id;tenant=contexte.tenantCode;
+      el('p7-back').href='/configuration-consulat.html?'+new URLSearchParams({organisation,tenant})+'#routage';
+      await load();reset();
+    }catch(e){status('Accès aux démarches impossible : '+e.message,true);}
+  })();
 })();

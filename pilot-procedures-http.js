@@ -34,11 +34,46 @@ async function inOrg(personneId,org,tenant){
  const xs=await listerOrganisationsPersonneDatabase(personneId,tenant);
  return xs.some(x=>Number(x.id)===org);
 }
-async function configRight(personneId,org,tenant){
- const check=await verifierPermissionPersonneDatabase({personneId,organisationId:org,tenantCode:tenant,permissionCode:'CREATE_UNIT'});
+// P3.3.5R : le droit de creer des bureaux n'est pas un prealable a la lecture
+// du catalogue. Toutes les decisions sont prises sur le serveur et dans le
+// contexte strict organisation + tenant. Aucune permission d'unite n'est globale.
+async function droitOrganisation(personneId,org,tenant,permissionCode){
+ const check=await verifierPermissionPersonneDatabase({personneId,organisationId:org,tenantCode:tenant,permissionCode});
  return Boolean(check.succes&&check.autorise&&check.portee==='ORGANISATION');
 }
-const catalogSQL=`SELECT c.id,c.code,c.categorie,c.titre,c.pieces_obligatoires AS "piecesObligatoires",c.delai_indicatif_jours AS "delaiIndicatifJours",c.actif,c.mis_a_jour_le AS "maj"
+async function configRight(personneId,org,tenant){
+ // Compatibilite avec la configuration historique P7 : CREATE_UNIT peut editer.
+ return droitOrganisation(personneId,org,tenant,'CREATE_UNIT');
+}
+async function publicationRight(personneId,org,tenant){
+ // Validation et publication : permission institutionnelle existante.
+ return droitOrganisation(personneId,org,tenant,'MANAGE_PUBLICATIONS');
+}
+async function catalogueReadRight(personneId,org,tenant){
+ // Le superviseur peut inspecter sans obtenir un droit d'edition.
+ return (await droitOrganisation(personneId,org,tenant,'VIEW_OPERATIONAL_DASHBOARD'))
+    || (await droitOrganisation(personneId,org,tenant,'MANAGE_PROCEDURES'))
+    || (await configRight(personneId,org,tenant))
+    || (await publicationRight(personneId,org,tenant));
+}
+async function catalogueEditRight(personneId,org,tenant){
+ // Edition : permission dédiée, portée strictement organisationnelle.
+ // CREATE_UNIT et MANAGE_PUBLICATIONS ne donnent jamais ce droit indirectement.
+ return droitOrganisation(personneId,org,tenant,'MANAGE_PROCEDURES');
+}
+function adminAction(req){
+ const org=validId(req.body?.organisationId),tenant=validTenant(req.body?.tenantCode),code=validCode(req.params.code);
+ const revision=req.body?.revision;
+ if(!org||!tenant||!code||req.body?.confirmation!==true||typeof revision!=='string'||
+    !/^\d{10}\.\d{6}$/.test(revision))return null;
+ return {org,tenant,code,revision};
+}
+const catalogSQL=`SELECT c.id,c.code,c.categorie,c.titre,c.pieces_obligatoires AS "piecesObligatoires",c.delai_indicatif_jours AS "delaiIndicatifJours",c.actif,c.mis_a_jour_le AS "maj",EXTRACT(EPOCH FROM c.mis_a_jour_le)::numeric(19,6)::text AS "revision",
+ c.valide_par AS "validePar",c.validation_explicite AS "validationExplicite",c.date_validation AS "validationLe",c.date_publication AS "publicationLe",
+ CASE WHEN c.actif AND c.validation_explicite AND c.valide_par IS NOT NULL THEN 'PUBLIEE'
+      WHEN c.actif THEN 'A_REVALIDER'
+      WHEN c.validation_explicite AND c.valide_par IS NOT NULL THEN 'VALIDEE'
+      ELSE 'BROUILLON' END AS etat
  FROM organisation_procedure_catalogue c JOIN organisations o ON o.id=c.organisation_id AND o.tenant_id=c.tenant_id
  JOIN tenants t ON t.id=c.tenant_id WHERE c.organisation_id=$1 AND t.code=$2`;
 function validPieces(p){return Array.isArray(p)&&p.length<=12&&p.every(x=>DOCUMENT_SET.has(x))&&new Set(p).size===p.length;}
@@ -48,37 +83,109 @@ function setup(app,exigerSession){
   const org=validId(req.query.organisationId),tenant=validTenant(req.query.tenant);
   if(!org||!tenant)return status(res,400,'CONTEXTE_INVALIDE');
   try{if(!await inOrg(req.auth.personneId,org,tenant))return status(res,403,'HORS_ORGANISATION');
-   const q=await executerRequete(catalogSQL+' AND c.actif=TRUE ORDER BY c.titre',[org,tenant]);
+   const q=await executerRequete(catalogSQL+' AND c.actif=TRUE AND c.validation_explicite=TRUE AND c.valide_par IS NOT NULL ORDER BY c.titre',[org,tenant]);
    return res.json({statut:'CATALOGUE_CHARGE',procedures:q.rows});
   }catch(e){console.error('P7 catalogue',e);return status(res,503,'CATALOGUE_INDISPONIBLE');}
  });
  router.get('/administration',async(req,res)=>{
   const org=validId(req.query.organisationId),tenant=validTenant(req.query.tenant);
   if(!org||!tenant)return status(res,400,'CONTEXTE_INVALIDE');
-  try{if(!await configRight(req.auth.personneId,org,tenant))return status(res,403,'CONFIGURATION_INTERDITE');
+  try{if(!await catalogueReadRight(req.auth.personneId,org,tenant))return status(res,403,'CONFIGURATION_INTERDITE');
    const q=await executerRequete(catalogSQL+' ORDER BY c.titre',[org,tenant]);return res.json({statut:'CATALOGUE_ADMIN',procedures:q.rows});
   }catch(e){console.error('P7 administration',e);return status(res,503,'CATALOGUE_INDISPONIBLE');}
  });
+ // Enregistrer ne vaut JAMAIS validation. Toute modification retire automatiquement
+ // la fiche de la publication, y compris pour une fiche déjà publiée.
  router.put('/administration/:code',async(req,res)=>{
   if(!sameOrigin(req))return status(res,403,'ORIGINE_NON_AUTORISEE');
   const org=validId(req.body?.organisationId),tenant=validTenant(req.body?.tenantCode),code=validCode(req.params.code);
   const cat=req.body?.categorie,titre=req.body?.titre,pieces=req.body?.piecesObligatoires,days=req.body?.delaiIndicatifJours;
   const d=days==null||days===''?null:Number(days);
-  if(!org||!tenant||!code||!CATEGORY_SET.has(cat)||typeof titre!=='string'||!titre.trim()||titre.length>160||!validPieces(pieces)||(req.body?.actif===true&&cat==='PASSEPORT'&&pieces.length===0)||
-    (d!==null&&(!Number.isInteger(d)||d<1||d>365))||typeof req.body?.actif!=='boolean')return status(res,400,'CONFIGURATION_INVALIDE');
-  try{if(!await configRight(req.auth.personneId,org,tenant))return status(res,403,'CONFIGURATION_INTERDITE');
-   const q=await executerRequete(`INSERT INTO organisation_procedure_catalogue(tenant_id,organisation_id,code,categorie,titre,pieces_obligatoires,delai_indicatif_jours,actif,valide_par)
-   SELECT t.id,o.id,$3,$4,$5,$6,$7,$8,$9 FROM organisations o JOIN tenants t ON t.id=o.tenant_id WHERE o.id=$1 AND t.code=$2
-   ON CONFLICT(organisation_id,code) DO UPDATE SET categorie=EXCLUDED.categorie,titre=EXCLUDED.titre,pieces_obligatoires=EXCLUDED.pieces_obligatoires,delai_indicatif_jours=EXCLUDED.delai_indicatif_jours,actif=EXCLUDED.actif,valide_par=EXCLUDED.valide_par,mis_a_jour_le=now()
-   RETURNING id,code,categorie,titre,actif`,[org,tenant,code,cat,titre.trim(),pieces,d,req.body.actif,req.auth.personneId]);
-   if(!q.rowCount)return status(res,404,'ORGANISATION_INTROUVABLE');return res.json({statut:'PROCEDURE_CONFIGUREE',procedure:q.rows[0]});
-  }catch(e){console.error('P7 config',e);return status(res,503,'CONFIGURATION_INDISPONIBLE');}
+  const revision=req.body?.revision??null;
+  // L'ancien champ actif est interdit à TRUE : impossible de publier par un PUT historique.
+  if(!org||!tenant||!code||!CATEGORY_SET.has(cat)||typeof titre!=='string'||!titre.trim()||titre.length>160||
+     !validPieces(pieces)||(d!==null&&(!Number.isInteger(d)||d<1||d>365))||req.body?.actif===true||
+     (revision!==null&&(typeof revision!=='string'||!/^\d{10}\.\d{6}$/.test(revision))))
+   return status(res,400,'CONFIGURATION_INVALIDE');
+  try{
+   if(!await catalogueEditRight(req.auth.personneId,org,tenant))return status(res,403,'CONFIGURATION_INTERDITE');
+   const q=await executerRequete(`INSERT INTO organisation_procedure_catalogue
+    (tenant_id,organisation_id,code,categorie,titre,pieces_obligatoires,delai_indicatif_jours,actif,valide_par,validation_explicite,date_validation,date_publication)
+    SELECT t.id,o.id,$3,$4,$5,$6,$7,FALSE,NULL,FALSE,NULL,NULL
+    FROM organisations o JOIN tenants t ON t.id=o.tenant_id WHERE o.id=$1 AND t.code=$2
+    ON CONFLICT(organisation_id,code) DO UPDATE SET
+      categorie=EXCLUDED.categorie,titre=EXCLUDED.titre,pieces_obligatoires=EXCLUDED.pieces_obligatoires,
+      delai_indicatif_jours=EXCLUDED.delai_indicatif_jours,actif=FALSE,valide_par=NULL,
+      validation_explicite=FALSE,date_validation=NULL,date_publication=NULL,mis_a_jour_le=now()
+    WHERE organisation_procedure_catalogue.tenant_id=EXCLUDED.tenant_id
+      AND $8::numeric IS NOT NULL
+      AND EXTRACT(EPOCH FROM organisation_procedure_catalogue.mis_a_jour_le)::numeric(19,6)=$8::numeric
+    RETURNING id,code,categorie,titre,actif,mis_a_jour_le AS "maj",EXTRACT(EPOCH FROM mis_a_jour_le)::numeric(19,6)::text AS "revision"`,
+    [org,tenant,code,cat,titre.trim(),pieces,d,revision]);
+   if(!q.rowCount)return status(res,409,'FICHE_EXISTANTE_MODIFIEE_OU_ORGANISATION_ABSENTE');
+   return res.json({statut:'BROUILLON_ENREGISTRE',procedure:{...q.rows[0],etat:'BROUILLON'}});
+  }catch(e){console.error('P7 brouillon',e);return status(res,503,'CONFIGURATION_INDISPONIBLE');}
+ });
+ // Confirmation explicite et vérifiée sur serveur. Revision optimiste : une modification
+ // entre l'ouverture de la page et la validation invalide la demande de validation.
+ router.post('/administration/:code/valider',async(req,res)=>{
+  if(!sameOrigin(req))return status(res,403,'ORIGINE_NON_AUTORISEE');
+  const ctx=adminAction(req);if(!ctx)return status(res,400,'VALIDATION_INVALIDE');
+  try{
+   if(!await publicationRight(req.auth.personneId,ctx.org,ctx.tenant))return status(res,403,'VALIDATION_INTERDITE');
+   const q=await executerRequete(`UPDATE organisation_procedure_catalogue c
+    SET valide_par=$4,validation_explicite=TRUE,date_validation=now(),actif=FALSE,
+        date_publication=NULL,mis_a_jour_le=now()
+    WHERE c.organisation_id=$1 AND c.code=$3 AND EXTRACT(EPOCH FROM c.mis_a_jour_le)::numeric(19,6)=$5::numeric
+      AND c.actif=FALSE AND c.validation_explicite=FALSE
+      AND (c.categorie<>'PASSEPORT' OR cardinality(c.pieces_obligatoires)>0)
+      AND NOT ('AUTRE'=ANY(c.pieces_obligatoires))
+      AND EXISTS (SELECT 1 FROM organisations o JOIN tenants t ON t.id=o.tenant_id
+        WHERE o.id=c.organisation_id AND t.id=c.tenant_id AND t.code=$2)
+    RETURNING c.id,c.code,c.mis_a_jour_le AS "maj",EXTRACT(EPOCH FROM mis_a_jour_le)::numeric(19,6)::text AS "revision"`,
+    [ctx.org,ctx.tenant,ctx.code,req.auth.personneId,ctx.revision]);
+   if(!q.rowCount)return status(res,409,'FICHE_MODIFIEE_OU_NON_VALIDABLE');
+   return res.json({statut:'FICHE_VALIDEE',procedure:{...q.rows[0],etat:'VALIDEE'}});
+  }catch(e){console.error('P7 validation',e);return status(res,503,'VALIDATION_INDISPONIBLE');}
+ });
+ router.post('/administration/:code/publier',async(req,res)=>{
+  if(!sameOrigin(req))return status(res,403,'ORIGINE_NON_AUTORISEE');
+  const ctx=adminAction(req);if(!ctx)return status(res,400,'PUBLICATION_INVALIDE');
+  try{
+   if(!await publicationRight(req.auth.personneId,ctx.org,ctx.tenant))return status(res,403,'PUBLICATION_INTERDITE');
+   const q=await executerRequete(`UPDATE organisation_procedure_catalogue c
+    SET actif=TRUE,date_publication=now(),mis_a_jour_le=now()
+    WHERE c.organisation_id=$1 AND c.code=$3 AND EXTRACT(EPOCH FROM c.mis_a_jour_le)::numeric(19,6)=$4::numeric
+      AND c.actif=FALSE AND c.validation_explicite=TRUE AND c.valide_par IS NOT NULL
+      AND EXISTS (SELECT 1 FROM organisations o JOIN tenants t ON t.id=o.tenant_id
+        WHERE o.id=c.organisation_id AND t.id=c.tenant_id AND t.code=$2)
+    RETURNING c.id,c.code,c.mis_a_jour_le AS "maj",EXTRACT(EPOCH FROM mis_a_jour_le)::numeric(19,6)::text AS "revision"`,
+    [ctx.org,ctx.tenant,ctx.code,ctx.revision]);
+   if(!q.rowCount)return status(res,409,'FICHE_NON_VALIDEE_OU_MODIFIEE');
+   return res.json({statut:'FICHE_PUBLIEE',procedure:{...q.rows[0],etat:'PUBLIEE'}});
+  }catch(e){console.error('P7 publication',e);return status(res,503,'PUBLICATION_INDISPONIBLE');}
+ });
+ router.post('/administration/:code/retirer',async(req,res)=>{
+  if(!sameOrigin(req))return status(res,403,'ORIGINE_NON_AUTORISEE');
+  const ctx=adminAction(req);if(!ctx)return status(res,400,'RETRAIT_INVALIDE');
+  try{
+   if(!await publicationRight(req.auth.personneId,ctx.org,ctx.tenant))return status(res,403,'PUBLICATION_INTERDITE');
+   const q=await executerRequete(`UPDATE organisation_procedure_catalogue c
+    SET actif=FALSE,date_publication=NULL,mis_a_jour_le=now()
+    WHERE c.organisation_id=$1 AND c.code=$3 AND EXTRACT(EPOCH FROM c.mis_a_jour_le)::numeric(19,6)=$4::numeric AND c.actif=TRUE
+      AND EXISTS (SELECT 1 FROM organisations o JOIN tenants t ON t.id=o.tenant_id
+        WHERE o.id=c.organisation_id AND t.id=c.tenant_id AND t.code=$2)
+    RETURNING c.id,c.code,c.mis_a_jour_le AS "maj",EXTRACT(EPOCH FROM mis_a_jour_le)::numeric(19,6)::text AS "revision"`,
+    [ctx.org,ctx.tenant,ctx.code,ctx.revision]);
+   if(!q.rowCount)return status(res,409,'FICHE_DEJA_RETIREE_OU_MODIFIEE');
+   return res.json({statut:'FICHE_RETIREE',procedure:{...q.rows[0],etat:'A_REVALIDER_OU_VALIDEE'}});
+  }catch(e){console.error('P7 retrait',e);return status(res,503,'RETRAIT_INDISPONIBLE');}
  });
  router.get('/preparer',async(req,res)=>{
   const org=validId(req.query.organisationId),tenant=validTenant(req.query.tenant),code=validCode(req.query.code);
   if(!org||!tenant||!code)return status(res,400,'PARAMETRES_INVALIDES');
   try{if(!await inOrg(req.auth.personneId,org,tenant))return status(res,403,'HORS_ORGANISATION');
-   const q=await executerRequete(catalogSQL+' AND c.code=$3 AND c.actif=TRUE',[org,tenant,code]);
+   const q=await executerRequete(catalogSQL+' AND c.code=$3 AND c.actif=TRUE AND c.validation_explicite=TRUE AND c.valide_par IS NOT NULL',[org,tenant,code]);
    if(!q.rowCount)return status(res,404,'PROCEDURE_NON_CONFIGUREE');
    const files=await executerRequete(`SELECT id,categorie,nom_original AS nom,date_creation AS "dateCreation" FROM citizen_private_files WHERE personne_id=$1 ORDER BY date_creation DESC LIMIT 50`,[req.auth.personneId]);
    const proc=q.rows[0];const pieces=proc.piecesObligatoires.map(cat=>({categorie:cat,documents:files.rows.filter(f=>f.categorie===cat)}));
@@ -96,7 +203,7 @@ function setup(app,exigerSession){
   try{
    if(!await inOrg(req.auth.personneId,org,tenant))return status(res,403,'HORS_ORGANISATION');
    client=await obtenirClientDatabase();await client.query('BEGIN');
-   const q=await client.query(catalogSQL+' AND c.code=$3 AND c.actif=TRUE FOR SHARE',[org,tenant,code]);
+   const q=await client.query(catalogSQL+' AND c.code=$3 AND c.actif=TRUE AND c.validation_explicite=TRUE AND c.valide_par IS NOT NULL FOR SHARE',[org,tenant,code]);
    if(!q.rowCount){await client.query('ROLLBACK');return status(res,409,'PROCEDURE_NON_CONFIGUREE');}
    const proc=q.rows[0];
    const documents=ids.length?(await client.query(`SELECT id,categorie,nom_original,mime_type,taille_octets FROM citizen_private_files WHERE personne_id=$1 AND id=ANY($2::uuid[]) FOR SHARE`,[req.auth.personneId,ids])).rows:[];

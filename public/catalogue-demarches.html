@@ -8,8 +8,15 @@
 <input type="hidden" id="proc-code" maxlength="64" value=""><p class="muted">SATEER génère automatiquement les informations techniques.</p>
 <fieldset><legend><strong>Pièces obligatoires</strong></legend><div id="proc-docs"></div></fieldset>
 <label>Nombre de jours calendaires indicatif (facultatif)<input id="proc-days" type="number" min="1" max="365" placeholder="Laisser vide si le délai n’est pas validé"></label>
-<label><input type="checkbox" id="proc-validated"> Je confirme que cette liste a été vérifiée avec l'autorité consulaire compétente.</label>
-<label><input type="checkbox" id="proc-active"> Rendre cette démarche accessible aux citoyens (seulement après validation).</label>
-<button class="btn" type="submit">Enregistrer la démarche</button><p id="catalogue-status" class="notice" role="status"></p></form></section></main></div>
+<p id="proc-selected-state" class="notice" aria-live="polite">Nouvelle fiche — brouillon</p>
+<button class="btn" id="proc-save" type="submit">1. Enregistrer le brouillon</button>
+<div style="margin-top:20px;border-top:1px solid #d2e0e3;padding-top:12px">
+<p class="muted">Étape institutionnelle : les opérations ci-dessous nécessitent une permission de publication à l'échelle du Consulat. Modifier un contenu annule sa validation précédente.</p>
+<label><input type="checkbox" id="proc-validated"> Je confirme personnellement avoir vérifié les informations de cette démarche avec l'autorité consulaire compétente.</label>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button class="btn" type="button" id="proc-validate" disabled>2. Valider la fiche</button>
+<button class="btn" type="button" id="proc-publish" disabled>3. Publier au catalogue citoyen</button>
+<button class="btn" type="button" id="proc-unpublish" disabled style="background:#eef4f3;color:#174d51;border:1px solid #8eacae">Retirer la publication</button>
+</div></div><p id="catalogue-status" class="notice" role="status"></p></form></section></main></div>
 <script src="/auth-client.js"></script><script src="/p7-admin.js"></script><script src="/sateer-bordeaux-recette-nav.js" defer></script>
 </body></html>
