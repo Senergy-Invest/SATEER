@@ -1,6 +1,8 @@
 'use strict';
 // Lecteur HTTP des seuls e-mails synthetiques du pilote Bordeaux; aucune ecriture.
 const express = require('express');
+const mailIntent = require('./public/sateer-mail-intent-core');
+const guidance = require('./sateer-mail-guidance-core');
 const { executerRequete } = require('./database');
 const { obtenirPermissionsEffectivesDatabase } = require('./services-database');
 const ORG = 70;
@@ -55,6 +57,59 @@ function createEmailDemoRouter(deps={}) {
    if(!p.rowCount)return deny(res,404,'COURRIER_INTROUVABLE');
    return res.json({statut:'COURRIER_SYNTHETIQUE_CHARGE',enLectureSeule:true,message:p.rows[0]});
   } catch(e){console.error('EMAIL_DEMO_DETAIL_ERROR',e.message);return deny(res,503,'COURRIER_INDISPONIBLE');}
+ });
+ // Préqualification côté serveur pour le seul courrier synthétique autorisé.
+ // Aucune création de dossier, aucune décision d'envoi ou de routage.
+ router.get('/messages/:id/qualification',async(req,res)=>{
+  const id=validId(req.params.id);if(!id)return deny(res,400,'ID_INVALIDE');
+  try {
+   const p=await query(`SELECT e.subject AS objet,e.body AS texte
+    FROM pilot_email_inbox_demo e
+    JOIN organisations o ON o.id=e.organisation_id AND o.tenant_id=e.tenant_id
+    JOIN tenants t ON t.id=e.tenant_id AND t.code=$2
+    WHERE e.id=$3 AND e.organisation_id=$1 AND e.source='DEMO_SYNTHETIQUE'`,[ORG,TENANT,id]);
+   if(!p.rowCount)return deny(res,404,'COURRIER_INTROUVABLE');
+   const decision=mailIntent.qualifier(p.rows[0].objet,p.rows[0].texte);
+   return res.json({statut:'PREQUALIFICATION_SYNTHETIQUE',lectureSeule:true,
+    validationHumaineRequise:true,decision});
+  } catch(e){console.error('EMAIL_DEMO_QUALIFICATION_ERROR',e.message);return deny(res,503,'QUALIFICATION_INDISPONIBLE');}
+ });
+ // Conseil guidé basé exclusivement sur le catalogue actif validé par le Consulat.
+ // Aucun appel IA, aucune réponse sortante, aucun routage ni modification SQL.
+ async function conseilPour(decision,corps){
+  if(decision.intention!=='INFORMATION')return {etat:'HORS_INFORMATION',fiche:null};
+  const q=await query(`SELECT c.code,c.titre,c.categorie,c.pieces_obligatoires,c.actif,c.valide_par,c.validation_explicite,c.mis_a_jour_le
+     FROM organisation_procedure_catalogue c
+     JOIN organisations o ON o.id=c.organisation_id AND o.tenant_id=c.tenant_id
+     JOIN tenants t ON t.id=c.tenant_id AND t.code=$2
+     WHERE c.organisation_id=$1 AND c.categorie=$3 AND c.actif=TRUE AND c.valide_par IS NOT NULL AND c.validation_explicite=TRUE
+     ORDER BY c.titre ASC LIMIT 30`,[ORG,TENANT,decision.categorie]);
+  return guidance.selectionnerFiche(decision,corps,q.rows);
+ }
+ router.get('/messages/:id/conseil',async(req,res)=>{
+  const id=validId(req.params.id);if(!id)return deny(res,400,'ID_INVALIDE');
+  try {
+   const p=await query(`SELECT e.subject AS objet,e.body AS texte
+     FROM pilot_email_inbox_demo e
+     JOIN organisations o ON o.id=e.organisation_id AND o.tenant_id=e.tenant_id
+     JOIN tenants t ON t.id=e.tenant_id AND t.code=$2
+     WHERE e.id=$3 AND e.organisation_id=$1 AND e.source='DEMO_SYNTHETIQUE'`,[ORG,TENANT,id]);
+   if(!p.rowCount)return deny(res,404,'COURRIER_INTROUVABLE');
+   const decision=mailIntent.qualifier(p.rows[0].objet,p.rows[0].texte);
+   const conseil=await conseilPour(decision,p.rows[0].texte);
+   return res.json({statut:'CONSEIL_DE_RECETTE',lectureSeule:true,envoiAutorise:false,
+     approbationReponseAutomatique:false,origine:'CATALOGUE_CONSULAT',decision,conseil});
+  } catch(e){console.error('EMAIL_DEMO_CONSEIL_ERROR',e.message);return deny(res,503,'CONSEIL_INDISPONIBLE');}
+ });
+ router.get('/scenarios/:id/conseil',async(req,res)=>{
+  const scenario=mailIntent.scenarios.find(x=>x.id===req.params.id);
+  if(!scenario)return deny(res,404,'SCENARIO_INCONNU');
+  try {
+   const decision=mailIntent.qualifier(scenario.objet,scenario.texte);
+   const conseil=await conseilPour(decision,scenario.texte);
+   return res.json({statut:'CONSEIL_SCENARIO',lectureSeule:true,envoiAutorise:false,
+     approbationReponseAutomatique:false,origine:'CATALOGUE_CONSULAT',decision,conseil});
+  } catch(e){console.error('EMAIL_DEMO_SCENARIO_ERROR',e.message);return deny(res,503,'CONSEIL_INDISPONIBLE');}
  });
  router.all('/messages', (req,res)=>res.status(405).json({statut:'LECTURE_SEULE'}));
  router.all('/messages/:id', (req,res)=>res.status(405).json({statut:'LECTURE_SEULE'}));
