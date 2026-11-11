@@ -2281,6 +2281,9 @@ async function prendreEnChargeDemandeDatabase(
 
                     AND d.statut = 'NOUVELLE'
 
+                    -- Une préaffectation P335BY ne peut pas être prise par un autre agent.
+                    AND (d.assignee_a IS NULL OR d.assignee_a = $2)
+
                     AND (
                         $5::integer IS NULL
                         OR d.destination_unit_id = $5::integer
@@ -2451,6 +2454,9 @@ async function repondreDemandeDatabase(
                     AND t.code = $4
 
                     AND d.statut = 'EN_COURS'
+
+                    -- La réponse / remise appartient à l'agent responsable.
+                    AND d.assignee_a = $2
 
                     AND (
                         $7::text <> 'DOCUMENT_REMIS'

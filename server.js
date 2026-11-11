@@ -1558,6 +1558,8 @@ app.post(
 );
 // =========================================================
 pilotModuleRegistry.installStaffAdministration(app);
+// P335BY Bordeaux : affectation de dossiers canoniques en base de recette seulement.
+pilotModuleRegistry.installCaseDispatch(app, exigerSession);
 // API - ADMINISTRATION GÉNÉRIQUE DES MEMBRES D'UNE UNITÉ
 // =========================================================
 

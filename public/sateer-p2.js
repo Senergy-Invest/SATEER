@@ -52,6 +52,8 @@
     demandsAction.id = 'sx-p2-demands-action';
     const catalogueAction = link(actions, 'Catalogue des démarches', '#', 'sx-p2-secondary');
     catalogueAction.id = 'sx-p2-catalogue'; catalogueAction.hidden = true;
+    const dispatchAction = link(actions, 'Répartir les dossiers', '#', 'sx-p2-secondary');
+    dispatchAction.id = 'sx-p2-dispatch'; dispatchAction.hidden = true;
     const reload = put(actions, 'button', 'Actualiser', 'sx-p2-secondary');
     reload.type = 'button';
     reload.id = 'sx-p2-refresh';
@@ -297,6 +299,19 @@
         catalogueAction.hidden = !adminAllowed;
         if (adminAllowed) catalogueAction.href = '/catalogue-demarches.html?' +
           new URLSearchParams({organisation:String(orgId),tenant});
+      }
+      const dispatchLink = document.getElementById('sx-p2-dispatch');
+      if (dispatchLink) {
+        dispatchLink.hidden = true;
+        try {
+          const access = await get('/api/bordeaux-case-dispatch/access?' +
+            new URLSearchParams({organisationId:String(orgId),tenant}));
+          if (access.ok) {
+            dispatchLink.href = '/repartition-dossiers-bordeaux.html?' +
+              new URLSearchParams({organisation:String(orgId),tenant});
+            dispatchLink.hidden = false;
+          }
+        } catch (_) { /* La supervision existante reste utilisable. */ }
       }
       const unitsResponse = await get(base + '/units/overview' + param);
       const unitsData = await readJson(unitsResponse);

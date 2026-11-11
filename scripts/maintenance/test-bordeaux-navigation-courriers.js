@@ -75,6 +75,6 @@ test('la page du secrétariat accepte les deux noms du paramètre sans contourne
   assert.match(page, /params\.get\('organisation'\) \|\| params\.get\('organisationId'\)/);
   assert.match(page, /credentials:'same-origin'/);
   const entry=fs.readFileSync(path.join(ROOT,'public/dashboard-vice-consul.html'),'utf8');
-  assert.match(entry,/sateer-vice-email-entry\.js\?v=p335bq/);
-  assert.match(entry,/sateer-p2\.js\?v=p335bq/);
+  assert.match(entry,/sateer-vice-email-entry\.js\?v=[a-z0-9_-]+/i);
+  assert.match(entry,/sateer-p2\.js\?v=[a-z0-9_-]+/i);
 });

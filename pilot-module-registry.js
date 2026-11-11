@@ -35,12 +35,19 @@ function createPilotModuleRegistry(options = {}) {
     return { routeNewCitizenCase };
   }
 
+  function installCaseDispatch(app, exigerSession) {
+    if (env.PGDATABASE !== 'sateer_test') return false;
+    const { createCaseDispatchRouter } = load('./pilot-case-dispatch-http');
+    app.use('/api/bordeaux-case-dispatch', exigerSession, createCaseDispatchRouter());
+    return true;
+  }
+
   function installStaffAdministration(app) {
     load('./pilot-office-agent-directory').installOfficeAgentDirectory(app);
     load('./pilot-staff-invitations').installStaffInvitations(app);
   }
 
-  return Object.freeze({ installEmailDemo, installCitizenIntake, installStaffAdministration });
+  return Object.freeze({ installEmailDemo, installCitizenIntake, installStaffAdministration, installCaseDispatch });
 }
 
 module.exports = Object.freeze({ ...createPilotModuleRegistry(), createPilotModuleRegistry });

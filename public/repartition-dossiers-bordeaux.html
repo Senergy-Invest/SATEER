@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Répartition des dossiers — Bordeaux · SATEER</title>
+<style>
+:root{font:15px/1.5 system-ui,-apple-system,sans-serif;color:#183148;background:#f5f7fa}*{box-sizing:border-box}
+body{margin:0} main{max-width:1170px;margin:0 auto;padding:26px 18px 55px}header,section{background:white;border:1px solid #dce4ec;border-radius:14px;padding:23px;margin-bottom:18px}
+h1{font-size:1.8rem;margin:2px 0 6px}h2{font-size:1.15rem;margin:0 0 12px}h3{font-size:1rem;margin:0}p{color:#526679}a{color:#1d5b7c}
+.label{font-size:.76rem;font-weight:750;color:#527188;letter-spacing:.075em}.notice{background:#fff8e8;border-left:4px solid #bf9539;padding:12px 15px;border-radius:7px}
+.metrics,.agents,.cases{display:grid;gap:12px}.metrics{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}.box{padding:14px;border:1px solid #dbe4ec;border-radius:10px;background:#fbfcfe}.box strong{display:block;font-size:1.6rem;color:#164d69}.sub{font-size:.77rem;color:#657c8c}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.row>label{font-weight:650}button,.button{border:0;border-radius:8px;background:#174560;color:white;padding:9px 13px;text-decoration:none;font:650 .88rem system-ui;cursor:pointer}button:hover{background:#236281}button:disabled{opacity:.45;cursor:not-allowed}button.secondary{background:#e8eff3;color:#16354b}
+input,select{font:inherit;padding:8px 10px;border:1px solid #b7c7d0;border-radius:8px;max-width:100%}input[type=number]{width:75px}.error{color:#ae3f29;font-weight:700}.help{font-size:.84rem}.cases article,.agents article{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;border:1px solid #dce6ed;border-radius:9px;padding:12px}
+small{color:#5b7386}#status{min-height:1.8em}.badge{font-size:.75rem;background:#e7eff4;border-radius:999px;padding:3px 8px}.case-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media(max-width:700px){.cases article,.agents article{display:block}.case-actions{margin-top:10px}}
+</style></head>
+<body><main>
+<header><div class="label">SATEER · CONSULAT DE BORDEAUX · RECETTE P335BY</div>
+<h1>Répartition et suivi des dossiers</h1><p>Vice-Consul — répartition par bureau et agent, prise en charge et délais.</p>
+<p class="notice">Base de recette uniquement. L'affectation inscrit un agent responsable dans un dossier existant, mais ne le prend pas en charge, ne clôture rien et n'envoie aucun e-mail. L'affectation automatique est déclenchée manuellement et limitée à 20 dossiers par opération.</p>
+<nav class="row"><a href="/dashboard-vice-consul.html?organisation=70&amp;tenant=P6V_3B5AC5AB9DB04657">← Pilotage du Consulat</a><a href="/index.html">Mon SATEER</a></nav>
+<p role="status" aria-live="polite" id="status">Vérification du compte…</p></header>
+<section id="workspace" hidden><h2>Vue d'ensemble par bureau</h2><div id="metrics" class="metrics"></div></section>
+<section id="officeSection" hidden><div class="row"><h2>Gestion des dossiers</h2><label for="office">Bureau</label><select id="office" aria-label="Sélectionner un bureau"></select><button type="button" class="secondary" id="reload">Actualiser</button></div>
+<div id="agents" class="agents" aria-label="Agents habilités"></div><h3>Dossiers du bureau</h3><p class="help">Urgences en premier. La prise en charge reste une action distincte de l'affectation.</p><div id="cases" class="cases"></div>
+<div class="row" style="margin-top:14px"><button id="previous" class="secondary" type="button">Précédents</button><span id="page" class="sub"></span><button id="next" class="secondary" type="button">Suivants</button></div>
+<div class="row" style="margin-top:16px"><button id="batch" type="button">Répartir automatiquement jusqu'à 20 dossiers non affectés</button></div></section>
+<section id="timingSection" hidden><h2>Délais du bureau</h2><p class="help">Délai constaté, jamais une promesse au citoyen. « Première réponse » et « document remis » sont deux événements différents.</p><div class="metrics" id="timings"></div></section>
+<section id="auditSection" hidden><h2>Journal des affectations</h2><div id="audit" class="cases"></div></section>
+</main><script src="/auth-client.js"></script><script src="/repartition-dossiers-bordeaux.js?v=p335by" defer></script></body></html>
