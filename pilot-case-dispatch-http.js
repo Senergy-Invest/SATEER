@@ -30,11 +30,18 @@ async function candidates(query,rights,unitId){
   JOIN organisation_units u ON u.id=m.organisation_unit_id AND u.organisation_id=$1 AND u.actif=TRUE
   JOIN organisations o ON o.id=u.organisation_id
   JOIN tenants t ON t.id=o.tenant_id AND t.code=$2
+  -- La relation generale peut etre MEMBRE : seul le role actif dans le bureau
+  -- et son droit TAKE_CASE permettent d'affecter un dossier.
   JOIN relations_personne_organisation ro ON ro.personne_id=p.id AND ro.organisation_id=o.id
-      AND ro.type IN ('AGENT','RESPONSABLE','AGENT_SATEER')
+  JOIN organisation_roles role_unite ON role_unite.id=m.role_id
+      AND role_unite.organisation_id=o.id AND role_unite.actif=TRUE
+      AND role_unite.scope IN ('UNIT','BOTH')
   LEFT JOIN pilot_case_dispatch_agent_settings s ON s.organisation_id=o.id AND s.unit_id=u.id AND s.personne_id=p.id
   WHERE u.id=$3 AND m.actif=TRUE AND (m.date_debut IS NULL OR m.date_debut<=now())
     AND (m.date_fin IS NULL OR m.date_fin>now())
+    AND EXISTS (SELECT 1 FROM role_permissions rp JOIN permissions permission
+      ON permission.id=rp.permission_id AND permission.actif=TRUE
+      WHERE rp.role_id=role_unite.id AND rp.actif=TRUE AND permission.code='TAKE_CASE')
     AND EXISTS (SELECT 1 FROM organisation_unit_capabilities uc JOIN capabilities c ON c.id=uc.capability_id
      WHERE uc.organisation_unit_id=u.id AND uc.actif=TRUE AND c.actif=TRUE AND c.code='TAKE_CASES')
   ORDER BY p.id LIMIT 201`,[ORG,TENANT,unitId]);
