@@ -27,12 +27,14 @@ function createEmailDemoRouter(deps={}) {
   if(org!==ORG || tenant!==TENANT)return deny(res,400,'CONTEXTE_INVALIDE');
   try {
    const d=await rights(Number(req.auth.personneId),ORG,TENANT);
-   if(!d?.succes || !(d.permissionsOrganisation||[]).includes('VIEW_OPERATIONAL_DASHBOARD'))return deny(res,403,'CONSULTATION_INTERDITE');
+   const permissions=d?.permissionsOrganisation||[];
+   if(!d?.succes || !(permissions.includes('VIEW_OPERATIONAL_DASHBOARD') || permissions.includes('VIEW_CONSULAR_MAIL_DEMO')))return deny(res,403,'CONSULTATION_INTERDITE');
    const p=await query('SELECT current_database() AS db, system_identifier::text AS sid FROM pg_control_system()');
    if(p.rows[0]?.db!=='sateer_test'||p.rows[0]?.sid!==PG_SYSTEM_ID) return deny(res,503,'INSTANCE_RECETTE_INVALIDE');
    next();
   } catch(e){console.error('EMAIL_DEMO_CONTROL_ERROR',e.message);return deny(res,503,'CONSULTATION_INDISPONIBLE');}
  });
+ router.get('/access',(req,res)=>res.json({statut:'ACCES_COURRIERS_DEMO_AUTORISE',lectureSeule:true,source:'DEMO_SYNTHETIQUE'}));
  router.get('/messages',async(req,res)=>{
   try {
    const p=await query(`SELECT e.id,e.mailbox_key AS "boite",e.from_label AS "expediteur",e.subject AS "objet",e.categorie_proposee AS "categorieProposee",e.motif_qualification AS "motif",e.statut,e.created_at AS "dateReception",u.nom AS "uniteSuggeree"

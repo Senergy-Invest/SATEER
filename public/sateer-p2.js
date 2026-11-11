@@ -50,6 +50,8 @@
     publish.hidden = true; // Montré seulement si le lien d'origine est autorisé.
     const demandsAction = link(actions, 'Suivre les demandes', '#sx-p2-categories', 'sx-p2-secondary');
     demandsAction.id = 'sx-p2-demands-action';
+    const catalogueAction = link(actions, 'Catalogue des démarches', '#', 'sx-p2-secondary');
+    catalogueAction.id = 'sx-p2-catalogue'; catalogueAction.hidden = true;
     const reload = put(actions, 'button', 'Actualiser', 'sx-p2-secondary');
     reload.type = 'button';
     reload.id = 'sx-p2-refresh';
@@ -197,6 +199,10 @@
     fillList('sx-p2-teams', services.sort((a,b)=>num(b.total_cases)-num(a.total_cases)), 'Aucune activité affectée aux services pour le moment.', u => [u.nom || 'Unité', `${fmt(u.total_cases)} dossiers · ${fmt(u.urgent_cases)} urgents`,num(u.urgent_cases)?'warn':undefined]);
   }
   function setOperationsVisible(allowed) {
+    if (!allowed) {
+      const catalogue = document.getElementById('sx-p2-catalogue');
+      if (catalogue) catalogue.hidden = true;
+    }
     for (const id of [
       'sx-p2-activity', 'sx-p2-categories', 'sx-p2-communication',
       'sx-p2-case-lists', 'sx-p2-teams-section', 'sx-p2-admin',
@@ -280,6 +286,18 @@
         return;
       }
       setOperationsVisible(true);
+      // Le lien est visible seulement après autorisation réelle de l'API catalogue.
+      const catalogueAction = document.getElementById('sx-p2-catalogue');
+      let adminAllowed = false;
+      try {
+        adminAllowed = (await get('/api/pilot-procedures/administration?' +
+          new URLSearchParams({organisationId:String(orgId),tenant}))).ok;
+      } catch (_) { /* Catalogue indisponible : conserver le tableau de bord. */ }
+      if (catalogueAction) {
+        catalogueAction.hidden = !adminAllowed;
+        if (adminAllowed) catalogueAction.href = '/catalogue-demarches.html?' +
+          new URLSearchParams({organisation:String(orgId),tenant});
+      }
       const unitsResponse = await get(base + '/units/overview' + param);
       const unitsData = await readJson(unitsResponse);
       const units = unitsData?.unites || unitsData?.units || (Array.isArray(unitsData) ? unitsData : []);
