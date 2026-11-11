@@ -115,7 +115,17 @@
   async function init(){
     if(!core){setStatus('Le module de préqualification ne s’est pas chargé.',true);return;}
     if(!valid){setStatus('Ouvre cette page depuis le pilotage avec organisation et tenant valides.',true);return;}
-    back.href='/dashboard-vice-consul.html?'+new URLSearchParams({organisation:org,tenant});
+    // Le retour dépend de l'espace d'origine et n'accorde aucun droit.
+    const origine=params.get('retour');
+    if(origine==='secretariat'){
+      back.href='/secretariat-bordeaux.html?'+new URLSearchParams({organisation:org,tenant});
+      back.textContent='← Mon Secrétariat';
+    }else if(origine==='vice'){
+      back.href='/dashboard-vice-consul.html?'+new URLSearchParams({organisation:org,tenant});
+      back.textContent='← Pilotage du Consulat';
+    }else{
+      back.href='/index.html';back.textContent='← Mon SATEER';
+    }
     consulat.href='/consulat.html?'+new URLSearchParams({organisation:org,tenant});
     tabInbox.addEventListener('click',()=>{mode='inbox';list();});
     tabScenarios.addEventListener('click',()=>{mode='scenarios';list();});

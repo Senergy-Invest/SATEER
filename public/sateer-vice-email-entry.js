@@ -39,7 +39,7 @@
     }
     action.className = compact ? 'sateer-vice-email-entry sx-p2-secondary' : 'sateer-vice-email-entry';
     if (valide) {
-      action.href = '/email-secretariat-demo.html?' + new URLSearchParams({organisation, tenant}).toString();
+      action.href = '/email-secretariat-demo.html?' + new URLSearchParams({organisation, tenant, retour:'vice'}).toString();
       action.removeAttribute('aria-disabled');
       action.removeAttribute('title');
     } else {

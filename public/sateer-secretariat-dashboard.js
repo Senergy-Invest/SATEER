@@ -30,7 +30,7 @@
       status.textContent = 'Réponse serveur non reconnue.';
       return;
     }
-    mailLink.href = '/email-secretariat-demo.html?' + new URLSearchParams({organisation:ORG,tenant:TENANT});
+    mailLink.href = '/email-secretariat-demo.html?' + new URLSearchParams({organisation:ORG,tenant:TENANT,retour:'secretariat'});
     content.hidden = false;
     status.textContent = 'Espace de recette autorisé — lecture seule.';
   }).catch(() => { status.textContent = 'Vérification de session impossible.'; });
