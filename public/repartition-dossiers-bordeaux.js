@@ -20,8 +20,18 @@
  }
  function fmtHours(v){return v==null?'Non mesuré':(Number(v)/3600).toFixed(1)+' h';}
  function card(label,value,sub){const b=node('article');b.className='box';b.append(node('small',label));const s=node('strong',value);b.append(s);if(sub)b.append(node('div',sub));return b;}
- async function stats(){const r=await request('/stats');const root=$('metrics');root.replaceChildren();
-   for(const b of r.bureaux){const e=card(b.bureau,(Number(b.enAttente)+Number(b.enCours))+' ouverts',
+ async function stats(){
+   const r=await request('/stats');
+   if(!Array.isArray(r.bureaux))throw Error('STATISTIQUES_INCOMPATIBLES : liste des bureaux absente');
+   const champs=['enAttente','enCours','traitees','sansAgent'];
+   for(const b of r.bureaux){
+     const manquants=champs.filter(k=>!Number.isSafeInteger(b[k]) || b[k]<0);
+     if(typeof b.bureau!=='string'||manquants.length){
+       throw Error('STATISTIQUES_INCOMPATIBLES : champs manquants ('+manquants.join(', ')+')');
+     }
+   }
+   const root=$('metrics');root.replaceChildren();
+   for(const b of r.bureaux){const e=card(b.bureau,(b.enAttente+b.enCours)+' ouverts',
      `${b.enAttente} nouveaux · ${b.enCours} en cours · ${b.traitees} traités · ${b.sansAgent} sans agent`);
      e.className='box';root.append(e);}
  }

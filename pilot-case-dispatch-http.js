@@ -124,11 +124,11 @@ function createCaseDispatchRouter(deps={}){
    try{
     const x=await query(`SELECT u.id AS "unitId",u.nom AS "bureau",
        COUNT(d.id)::int AS total,
-       COUNT(d.id) FILTER (WHERE d.statut='NOUVELLE')::int AS enAttente,
-       COUNT(d.id) FILTER (WHERE d.statut='EN_COURS')::int AS enCours,
+       COUNT(d.id) FILTER (WHERE d.statut='NOUVELLE')::int AS "enAttente",
+       COUNT(d.id) FILTER (WHERE d.statut='EN_COURS')::int AS "enCours",
        COUNT(d.id) FILTER (WHERE d.statut='TRAITEE')::int AS traitees,
-       COUNT(d.id) FILTER (WHERE d.statut IN ('NOUVELLE','EN_COURS') AND d.assignee_a IS NULL)::int AS sansAgent,
-       COUNT(DISTINCT d.assignee_a) FILTER (WHERE d.statut IN ('NOUVELLE','EN_COURS'))::int AS agentsAvecCharge,
+       COUNT(d.id) FILTER (WHERE d.statut IN ('NOUVELLE','EN_COURS') AND d.assignee_a IS NULL)::int AS "sansAgent",
+       COUNT(DISTINCT d.assignee_a) FILTER (WHERE d.statut IN ('NOUVELLE','EN_COURS'))::int AS "agentsAvecCharge",
        ROUND(AVG(EXTRACT(EPOCH FROM (d.date_cloture-d.date_creation))/3600)
          FILTER (WHERE d.statut='TRAITEE' AND d.date_cloture IS NOT NULL)::numeric,1) AS "delaiClotureHeures"
       FROM organisation_units u JOIN organisations o ON o.id=u.organisation_id
