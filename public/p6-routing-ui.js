@@ -34,11 +34,24 @@
  }
  async function init(){
    if(!$('sx-p6-rule-form'))return;
+   // Ne jamais proposer un lien nu vers le catalogue : il perdrait le contexte
+   // de l'organisation et provoquerait « Organisation non sélectionnée ».
+   const catalogueLink=$('sx-p7-procedures');
+   if(catalogueLink){
+     catalogueLink.removeAttribute('href');
+     catalogueLink.setAttribute('aria-disabled','true');
+     catalogueLink.title='Vérification du contexte consulaire en cours';
+   }
    try{
      const ctx=await window.SATEER_CONTEXT_READY;
      const selected=await window.SATEER_choisirOrganisation(qs.get('organisation')||null);
      if(!ctx||!selected?.id||!ctx.tenantCode)throw Error('Ouvrez cette page depuis votre espace professionnel.');
      org=Number(selected.id);tenant=ctx.tenantCode;
+     if(catalogueLink){
+       catalogueLink.href='/catalogue-demarches.html?'+new URLSearchParams({organisation:String(org),tenant});
+       catalogueLink.removeAttribute('aria-disabled');
+       catalogueLink.removeAttribute('title');
+     }
      await load();
    }catch(e){status(e.message,true);}
  }
