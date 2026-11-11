@@ -11,6 +11,7 @@
   const status=document.getElementById('status'), count=document.getElementById('mail-count');
   const tabInbox=document.getElementById('tab-inbox'), tabScenarios=document.getElementById('tab-scenarios');
   const back=document.getElementById('back'), consulat=document.getElementById('open-consulat');
+  const triageSummary=document.getElementById('triage-summary'), configLink=document.getElementById('config-courriers-link');
   const api='/api/bordeaux-email-demo/messages';
   let stored=[], mode='inbox', active=null, selectionToken=0;
   const text=(tag,value,cls)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(value!==undefined && value!==null)node.textContent=String(value);return node;};
@@ -44,6 +45,8 @@
     add(dec,'p','Thème détecté : '+a.categorieLibelle,'mail-guide');
     add(dec,'p',noteFor(a),'mail-guide');
     add(dec,'small','Règle : '+a.motif+(fromDemo?' · simulation locale':' · calculée côté serveur')+' · aucune action déclenchée','mail-code');
+    if(msg.decisionFile){add(dec,'p','File proposée : '+msg.decisionFile.file+' — '+msg.decisionFile.motif,'mail-guide');
+       add(dec,'small','Proposition non exécutée : aucun transfert ou envoi.', 'mail-code');}
     if(!fromDemo && msg.uniteSuggeree){
       add(dec,'small','Ancienne suggestion par mot-clé : '+msg.uniteSuggeree+'. Non appliquée : la qualification par intention prévaut dans cette simulation.','mail-code');
     }
@@ -78,7 +81,7 @@
     tabInbox.setAttribute('aria-pressed',String(mode==='inbox'));
     tabScenarios.setAttribute('aria-pressed',String(mode==='scenarios'));
     const items=mode==='inbox'?stored:core.scenarios;
-    if(!items.length){add(root,'p',mode==='inbox'?'Aucun courrier fictif enregistré.':'Aucun scénario.','mail-muted');detail.replaceChildren(add(document.createElement('div'),'p','Aucun courrier à afficher.','mail-muted'));return;}
+    if(!items.length){add(root,'p',mode==='inbox'?'Aucun courrier dans cette file.':'Aucun scénario.','mail-muted');detail.replaceChildren(add(document.createElement('div'),'p','Aucun courrier à afficher.','mail-muted'));return;}
     for(const item of items){const b=add(root,'button','','mail-item');b.type='button';b.dataset.key=String(item.id);b.setAttribute('aria-pressed','false');
       add(b,'strong',mode==='inbox'?('n°'+item.id+' · '+item.objet):item.objet);
       add(b,'small',item.expediteur+' · '+(mode==='inbox'?'message fictif':'cas '+item.id));
@@ -109,7 +112,7 @@
       if(qualification.statut!=='PREQUALIFICATION_SYNTHETIQUE'||!qualification.lectureSeule||!qualification.decision||
          conseil.statut!=='CONSEIL_DE_RECETTE'||conseil.envoiAutorise!==false||!conseil.lectureSeule||
          JSON.stringify(qualification.decision)!==JSON.stringify(conseil.decision))throw Error('CONSEIL_NON_VALIDE');
-      show(result.message,false,qualification.decision,conseil);
+      show({...result.message,decisionFile:m.decisionFile},false,qualification.decision,conseil);
     } catch(e){if(token!==selectionToken || mode!=='inbox')return;detail.replaceChildren();setStatus('Lecture ou vérification des sources indisponible : '+e.message,true);}
   }
   async function init(){
@@ -129,8 +132,33 @@
     consulat.href='/consulat.html?'+new URLSearchParams({organisation:org,tenant});
     tabInbox.addEventListener('click',()=>{mode='inbox';list();});
     tabScenarios.addEventListener('click',()=>{mode='scenarios';list();});
-    try{const result=await request(api+'?'+qs);stored=result.messages||[];count.textContent=String(stored.length);list();}
-    catch(e){count.textContent='—';setStatus('Boîte fictive indisponible : '+e.message,true);if(e.message==='SESSION_REQUISE'){const l=add(status,'a','Se connecter');l.href='/login.html';}mode='scenarios';list();setStatus('Boîte fictive indisponible. Exemples locaux uniquement : '+e.message,true);}
+    try{
+      const access=await request('/api/bordeaux-email-demo/triage/access?'+qs);
+      const isVice=access.profil==='VICE';
+      const result=await request('/api/bordeaux-email-demo/triage/'+(isVice?'vice':'secretariat')+'?'+qs);
+      if(result.statut!=='TRIAGE_SYNTHETIQUE'||result.simulation!==true)throw Error('SOURCE_NON_CONFORME');
+      stored=result.messages||[];count.textContent=String(result.pagination.total);
+      tabInbox.textContent=isVice?'Tous les courriers fictifs':'Interventions humaines';
+      triageSummary.textContent=(isVice?'Supervision : tous les courriers fictifs. ':'Secrétariat : uniquement la file d’intervention humaine. ')+
+        'Total : '+result.totalCourriers+' · Secrétariat : '+result.nombres.secretariat+
+        ' · Assistant à vérifier : '+result.nombres.assistant+' · Bureau à vérifier : '+result.nombres.bureau+
+        '. Aucune proposition n’a été exécutée.';
+      if(isVice){configLink.href='/pilotage-courriers-bordeaux.html?'+new URLSearchParams({organisation:org,tenant});configLink.hidden=false;}
+      list();
+      const more=document.getElementById('triage-more');
+      let current=result.pagination;
+      more.hidden=!current.aSuivre;
+      more.onclick=async()=>{
+        more.disabled=true;
+        try{
+          const next=await request('/api/bordeaux-email-demo/triage/'+(isVice?'vice':'secretariat')+'?'+qs+'&offset='+(current.offset+current.limit));
+          if(!next.pagination||next.pagination.offset!==current.offset+current.limit||next.simulation!==true)throw Error('PAGINATION_INVALIDE');
+          stored.push(...next.messages);current=next.pagination;more.hidden=!current.aSuivre;list();
+        }catch(e){setStatus('Chargement page suivante indisponible : '+e.message,true)}
+        finally{more.disabled=false}
+      };
+    }
+    catch(e){count.textContent='—';triageSummary.textContent='File filtrée indisponible : aucun accès de repli non filtré.';setStatus('Boîte fictive indisponible : '+e.message,true);if(e.message==='SESSION_REQUISE'){const l=add(status,'a','Se connecter');l.href='/login.html';}mode='scenarios';list();setStatus('Boîte fictive indisponible. Exemples locaux uniquement : '+e.message,true);}
   }
   init();
 })();

@@ -3,6 +3,7 @@
 const express = require('express');
 const mailIntent = require('./public/sateer-mail-intent-core');
 const guidance = require('./sateer-mail-guidance-core');
+const triage = require('./pilot-mail-triage-http');
 const { executerRequete } = require('./database');
 const { obtenirPermissionsEffectivesDatabase } = require('./services-database');
 const ORG = 70;
@@ -31,20 +32,25 @@ function createEmailDemoRouter(deps={}) {
    if(!d?.succes || !(permissions.includes('VIEW_OPERATIONAL_DASHBOARD') || permissions.includes('VIEW_CONSULAR_MAIL_DEMO')))return deny(res,403,'CONSULTATION_INTERDITE');
    const p=await query('SELECT current_database() AS db, system_identifier::text AS sid FROM pg_control_system()');
    if(p.rows[0]?.db!=='sateer_test'||p.rows[0]?.sid!==PG_SYSTEM_ID) return deny(res,503,'INSTANCE_RECETTE_INVALIDE');
+   req.demoPermissions=permissions; // droits obtenus côté serveur, jamais du client
    next();
   } catch(e){console.error('EMAIL_DEMO_CONTROL_ERROR',e.message);return deny(res,503,'CONSULTATION_INDISPONIBLE');}
  });
+ triage.installTriageRoutes(router,{query,clientFactory:deps.clientFactory});
  router.get('/access',(req,res)=>res.json({statut:'ACCES_COURRIERS_DEMO_AUTORISE',lectureSeule:true,source:'DEMO_SYNTHETIQUE'}));
  router.get('/messages',async(req,res)=>{
   try {
-   const p=await query(`SELECT e.id,e.mailbox_key AS "boite",e.from_label AS "expediteur",e.subject AS "objet",e.categorie_proposee AS "categorieProposee",e.motif_qualification AS "motif",e.statut,e.created_at AS "dateReception",u.nom AS "uniteSuggeree"
+   const p=await query(`SELECT e.id,e.mailbox_key AS "boite",e.from_label AS "expediteur",e.subject AS "objet",e.body AS "texte",e.categorie_proposee AS "categorieProposee",e.motif_qualification AS "motif",e.statut,e.created_at AS "dateReception",u.nom AS "uniteSuggeree"
     FROM pilot_email_inbox_demo e
     JOIN organisations o ON o.id=e.organisation_id AND o.tenant_id=e.tenant_id
     JOIN tenants t ON t.id=e.tenant_id AND t.code=$2
     LEFT JOIN organisation_units u ON u.id=e.unite_suggeree_id AND u.organisation_id=e.organisation_id
     WHERE e.organisation_id=$1 AND e.source='DEMO_SYNTHETIQUE'
-    ORDER BY e.created_at DESC,e.id DESC LIMIT 50`,[ORG,TENANT]);
-   return res.json({statut:'COURRIERS_SYNTHETIQUES_CHARGES',enLectureSeule:true, messages:p.rows});
+    ORDER BY e.created_at DESC,e.id DESC LIMIT 501`,[ORG,TENANT]);
+   if(p.rows.length>500)return deny(res,503,'CAPACITE_RECETTE_DEPASSEE');
+   // Ancienne API : pas de contournement de la file filtrée par le serveur.
+   const a=[];for(const m of p.rows){if(await triage.secretaryAllowed(req,m,query)){const {texte,...visible}=m;a.push(visible);}}
+   return res.json({statut:'COURRIERS_SYNTHETIQUES_CHARGES',enLectureSeule:true, messages:a});
   } catch(e){console.error('EMAIL_DEMO_LIST_ERROR',e.message);return deny(res,503,'COURRIERS_INDISPONIBLES');}
  });
  router.get('/messages/:id',async(req,res)=>{
@@ -57,6 +63,7 @@ function createEmailDemoRouter(deps={}) {
     LEFT JOIN organisation_units u ON u.id=e.unite_suggeree_id AND u.organisation_id=e.organisation_id
     WHERE e.id=$3 AND e.organisation_id=$1 AND e.source='DEMO_SYNTHETIQUE'`,[ORG,TENANT,id]);
    if(!p.rowCount)return deny(res,404,'COURRIER_INTROUVABLE');
+   if(!await triage.secretaryAllowed(req,p.rows[0],query))return deny(res,403,'COURRIER_HORS_FILE_SECRETARIAT');
    return res.json({statut:'COURRIER_SYNTHETIQUE_CHARGE',enLectureSeule:true,message:p.rows[0]});
   } catch(e){console.error('EMAIL_DEMO_DETAIL_ERROR',e.message);return deny(res,503,'COURRIER_INDISPONIBLE');}
  });
@@ -71,6 +78,7 @@ function createEmailDemoRouter(deps={}) {
     JOIN tenants t ON t.id=e.tenant_id AND t.code=$2
     WHERE e.id=$3 AND e.organisation_id=$1 AND e.source='DEMO_SYNTHETIQUE'`,[ORG,TENANT,id]);
    if(!p.rowCount)return deny(res,404,'COURRIER_INTROUVABLE');
+   if(!await triage.secretaryAllowed(req,p.rows[0],query))return deny(res,403,'COURRIER_HORS_FILE_SECRETARIAT');
    const decision=mailIntent.qualifier(p.rows[0].objet,p.rows[0].texte);
    return res.json({statut:'PREQUALIFICATION_SYNTHETIQUE',lectureSeule:true,
     validationHumaineRequise:true,decision});
@@ -97,6 +105,7 @@ function createEmailDemoRouter(deps={}) {
      JOIN tenants t ON t.id=e.tenant_id AND t.code=$2
      WHERE e.id=$3 AND e.organisation_id=$1 AND e.source='DEMO_SYNTHETIQUE'`,[ORG,TENANT,id]);
    if(!p.rowCount)return deny(res,404,'COURRIER_INTROUVABLE');
+   if(!await triage.secretaryAllowed(req,p.rows[0],query))return deny(res,403,'COURRIER_HORS_FILE_SECRETARIAT');
    const decision=mailIntent.qualifier(p.rows[0].objet,p.rows[0].texte);
    const conseil=await conseilPour(decision,p.rows[0].texte);
    return res.json({statut:'CONSEIL_DE_RECETTE',lectureSeule:true,envoiAutorise:false,

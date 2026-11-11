@@ -6,9 +6,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Module = require('node:module');
 const root = process.env.SATEER_PROJECT_ROOT || path.resolve(__dirname, '../..');
-const routeHandlers = {get:[],use:[],all:[]};
+const routeHandlers = {get:[],use:[],all:[],put:[]};
 const orig = Module._load;
-const router=()=>({use:f=>routeHandlers.use.push(f),get:(p,f)=>routeHandlers.get.push({p,f}),all:(p,f)=>routeHandlers.all.push({p,f})});
+const router=()=>({use:f=>routeHandlers.use.push(f),get:(p,f)=>routeHandlers.get.push({p,f}),all:(p,f)=>routeHandlers.all.push({p,f}),put:(p,f)=>routeHandlers.put.push({p,f})});
 try {
   Module._load=function(id,parent,isMain){
     if(id==='express')return {Router:router};

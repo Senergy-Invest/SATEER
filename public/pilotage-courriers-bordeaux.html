@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Règles des courriers · Vice-Consul · Bordeaux</title>
+<style>
+:root{font:16px/1.45 system-ui,-apple-system,sans-serif;color:#1b3445;background:#f5f7fa}
+*{box-sizing:border-box}main{max-width:960px;margin:2rem auto;padding:0 18px}header,section{background:white;border:1px solid #dae2e9;border-radius:13px;padding:22px;margin-bottom:15px}
+h1{font-size:1.65rem;margin:.3rem 0}.muted{color:#576b7a}.notice{background:#fff9e9;border-left:4px solid #c49a42;padding:12px;border-radius:5px}
+label{display:block;font-weight:650;font-size:.9rem;margin:8px 0 4px}select{font:inherit;padding:9px;border-radius:8px;border:1px solid #adbdc8;width:100%}
+button,.link{display:inline-block;padding:11px 15px;border:0;border-radius:8px;background:#153950;color:#fff;text-decoration:none;cursor:pointer;font:650 .9rem system-ui;margin-top:10px}
+a{color:#185d86}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.grid article{background:#f8fbfd;border:1px solid #e1e8ef;padding:14px;border-radius:10px}
+.grid h3{margin:0 0 8px}.score{font-size:1.3rem;font-weight:750}.alert{color:#a03a26}pre{white-space:pre-wrap;word-break:break-word;background:#f8fafb;padding:10px;border-radius:8px;font-size:.8rem}
+@media(max-width:730px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<header><small>CONSULAT DE BORDEAUX · RECETTE P335BX · VICE-CONSUL A01</small>
+<h1>Configurer le tri des courriers fictifs</h1>
+<p class="notice"><strong>Mode démonstration.</strong> Modifier une règle change uniquement la proposition de file dans cette recette. Aucun e-mail n'est envoyé, aucun dossier n'est créé ni transmis à un bureau, aucune boîte officielle n'est connectée.</p>
+<a id="back" href="/dashboard-vice-consul.html?organisation=70&amp;tenant=P6V_3B5AC5AB9DB04657">← Tableau de bord Vice-Consul</a> ·
+<a href="/email-secretariat-demo.html?organisation=70&amp;tenant=P6V_3B5AC5AB9DB04657&amp;retour=vice">Voir les courriers et leurs files</a>
+<p role="status" id="status">Vérification de tes autorisations…</p></header>
+<section hidden id="workspace">
+<h2>Règles proposées par démarche</h2>
+<p class="muted">MANUEL : en attente au Secrétariat. PROPOSITION : pour une demande claire, proposée au bureau après vérification ; pour une information, préparation par l'assistant avec validation obligatoire. Aucune action automatique n'est activée.</p>
+<div id="rule-grid" class="grid"></div>
+</section>
+<section><h2>Suivi complet des courriers fictifs</h2><div class="grid" id="metrics"><article>Chargement…</article></div><p class="muted">Il s'agit de files simulées, pas du nombre de courriers traités ou remis.</p></section>
+<section id="auditSection" hidden><h2>Historique des modifications de règles</h2><div id="audit" class="muted">Aucune modification pour le moment.</div></section>
+<p><a href="/index.html">Mon SATEER</a></p>
+</main>
+<script src="/auth-client.js"></script>
+<script src="/pilotage-courriers-bordeaux.js?v=p335bx" defer></script>
+</body></html>
