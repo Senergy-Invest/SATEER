@@ -3,7 +3,7 @@
  * Aucun accès forcé : l'API conserve son contrôle de session et de permissions.
  */
 (function () {
-  function installerLien(documentRef, locationRef) {
+  function installerLien(documentRef, locationRef, dashboardContext = null) {
     const compact = documentRef.getElementById('sx-p2-root');
     const compactActions = compact ? compact.querySelector('.sx-p2-actions') : null;
     if (compact && !compactActions) return 'BARRE_P2_ABSENTE';
@@ -13,9 +13,18 @@
     if (!compact && documentRef.querySelector('script[src*="sateer-p2.js"]')) return 'ATTENTE_P2';
 
     const params = new URLSearchParams(locationRef.search || '');
-    const organisation = params.get('organisation') || params.get('organisationId') || '';
-    const tenant = params.get('tenant') || '';
-    const valide = /^[1-9][0-9]{0,14}$/.test(organisation) && /^[A-Z][A-Z0-9_-]{1,49}$/.test(tenant);
+    const organisationDansUrl = params.get('organisation') || params.get('organisationId') || '';
+    const tenantDansUrl = params.get('tenant') || '';
+    // Le tableau P2 peut être ouvert depuis Mon SATEER sans paramètres URL.
+    // Son événement est émis uniquement après chargement du dashboard autorisé.
+    const organisationDuDashboard = String(dashboardContext?.organisationId || '');
+    const tenantDuDashboard = String(dashboardContext?.tenant || '');
+    const organisation = organisationDansUrl || organisationDuDashboard;
+    const tenant = tenantDansUrl || tenantDuDashboard;
+    const contexteCoherent = (!organisationDansUrl || !organisationDuDashboard || organisationDansUrl === organisationDuDashboard)
+      && (!tenantDansUrl || !tenantDuDashboard || tenantDansUrl === tenantDuDashboard);
+    const valide = contexteCoherent && /^[1-9][0-9]{0,14}$/.test(organisation)
+      && /^[A-Z][A-Z0-9_-]{1,49}$/.test(tenant);
     let action = documentRef.getElementById('sateer-vice-email-entry');
     if (!action) {
       action = documentRef.createElement('a');
@@ -63,11 +72,18 @@
   if (typeof module === 'object' && module.exports) module.exports = {installerLien};
   if (typeof document !== 'undefined' && typeof window !== 'undefined') {
     function init() {
-      const result = installerLien(document, window.location);
+      let dashboardContext = null;
+      const installer = () => installerLien(document, window.location, dashboardContext);
+      // Le contexte résolu est conservé lors des mutations DOM de P2.
+      window.addEventListener('sateer:vice-dashboard-refreshed', event => {
+        dashboardContext = event.detail || null;
+        installer();
+      });
+      const result = installer();
       if (result === 'ATTENTE_P2') {
         const main = document.querySelector('main.page') || document.documentElement;
         const observer = new MutationObserver(() => {
-          const next = installerLien(document, window.location);
+          const next = installer();
           if (next !== 'ATTENTE_P2') observer.disconnect();
         });
         observer.observe(main, {childList: true});

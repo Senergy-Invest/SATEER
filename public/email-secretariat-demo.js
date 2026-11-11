@@ -4,7 +4,7 @@
 (() => {
   const core = window.SATEER_MAIL_INTENT;
   const params = new URLSearchParams(location.search);
-  const org = params.get('organisation') || '', tenant = params.get('tenant') || '';
+  const org = params.get('organisation') || params.get('organisationId') || '', tenant = params.get('tenant') || '';
   const valid = /^[1-9][0-9]{0,14}$/.test(org) && /^[A-Z][A-Z0-9_-]{1,49}$/.test(tenant);
   const qs = new URLSearchParams({organisationId:org,tenant});
   const root=document.getElementById('mails'), detail=document.getElementById('detail');
