@@ -403,6 +403,44 @@ function setup(app,exigerSession){
    return res.json({statut:'DETAIL_SUPERVISION',dossier:dossier.rows[0],messages:messages.rows,historique:historique.rows,limite:100,lectureSeule:true});
   }catch(err){console.error('P335L2 detail supervision',err);return status(res,503,'DETAIL_SUPERVISION_INDISPONIBLE');}
  });
+ // P3.3.5J — Journal Agent. Lecture seule, jamais les pièces privées.
+ // Autorisation par l'unité réelle du dossier, pas par une unité demandée arbitrairement.
+ router.get('/dossiers/:id/journal-agent',async(req,res)=>{
+  const id=validId(req.params.id),org=validId(req.query.organisationId),unitId=validId(req.query.unitId),tenant=validTenant(req.query.tenant);
+  if(!id||!org||!unitId||!tenant)return status(res,400,'PARAMETRES_INVALIDES');
+  try{
+   const dossier=await caseAccess(req,id,org,tenant);
+   if(!dossier||Number(dossier.destination_unit_id)!==unitId||Number(dossier.personne_id)===Number(req.auth.personneId))
+    return status(res,403,'ACCES_REFUSE');
+   // caseAccess vérifie déjà l'autorisation et la capacité VIEW_INBOX du bureau pour tout non-propriétaire.
+   const p=[id,org,tenant,unitId];
+   const messages=await executerRequete(`
+     SELECT r.id,r.contenu,r.type,r.date_creation,
+            auteur.prenom AS auteur_prenom,auteur.nom AS auteur_nom
+     FROM demande_reponses r
+     JOIN demandes d ON d.id=r.demande_id AND d.tenant_id=r.tenant_id
+     JOIN organisations o ON o.id=d.organisation_id AND o.tenant_id=d.tenant_id
+     JOIN tenants t ON t.id=d.tenant_id
+     LEFT JOIN personnes auteur ON auteur.id=r.auteur_personne_id
+     WHERE d.id=$1 AND d.organisation_id=$2 AND t.code=$3
+       AND d.destination_unit_id=$4 AND r.visible_citoyen=TRUE
+     ORDER BY r.date_creation DESC,r.id DESC LIMIT 100`,p);
+   const historique=await executerRequete(`
+     SELECT h.id,h.action,h.commentaire,h.ancien_statut,h.nouveau_statut,h.date_action,
+            auteur.prenom AS auteur_prenom,auteur.nom AS auteur_nom
+     FROM demande_history h
+     JOIN demandes d ON d.id=h.demande_id AND d.tenant_id=h.tenant_id
+     JOIN organisations o ON o.id=d.organisation_id AND o.tenant_id=d.tenant_id
+     JOIN tenants t ON t.id=d.tenant_id
+     LEFT JOIN personnes auteur ON auteur.id=h.auteur_personne_id
+     WHERE d.id=$1 AND d.organisation_id=$2 AND t.code=$3
+       AND d.destination_unit_id=$4
+     ORDER BY h.date_action DESC,h.id DESC LIMIT 100`,p);
+   return res.json({statut:'JOURNAL_AGENT_CHARGE',dossierId:id,
+    messages:messages.rows, historique:historique.rows,limite:100});
+  }catch(err){console.error('P335J journal agent indisponible',err);
+   return status(res,503,'JOURNAL_AGENT_INDISPONIBLE');}
+ });
  router.get('/dossiers/:id/suivi',async(req,res)=>{
   const id=validId(req.params.id),org=validId(req.query.organisationId),tenant=validTenant(req.query.tenant);
   if(!id||!org||!tenant)return status(res,400,'PARAMETRES_INVALIDES');

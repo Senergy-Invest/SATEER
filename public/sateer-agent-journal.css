@@ -1,0 +1,120 @@
+/* SATEER P3.3.5K — journal professionnel des dossiers, limité au composant Agent. */
+.sateer-agent-journal {
+  --saj-ink: #1c3040;
+  --saj-secondary: #526578;
+  --saj-line: #dbe6ed;
+  --saj-surface: #ffffff;
+  --saj-muted: #f5f8fb;
+  margin: 28px 0 14px;
+  padding: 0;
+  color: var(--saj-ink);
+  font-family: inherit;
+  min-width: 0;
+}
+.sateer-agent-journal *, .sateer-agent-journal *::before, .sateer-agent-journal *::after { box-sizing: border-box; }
+.sateer-agent-journal .saj-header {
+  display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;
+  border: 1px solid var(--saj-line); border-radius: 16px 16px 0 0;
+  background: linear-gradient(110deg, #eef6f6 0%, #f7fafc 62%, #ffffff 100%);
+  padding: 22px 24px;
+}
+.sateer-agent-journal .saj-heading { min-width: 240px; flex: 1; }
+.sateer-agent-journal .saj-kicker {
+  display: block; color: #287369; font-weight: 750; font-size: 10px;
+  line-height: 1.4; letter-spacing: 1.25px; margin-bottom: 7px;
+}
+.sateer-agent-journal .saj-title {
+  color: #172d3f; margin: 0 0 6px; font-size: clamp(19px, 2.2vw, 25px);
+  line-height: 1.25; font-weight: 760; letter-spacing: -.45px;
+}
+.sateer-agent-journal .saj-subtitle { font-size: 13px; line-height: 1.6; color: var(--saj-secondary); margin: 0; max-width: 58ch; }
+.sateer-agent-journal .saj-counts { display: flex; flex-wrap: wrap; gap: 8px; }
+.sateer-agent-journal .saj-count {
+  background: #ffffff; border: 1px solid #d5e3e9; border-radius: 999px;
+  padding: 8px 12px; font-weight: 680; color: #294459; font-size: 12px; white-space: nowrap;
+}
+.sateer-agent-journal .saj-loading, .sateer-agent-journal .saj-error {
+  margin: 0; padding: 16px 22px; border: 1px solid var(--saj-line); border-top: 0;
+  background: var(--saj-surface); border-radius: 0 0 16px 16px;
+}
+.sateer-agent-journal .saj-error { color: #8e2f24; background: #fff5f1; }
+.sateer-agent-journal .saj-switch {
+  display: flex; gap: 6px; padding: 10px; background: #ffffff;
+  border-left: 1px solid var(--saj-line); border-right: 1px solid var(--saj-line);
+  border-bottom: 1px solid var(--saj-line);
+}
+.sateer-agent-journal .saj-switch-button {
+  appearance: none; border: 0; border-radius: 10px; background: transparent;
+  color: #5a6f7c; font: inherit; font-weight: 680; font-size: 13px;
+  padding: 11px 14px; display: inline-flex; align-items: center; gap: 9px;
+  cursor: pointer; transition: background-color .18s ease, color .18s ease;
+}
+.sateer-agent-journal .saj-switch-button:hover { background: #eef5f8; color: #193947; }
+.sateer-agent-journal .saj-switch-button[aria-pressed="true"] { background: #185b62; color: white; }
+.sateer-agent-journal .saj-switch-button:focus-visible,
+.sateer-agent-journal .saj-message-summary:focus-visible { outline: 3px solid #4aa8b5; outline-offset: 2px; }
+.sateer-agent-journal .saj-switch-count {
+  border-radius: 6px; padding: 2px 7px; color: inherit;
+  background: rgba(105,125,138,.13); font-weight: 750; font-variant-numeric: tabular-nums;
+}
+.sateer-agent-journal .saj-switch-button[aria-pressed="true"] .saj-switch-count { background: rgba(255,255,255,.19); }
+.sateer-agent-journal .saj-panel {
+  padding: 22px 24px 26px; border: 1px solid var(--saj-line); border-top: 0;
+  border-radius: 0 0 16px 16px; background: #ffffff; min-width: 0;
+}
+.sateer-agent-journal .saj-panel[hidden] { display: none !important; }
+.sateer-agent-journal .saj-panel-intro { margin: 0 0 18px; font-size: 12px; color: var(--saj-secondary); line-height: 1.6; }
+.sateer-agent-journal .saj-empty { border: 1px dashed #cadbe2; border-radius: 12px; padding: 28px; color: #5d7180; text-align: center; }
+.sateer-agent-journal .saj-message {
+  background: #ffffff; border: 1px solid #dae5eb; border-left: 4px solid #438eac;
+  border-radius: 12px; margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(30,56,71,.035); overflow: hidden;
+}
+.sateer-agent-journal .saj-message.saj-tone-ready { border-left-color: #bd8529; }
+.sateer-agent-journal .saj-message.saj-tone-done { border-left-color: #27846f; }
+.sateer-agent-journal .saj-message-summary { position: relative; display: block; cursor: pointer; list-style: none; padding: 15px 42px 15px 17px; }
+.sateer-agent-journal .saj-message-summary::-webkit-details-marker { display: none; }
+.sateer-agent-journal .saj-message-summary::after {
+  content: '+'; position: absolute; right: 16px; top: 17px; width: 22px; height: 22px;
+  display: grid; place-items: center; font-size: 21px; line-height: 1; font-weight: 450;
+  border-radius: 6px; color: #42616e; background: #edf3f6;
+}
+.sateer-agent-journal .saj-message[open] .saj-message-summary::after { content: '−'; }
+.sateer-agent-journal .saj-message-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sateer-agent-journal .saj-tag { padding: 5px 9px; background: #eaf4f8; color: #215772; font-weight: 750; font-size: 11px; border-radius: 999px; }
+.sateer-agent-journal .saj-tone-ready .saj-tag { background: #fdf2d9; color: #815710; }
+.sateer-agent-journal .saj-tone-done .saj-tag { background: #e6f5ed; color: #20694e; }
+.sateer-agent-journal .saj-message-date { color: #687987; font-size: 11px; white-space: nowrap; }
+.sateer-agent-journal .saj-message-author { display: block; font-size: 13px; font-weight: 690; color: #233d4e; margin-bottom: 6px; }
+.sateer-agent-journal .saj-message-preview { color: #6a7986; font-size: 12px; line-height: 1.6; display: block; overflow-wrap: anywhere; }
+.sateer-agent-journal .saj-message[open] .saj-message-preview { display: none; }
+.sateer-agent-journal .saj-message-body { border-top: 1px solid #e5edf1; background: #fbfdfe; padding: 12px 17px 17px; }
+.sateer-agent-journal .saj-message-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font-size: 13px; line-height: 1.85; color: #253b4a; }
+.sateer-agent-journal .saj-timeline { list-style: none; margin: 0; padding: 2px 0 0 11px; }
+.sateer-agent-journal .saj-event { position: relative; padding: 4px 0 24px 25px; border-left: 2px solid #dde8ed; margin-left: 4px; }
+.sateer-agent-journal .saj-event:last-child { border-left-color: transparent; padding-bottom: 7px; }
+.sateer-agent-journal .saj-event::before {
+  content: ''; position: absolute; top: 9px; left: -7px; width: 12px; height: 12px;
+  border-radius: 50%; background: #ffffff; border: 3px solid #6c9aab;
+  box-shadow: 0 0 0 4px #eef5f7;
+}
+.sateer-agent-journal .saj-event.saj-event-ready::before { border-color: #bd8529; box-shadow: 0 0 0 4px #fdf6e8; }
+.sateer-agent-journal .saj-event.saj-event-done::before { border-color: #288569; box-shadow: 0 0 0 4px #e8f6ef; }
+.sateer-agent-journal .saj-event-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 5px 15px; }
+.sateer-agent-journal .saj-event-title { font-size: 13px; line-height: 1.4; color: #213a48; font-weight: 740; }
+.sateer-agent-journal .saj-event-date, .sateer-agent-journal .saj-event-actor { font-size: 11px; color: #72828d; }
+.sateer-agent-journal .saj-event-actor { display: block; margin-top: 3px; }
+.sateer-agent-journal .saj-event-note { margin: 7px 0 0; color: #596d79; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.sateer-agent-journal .saj-transition { margin-top: 9px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.sateer-agent-journal .saj-transition-state { background: #eef3f6; color: #365567; border: 1px solid #dce7ec; border-radius: 7px; font-size: 11px; font-weight: 700; padding: 4px 7px; }
+.sateer-agent-journal .saj-transition-arrow { color: #62818d; }
+.sateer-agent-journal .saj-footer { font-size: 11px; color: #71818c; margin: 12px 4px 0; line-height: 1.5; }
+@media (max-width: 720px) {
+  .sateer-agent-journal .saj-header { padding: 18px; }
+  .sateer-agent-journal .saj-switch { flex-wrap: wrap; }
+  .sateer-agent-journal .saj-switch-button { padding: 10px; flex: 1; justify-content: center; font-size: 12px; }
+  .sateer-agent-journal .saj-panel { padding: 18px 15px; }
+  .sateer-agent-journal .saj-message-top { flex-direction: column; align-items: flex-start; }
+  .sateer-agent-journal .saj-message-date { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { .sateer-agent-journal .saj-switch-button { transition: none; } }

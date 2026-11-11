@@ -414,8 +414,167 @@
         );
 
         renderCaseActions(detail, demande);
+        renderAgentJournal(detail, demande.id);
         if (typeof window.SATEER_P7_SHOW_CASE === 'function') {
             window.SATEER_P7_SHOW_CASE(detail, demande.id).catch(() => {});
+        }
+    }
+
+    // P3.3.5K — Journal Agent lisible et accessible, données existantes en lecture seule.
+    async function renderAgentJournal(container, demandeId) {
+        const cssId = 'sateer-agent-journal-css';
+        if (!document.getElementById(cssId)) {
+            const style = document.createElement('link');
+            style.id = cssId;
+            style.rel = 'stylesheet';
+            style.href = '/sateer-agent-journal.css?v=p335k';
+            document.head.appendChild(style);
+        }
+
+        const element = (tag, className, content) => {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (content !== undefined && content !== null) node.textContent = String(content);
+            return node;
+        };
+        const section = element('section', 'sateer-agent-journal');
+        section.setAttribute('aria-label', 'Échanges et historique du dossier');
+        const header = element('header', 'saj-header');
+        const heading = element('div', 'saj-heading');
+        heading.append(
+            element('span', 'saj-kicker', 'SUIVI DU DOSSIER · LECTURE SEULE'),
+            element('h3', 'saj-title', 'Échanges et historique'),
+            element('p', 'saj-subtitle', 'Retrouvez les messages transmis et les étapes du traitement, sans modifier le dossier.')
+        );
+        const counts = element('div', 'saj-counts');
+        header.append(heading, counts);
+        const status = element('p', 'saj-loading', 'Chargement des échanges…');
+        status.setAttribute('role', 'status');
+        section.append(header, status);
+        container.appendChild(section);
+
+        const url = `/api/pilot-procedures/dossiers/${encodeURIComponent(demandeId)}/journal-agent?` +
+            new URLSearchParams({organisationId:String(organisationId),tenant:tenantCode,unitId:String(unitId)});
+
+        try {
+            const response = await fetch(url, {credentials:'same-origin', cache:'no-store'});
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = await response.json();
+            if (data.statut !== 'JOURNAL_AGENT_CHARGE' || Number(data.dossierId) !== Number(demandeId)) {
+                throw new Error('JOURNAL_INATTENDU');
+            }
+            // Ne jamais afficher le journal d'un ancien dossier après un changement de sélection.
+            if (!section.isConnected) return;
+            status.remove();
+            const messages = Array.isArray(data.messages) ? data.messages : [];
+            const historique = Array.isArray(data.historique) ? data.historique : [];
+            const pluriel = (count, singular, plural) => count + ' ' + (count === 1 ? singular : plural);
+            counts.append(
+                element('span', 'saj-count', pluriel(messages.length, 'message', 'messages')),
+                element('span', 'saj-count', pluriel(historique.length, 'événement', 'événements'))
+            );
+            const formatDate = value => {
+                const date = value ? new Date(value) : null;
+                return date && !Number.isNaN(date.getTime())
+                    ? date.toLocaleString('fr-FR', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+                    : 'Date non renseignée';
+            };
+            const formatAuteur = item => {
+                const name = [item.auteur_prenom, item.auteur_nom].filter(Boolean).join(' ').trim();
+                if (name) return name;
+                return /ORIENTATION|ROUTAGE/.test(String(item.action || '')) ? 'Système SATEER' : 'Auteur non renseigné';
+            };
+            const types = {
+                REPONSE: ['Information transmise', 'info'],
+                DOCUMENT_PRET: ['Document prêt au retrait', 'ready'],
+                DOCUMENT_REMIS: ['Remise du document', 'done'],
+                DOCUMENT_PRET_CONFIRME: ['Document prêt au retrait', 'ready'],
+                DOCUMENT_REMIS_CONFIRME: ['Remise du document', 'done']
+            };
+            const labelMessage = type => types[type] || ['Message au citoyen', 'info'];
+            const labelsActions = {
+                CREATION: 'Demande créée', CREATION_DEMANDE:'Demande créée',
+                PIECES_TRANSMISES:'Pièces transmises', PRISE_EN_CHARGE:'Prise en charge',
+                REPONSE_ENVOYEE:'Information transmise', DOCUMENT_PRET_CONFIRME:'Document prêt au retrait',
+                DOCUMENT_REMIS_CONFIRME:'Document remis', DOCUMENT_REMIS:'Document remis',
+                ORIENTATION:'Dossier orienté', ORIENTATION_AUTOMATIQUE:'Orientation automatique',
+                ROUTAGE:'Dossier orienté', AFFECTATION:'Affectation modifiée'
+            };
+            const labelAction = raw => labelsActions[raw] ||
+                String(raw || 'Événement du dossier').replaceAll('_', ' ').toLowerCase().replace(/^./, c => c.toUpperCase());
+            const labelStatut = raw => ({NOUVELLE:'Nouvelle',EN_COURS:'En cours',TRAITEE:'Traitée'})[raw] ||
+                String(raw || '').replaceAll('_', ' ').toLowerCase();
+
+            const tabs = element('nav', 'saj-switch');
+            tabs.setAttribute('aria-label', 'Afficher les échanges ou les événements');
+            const paneMessages = element('div', 'saj-panel');
+            const paneHistory = element('div', 'saj-panel');
+            const buttons = [];
+            const panes = [paneMessages, paneHistory];
+            const select = index => {
+                buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+                panes.forEach((pane, i) => {pane.hidden = i !== index;});
+            };
+            for (const [index, title, count] of [[0, 'Messages au citoyen', messages.length], [1, 'Historique des actions', historique.length]]) {
+                const button = element('button', 'saj-switch-button', title);
+                button.type = 'button';
+                button.append(element('span', 'saj-switch-count', count));
+                button.addEventListener('click', () => select(index));
+                tabs.appendChild(button);
+                buttons.push(button);
+            }
+            section.append(tabs, paneMessages, paneHistory);
+
+            paneMessages.append(element('p', 'saj-panel-intro', 'Les échanges sont classés du plus récent au plus ancien. Ouvrez un message pour le relire.'));
+            if (!messages.length) paneMessages.append(element('p','saj-empty','Aucun message envoyé pour ce dossier.'));
+            messages.forEach((message, index) => {
+                const [title, tone] = labelMessage(message.type);
+                const card = element('details', 'saj-message saj-tone-' + tone);
+                card.open = index === 0;
+                const summary = element('summary', 'saj-message-summary');
+                const top = element('span', 'saj-message-top');
+                top.append(element('span', 'saj-tag', title), element('span', 'saj-message-date', formatDate(message.date_creation)));
+                const author = element('span', 'saj-message-author', formatAuteur(message));
+                const rawContent = String(message.contenu || 'Message sans contenu.');
+                const preview = rawContent.replace(/\s+/g, ' ').trim();
+                summary.append(top, author, element('span', 'saj-message-preview', preview.slice(0, 125) + (preview.length > 125 ? '…' : '')));
+                const body = element('div', 'saj-message-body');
+                body.append(element('p', 'saj-message-text', rawContent));
+                card.append(summary, body);
+                paneMessages.appendChild(card);
+            });
+
+            paneHistory.append(element('p', 'saj-panel-intro', 'Une chronologie des actions réellement enregistrées, de la plus récente à la plus ancienne.'));
+            if (!historique.length) paneHistory.append(element('p', 'saj-empty', 'Aucun événement enregistré pour ce dossier.'));
+            const timeline = element('ol', 'saj-timeline');
+            historique.forEach((entry, index) => {
+                const tone = /DOCUMENT_REMIS/.test(String(entry.action || '')) ? 'done'
+                    : /DOCUMENT_PRET/.test(String(entry.action || '')) ? 'ready' : 'info';
+                const li = element('li', 'saj-event saj-event-' + tone + (index === 0 ? ' saj-event-latest' : ''));
+                const head = element('div','saj-event-head');
+                head.append(element('strong', 'saj-event-title', labelAction(entry.action)),
+                    element('time', 'saj-event-date', formatDate(entry.date_action)));
+                li.append(head, element('span', 'saj-event-actor', formatAuteur(entry)));
+                if (entry.ancien_statut && entry.nouveau_statut && entry.ancien_statut !== entry.nouveau_statut) {
+                    const transition = element('div','saj-transition');
+                    transition.append(
+                        element('span','saj-transition-state',labelStatut(entry.ancien_statut)),
+                        element('span','saj-transition-arrow','→'),
+                        element('span','saj-transition-state',labelStatut(entry.nouveau_statut))
+                    );
+                    li.append(transition);
+                }
+                if (entry.commentaire) li.append(element('p','saj-event-note',entry.commentaire));
+                timeline.appendChild(li);
+            });
+            paneHistory.appendChild(timeline);
+            section.append(element('p', 'saj-footer', 'Journal en lecture seule · 100 derniers messages et 100 derniers événements au maximum.'));
+            select(0);
+        } catch (error) {
+            if (section.isConnected) {
+                status.className = 'saj-error';
+                status.textContent = 'Journal momentanément indisponible (' + error.message + '). Aucune action n’a été modifiée.';
+            }
         }
     }
 
