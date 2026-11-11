@@ -1,0 +1,34 @@
+/* P3.3.5N — registre distinct, pagination serveur, journal en lecture seule. */
+body.sateer-vice-registre{background:#f4f7fa}
+body.sateer-vice-registre main.page{width:min(100% - 2rem,1380px);margin-inline:auto;padding-bottom:4rem}
+body.sateer-vice-registre .sx-n-registry-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;background:#fff;border:1px solid #dde8f1;border-radius:15px;padding:1.3rem 1.6rem;margin-top:1rem}
+body.sateer-vice-registre .sx-n-registry-header h1{font-size:clamp(1.3rem,2.8vw,1.9rem);margin:.2rem 0;color:#173d55}
+body.sateer-vice-registre .sx-n-registry-header p:not(.sx-n-eyebrow){font-size:.85rem;color:#5a7388;max-width:65ch;margin:.2rem 0}
+body.sateer-vice-registre .sx-n-eyebrow{font-size:.74rem;font-weight:800;color:#40708e;letter-spacing:.08em;margin:0}
+body.sateer-vice-registre .sx-n-back{border:1px solid #a8c4d7;border-radius:9px;padding:.66rem .85rem;text-decoration:none;color:#174d6b;font-size:.86rem;font-weight:700}
+body.sateer-vice-registre .sx-n-info{font-size:.8rem;color:#697f91;padding:.5rem .5rem}
+body.sateer-vice-registre .sx-l2-panel{display:block;margin-top:.4rem;background:#fff;border:1px solid #dce6ee;border-radius:15px;padding:1.3rem 1.5rem}
+body.sateer-vice-registre .sx-l2-panel[hidden],body.sateer-vice-registre .sx-l2-detail[hidden]{display:none!important}
+body.sateer-vice-registre .sx-l2-header h2{font-size:1.2rem;margin:.1rem 0}
+body.sateer-vice-registre .sx-l2-list{overflow:auto}
+body.sateer-vice-registre .sx-m3-table{width:100%;border-collapse:collapse;table-layout:fixed}
+body.sateer-vice-registre .sx-m3-table thead{background:#f1f5f9}
+body.sateer-vice-registre .sx-m3-table th{font-size:.75rem;color:#526777;text-align:left;font-weight:700;padding:.8rem;border-bottom:1px solid #d6e2eb}
+body.sateer-vice-registre .sx-m3-table th:nth-child(1){width:34%}
+body.sateer-vice-registre .sx-m3-table th:nth-child(2){width:20%}
+body.sateer-vice-registre .sx-m3-table th:nth-child(3){width:18%}
+body.sateer-vice-registre .sx-m3-table th:nth-child(4){width:13%}
+body.sateer-vice-registre .sx-m3-table th:nth-child(5){width:15%}
+body.sateer-vice-registre .sx-m3-table td{border-bottom:1px solid #edf2f5;padding:.85rem .8rem;vertical-align:top;font-size:.84rem;overflow-wrap:anywhere}
+body.sateer-vice-registre .sx-m3-table tr:last-child td{border-bottom:0}
+body.sateer-vice-registre .sx-m3-table tbody tr:hover{background:#f9fbfc}
+body.sateer-vice-registre .sx-m3-table td small{display:block;color:#668197;font-size:.73rem;margin-top:.22rem}
+body.sateer-vice-registre .sx-m3-urgent{display:block;font-size:.72rem;color:#ac4b25;font-weight:700;margin:.35rem 0}
+body.sateer-vice-registre .sx-m3-sr-only{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+body.sateer-vice-registre .sx-l2-detail{scroll-margin-top:1.2rem}
+@media(max-width:760px){body.sateer-vice-registre main.page{width:min(100% - 1rem,1380px)}body.sateer-vice-registre .sx-l2-panel{padding:1rem}body.sateer-vice-registre .sx-m3-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}body.sateer-vice-registre .sx-m3-table,body.sateer-vice-registre .sx-m3-table tbody,body.sateer-vice-registre .sx-m3-table tr,body.sateer-vice-registre .sx-m3-table td{display:block;width:100%}body.sateer-vice-registre .sx-m3-table tr{padding:.6rem;border-bottom:1px solid #e3ecf2}body.sateer-vice-registre .sx-m3-table td{border:0;padding:.25rem 0;display:flex;gap:.8rem;align-items:baseline}body.sateer-vice-registre .sx-m3-table td::before{content:attr(data-label);min-width:90px;max-width:90px;flex:0 0 90px;font-size:.73rem;font-weight:700;color:#657a8a}body.sateer-vice-registre .sx-m3-table td:first-child::before{content:'';display:none}}
+
+body.sateer-vice-registre .sx-l2-filters{grid-template-columns:repeat(4,minmax(160px,1fr))}
+body.sateer-vice-registre .sx-l2-filters label:first-child{grid-column:span 2}
+@media(max-width:920px){body.sateer-vice-registre .sx-l2-filters{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+@media(max-width:480px){body.sateer-vice-registre .sx-l2-filters{grid-template-columns:1fr}body.sateer-vice-registre .sx-l2-filters label:first-child{grid-column:1}}

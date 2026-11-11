@@ -284,6 +284,7 @@
       const unitsData = await readJson(unitsResponse);
       const units = unitsData?.unites || unitsData?.units || (Array.isArray(unitsData) ? unitsData : []);
       display(dashboard, units);
+      window.dispatchEvent(new CustomEvent('sateer:vice-dashboard-refreshed'));
       if (!unitsResponse.ok) set('sx-p2-teams', 'Indicateurs des services non disponibles pour ce compte.');
       status.textContent = 'Indicateurs actualisés.';
     } catch (e) {

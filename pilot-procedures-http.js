@@ -253,6 +253,156 @@ function setup(app,exigerSession){
   const cap=await executerRequete(`SELECT 1 FROM organisation_unit_capabilities uc JOIN capabilities c ON c.id=uc.capability_id WHERE uc.organisation_unit_id=$1 AND uc.actif=TRUE AND c.actif=TRUE AND c.code='VIEW_INBOX'`,[d.destination_unit_id]);
   return cap.rowCount?d:null;
  }
+ // P3.3.5L2 — Supervision organisationnelle des dossiers (lecture seule).
+ // Ne donne aucun acces aux pieces jointes et ne modifie ni etat, ni notification.
+ async function pilotSupervisionPermise(req, organisationId, tenantCode) {
+  const droit=await verifierPermissionPersonneDatabase({
+   personneId:req.auth.personneId,organisationId,tenantCode,
+   permissionCode:'VIEW_OPERATIONAL_DASHBOARD'
+  });
+  return Boolean(droit.succes&&droit.autorise&&droit.portee==='ORGANISATION');
+ }
+ const supervisionScope=`FROM demandes d
+  JOIN organisations o ON o.id=d.organisation_id AND o.tenant_id=d.tenant_id
+  JOIN tenants t ON t.id=d.tenant_id
+  JOIN personnes p ON p.id=d.personne_id`;
+ const supervisionScopeWhere='d.organisation_id=$1 AND t.code=$2';
+ function supervisionQueryContext(req){
+  const org=validId(req.query.organisationId);
+  const tenant=validTenant(req.query.tenant);
+  return org&&tenant?{org,tenant}:null;
+ }
+ // P3.3.5N — Pilotage agrégé (lecture seule, permission organisationnelle vérifiée).
+ // Les délais ci-dessous sont des anciennetés depuis réception, jamais des délais consulaires promis.
+ router.get('/supervision/synthese',async(req,res)=>{
+  const ctx=supervisionQueryContext(req);
+  if(!ctx)return status(res,400,'CONTEXTE_INVALIDE');
+  try{
+   if(!await pilotSupervisionPermise(req,ctx.org,ctx.tenant))return status(res,403,'ACCES_REFUSE');
+   const scope=`FROM demandes d JOIN organisations o ON o.id=d.organisation_id AND o.tenant_id=d.tenant_id
+     JOIN tenants t ON t.id=d.tenant_id`;
+   const where='WHERE d.organisation_id=$1 AND t.code=$2';
+   const counts=await executerRequete(`SELECT
+    COUNT(*) FILTER (WHERE d.statut='NOUVELLE' AND d.destination_unit_id IS NULL)::int AS "aOrienter",
+    COUNT(*) FILTER (WHERE d.statut='NOUVELLE' AND d.destination_unit_id IS NOT NULL)::int AS "attentePriseEnCharge",
+    COUNT(*) FILTER (WHERE d.statut='EN_COURS')::int AS "enTraitement",
+    COUNT(*) FILTER (WHERE d.statut='TRAITEE')::int AS "clotures",
+    COUNT(*) FILTER (WHERE d.statut IN ('NOUVELLE','EN_COURS') AND d.priorite='URGENTE')::int AS "urgentsOuverts"
+    ${scope} ${where}`,[ctx.org,ctx.tenant]);
+   const priorites=await executerRequete(`SELECT d.id,d.objet,d.categorie,d.statut,d.priorite,d.date_creation,
+    d.destination_unit_id AS "unitId",u.nom AS "unitName",p.prenom,p.nom
+    ${scope}
+    JOIN personnes p ON p.id=d.personne_id
+    LEFT JOIN organisation_units u ON u.id=d.destination_unit_id AND u.organisation_id=d.organisation_id
+    ${where} AND d.statut IN ('NOUVELLE','EN_COURS')
+    ORDER BY CASE WHEN d.priorite='URGENTE' THEN 0 ELSE 1 END,
+      d.date_creation ASC,d.id ASC LIMIT 5`,[ctx.org,ctx.tenant]);
+   const bureaux=await executerRequete(`SELECT d.destination_unit_id AS "unitId",
+    COALESCE(u.nom,'Non orienté') AS "unitName",
+    COUNT(*) FILTER (WHERE d.statut='NOUVELLE')::int AS "aPrendre",
+    COUNT(*) FILTER (WHERE d.statut='EN_COURS')::int AS "enCours",
+    COUNT(*) FILTER (WHERE d.priorite='URGENTE')::int AS "urgents"
+    ${scope}
+    LEFT JOIN organisation_units u ON u.id=d.destination_unit_id AND u.organisation_id=d.organisation_id
+    ${where} AND d.statut IN ('NOUVELLE','EN_COURS')
+    GROUP BY d.destination_unit_id,u.nom
+    ORDER BY COUNT(*) DESC,COALESCE(u.nom,'Non orienté') ASC LIMIT 6`,[ctx.org,ctx.tenant]);
+   return res.json({statut:'SYNTHESE_SUPERVISION',comptes:counts.rows[0]||{},
+    priorites:priorites.rows,bureaux:bureaux.rows,
+    regleAnciennete:'DEPUIS_CREATION',seuilRetardConfigure:false,lectureSeule:true});
+  }catch(err){console.error('P335N synthese supervision',err);return status(res,503,'SYNTHESE_INDISPONIBLE');}
+ });
+ router.get('/supervision/filtres',async(req,res)=>{
+  const ctx=supervisionQueryContext(req);
+  if(!ctx)return status(res,400,'CONTEXTE_INVALIDE');
+  try{
+   if(!await pilotSupervisionPermise(req,ctx.org,ctx.tenant))return status(res,403,'ACCES_REFUSE');
+   const categories=await executerRequete(`SELECT DISTINCT d.categorie ${supervisionScope} WHERE ${supervisionScopeWhere} AND d.categorie IS NOT NULL ORDER BY d.categorie`,[ctx.org,ctx.tenant]);
+   const unites=await executerRequete(`SELECT u.id,u.nom FROM organisation_units u JOIN organisations o ON o.id=u.organisation_id JOIN tenants t ON t.id=o.tenant_id WHERE u.organisation_id=$1 AND t.code=$2 ORDER BY u.nom,u.id`,[ctx.org,ctx.tenant]);
+   return res.json({statut:'FILTRES_SUPERVISION',categories:categories.rows.map(x=>x.categorie),unites:unites.rows});
+  }catch(err){console.error('P335L2 filtres supervision',err);return status(res,503,'SUPERVISION_INDISPONIBLE');}
+ });
+ router.get('/supervision/dossiers',async(req,res)=>{
+  const ctx=supervisionQueryContext(req);
+  if(!ctx)return status(res,400,'CONTEXTE_INVALIDE');
+  const pageRaw=String(req.query.page||'1');
+  if(!/^[1-9][0-9]{0,3}$/.test(pageRaw))return status(res,400,'PAGE_INVALIDE');
+  const page=Number(pageRaw),pageSize=20;
+  const etat=String(req.query.statut||'').trim();
+  if(etat&&!['NOUVELLE','EN_COURS','TRAITEE'].includes(etat))return status(res,400,'STATUT_INVALIDE');
+  const categorie=String(req.query.categorie||'').trim();
+  const recherche=String(req.query.q||'').trim();
+  const orientation=String(req.query.orientation||'').trim();
+  const tri=String(req.query.tri||'ACTIVITE').trim();
+  const urgence=String(req.query.urgence||'').trim();
+  if(orientation&&!['A_ORIENTER','ATTENTE_AGENT'].includes(orientation))return status(res,400,'ORIENTATION_INVALIDE');
+  if(!['ACTIVITE','ANCIENNETE','URGENCE'].includes(tri))return status(res,400,'TRI_INVALIDE');
+  if(urgence&&urgence!=='1')return status(res,400,'URGENCE_INVALIDE');
+  if(categorie.length>80||recherche.length>100)return status(res,400,'FILTRE_INVALIDE');
+  const unite=req.query.unitId?validId(req.query.unitId):null;
+  if(req.query.unitId&&!unite)return status(res,400,'UNITE_INVALIDE');
+  try{
+   if(!await pilotSupervisionPermise(req,ctx.org,ctx.tenant))return status(res,403,'ACCES_REFUSE');
+   const args=[ctx.org,ctx.tenant],conditions=[supervisionScopeWhere];
+   if(etat){args.push(etat);conditions.push(`d.statut=$${args.length}`);}
+   if(categorie){args.push(categorie);conditions.push(`d.categorie=$${args.length}`);}
+   if(unite){args.push(unite);conditions.push(`d.destination_unit_id=$${args.length}`);}
+   if(orientation==='A_ORIENTER')conditions.push(`d.statut='NOUVELLE' AND d.destination_unit_id IS NULL`);
+   if(orientation==='ATTENTE_AGENT')conditions.push(`d.statut='NOUVELLE' AND d.destination_unit_id IS NOT NULL`);
+   if(urgence==='1')conditions.push(`d.priorite='URGENTE' AND d.statut IN ('NOUVELLE','EN_COURS')`);
+   if(recherche){args.push(recherche);
+    conditions.push(`(d.id::text=$${args.length} OR d.objet ILIKE '%' || $${args.length} || '%' OR p.prenom ILIKE '%' || $${args.length} || '%' OR p.nom ILIKE '%' || $${args.length} || '%' OR CONCAT_WS(' ',p.prenom,p.nom) ILIKE '%' || $${args.length} || '%')`);
+   }
+   const where=' WHERE '+conditions.join(' AND ');
+   const ordering={ACTIVITE:'COALESCE(d.date_modification,d.date_creation) DESC,d.id DESC',
+    ANCIENNETE:'d.date_creation ASC,d.id ASC',
+    URGENCE:"CASE WHEN d.priorite='URGENTE' THEN 0 ELSE 1 END,d.date_creation ASC,d.id ASC"}[tri];
+   const total=await executerRequete(`SELECT COUNT(*)::int AS n ${supervisionScope}${where}`,args);
+   const rows=await executerRequete(`SELECT d.id,d.objet,d.categorie,d.statut,d.priorite,
+      d.date_creation,d.date_modification,d.date_cloture,
+      p.prenom,p.nom,d.destination_unit_id AS "unitId",u.nom AS "unitName"
+      ${supervisionScope}
+      LEFT JOIN organisation_units u ON u.id=d.destination_unit_id AND u.organisation_id=d.organisation_id
+      ${where}
+      ORDER BY ${ordering}
+      LIMIT $${args.length+1} OFFSET $${args.length+2}`,
+      [...args,pageSize,(page-1)*pageSize]);
+   return res.json({statut:'DOSSIERS_SUPERVISION',dossiers:rows.rows,total:Number(total.rows[0]?.n||0),page,pageSize});
+  }catch(err){console.error('P335L2 dossiers supervision',err);return status(res,503,'SUPERVISION_INDISPONIBLE');}
+ });
+ router.get('/supervision/dossiers/:id',async(req,res)=>{
+  const ctx=supervisionQueryContext(req),id=validId(req.params.id);
+  if(!ctx||!id)return status(res,400,'PARAMETRES_INVALIDES');
+  try{
+   if(!await pilotSupervisionPermise(req,ctx.org,ctx.tenant))return status(res,403,'ACCES_REFUSE');
+   const dossier=await executerRequete(`SELECT d.id,d.objet,d.description,d.categorie,d.statut,d.priorite,
+    d.date_creation,d.date_modification,d.date_cloture,
+    d.metadata->'sateer_document'->>'statut' AS "documentStatut",
+    p.prenom,p.nom,u.nom AS "unitName"
+    ${supervisionScope}
+    LEFT JOIN organisation_units u ON u.id=d.destination_unit_id AND u.organisation_id=d.organisation_id
+    WHERE ${supervisionScopeWhere} AND d.id=$3`,[ctx.org,ctx.tenant,id]);
+   if(!dossier.rowCount)return status(res,404,'DOSSIER_ABSENT_DU_PERIMETRE');
+   const base=[ctx.org,ctx.tenant,id];
+   const messages=await executerRequete(`SELECT r.id,r.type,r.contenu,r.date_creation,
+    auteur.prenom AS auteur_prenom,auteur.nom AS auteur_nom
+    FROM demande_reponses r JOIN demandes d ON d.id=r.demande_id AND d.tenant_id=r.tenant_id
+    JOIN organisations o ON o.id=d.organisation_id AND o.tenant_id=d.tenant_id
+    JOIN tenants t ON t.id=d.tenant_id
+    LEFT JOIN personnes auteur ON auteur.id=r.auteur_personne_id
+    WHERE d.organisation_id=$1 AND t.code=$2 AND d.id=$3 AND r.visible_citoyen=TRUE
+    ORDER BY r.date_creation ASC,r.id ASC LIMIT 100`,base);
+   const historique=await executerRequete(`SELECT h.id,h.action,h.commentaire,h.ancien_statut,h.nouveau_statut,h.date_action,
+    auteur.prenom AS auteur_prenom,auteur.nom AS auteur_nom
+    FROM demande_history h JOIN demandes d ON d.id=h.demande_id AND d.tenant_id=h.tenant_id
+    JOIN organisations o ON o.id=d.organisation_id AND o.tenant_id=d.tenant_id
+    JOIN tenants t ON t.id=d.tenant_id
+    LEFT JOIN personnes auteur ON auteur.id=h.auteur_personne_id
+    WHERE d.organisation_id=$1 AND t.code=$2 AND d.id=$3
+    ORDER BY h.date_action DESC,h.id DESC LIMIT 100`,base);
+   return res.json({statut:'DETAIL_SUPERVISION',dossier:dossier.rows[0],messages:messages.rows,historique:historique.rows,limite:100,lectureSeule:true});
+  }catch(err){console.error('P335L2 detail supervision',err);return status(res,503,'DETAIL_SUPERVISION_INDISPONIBLE');}
+ });
  router.get('/dossiers/:id/suivi',async(req,res)=>{
   const id=validId(req.params.id),org=validId(req.query.organisationId),tenant=validTenant(req.query.tenant);
   if(!id||!org||!tenant)return status(res,400,'PARAMETRES_INVALIDES');

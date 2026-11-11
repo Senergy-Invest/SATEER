@@ -1,0 +1,60 @@
+/* SATEER P3.3.5N — Synthèse opérationnelle / registre séparé. */
+body.sx-n-ready{background:#f4f7fa}
+body.sx-n-ready main.page{max-width:1360px;margin-inline:auto}
+body.sx-n-ready #sx-p2-root{display:flex;flex-direction:column;gap:1rem}
+body.sx-n-ready .sx-p2-hero,body.sx-n-ready .sx-p2-block{background:#fff;border:1px solid #e1e8ef;border-radius:14px;box-shadow:0 3px 16px rgba(22,47,69,.035)}
+body.sx-n-ready .sx-p2-hero{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.2rem 1.5rem;flex-wrap:wrap}
+body.sx-n-ready .sx-p2-hero h1{font-size:clamp(1.4rem,3vw,1.9rem)}
+body.sx-n-ready .sx-p2-activity{margin:0}
+body.sx-n-ready #sx-p2-activity{padding:1rem 1.4rem}
+body.sx-n-ready #sx-p2-activity h2{margin:0 0 1rem;font-size:1.18rem}
+body.sx-n-ready .sx-p2-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem}
+body.sx-n-ready .sx-p2-metric{border:1px solid #e3ecf2;background:#f8fafc;border-radius:11px;padding:.9rem;min-width:0;position:relative;display:flex;flex-direction:column;gap:.3rem}
+body.sx-n-ready .sx-p2-metric strong{font-size:clamp(1.5rem,2.8vw,2rem);line-height:1.1;color:#193d54}
+body.sx-n-ready .sx-p2-metric span{font-weight:680;font-size:.83rem}
+body.sx-n-ready .sx-p2-metric small{font-size:.74rem;color:#6b7c8b}
+body.sx-n-ready .sx-m3-metric-action{position:absolute;inset:0;border:0;background:transparent;cursor:pointer;border-radius:11px}
+body.sx-n-ready .sx-m3-metric-action:focus-visible{outline:3px solid #217aa9;outline-offset:2px}
+body.sx-n-ready .sx-n-queue,body.sx-n-ready .sx-n-priority,body.sx-n-ready .sx-n-registry-cta{padding:1.2rem 1.4rem}
+body.sx-n-ready .sx-n-queue h2,body.sx-n-ready .sx-n-priority h2,body.sx-n-ready .sx-n-registry-cta h2{font-size:1.07rem;margin:0 0 .8rem;color:#1b4055}
+body.sx-n-ready .sx-n-waiting{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-bottom:1.1rem}
+body.sx-n-ready .sx-n-wait-card{display:flex;flex-direction:column;gap:.25rem;padding:1rem;background:#f8fbfd;border:1px solid #dbe8f0;border-radius:11px;text-decoration:none;color:inherit}
+body.sx-n-ready .sx-n-wait-card:hover{border-color:#8eafc4;background:#f1f8fc}
+body.sx-n-ready .sx-n-wait-card strong{font-size:1.55rem;color:#1c5578}
+body.sx-n-ready .sx-n-wait-card span{font-weight:700}
+body.sx-n-ready .sx-n-wait-card small,body.sx-n-ready .sx-n-subhead span,body.sx-n-ready .sx-n-priority-header p{color:#637b8b;font-size:.78rem}
+body.sx-n-ready .sx-n-bureaux{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem .8rem}
+body.sx-n-ready .sx-n-subhead{grid-column:1/-1;display:flex;gap:.6rem;flex-wrap:wrap;align-items:baseline;justify-content:space-between}
+body.sx-n-ready .sx-n-subhead h3{font-size:.9rem;margin:0;color:#27475c}
+body.sx-n-ready .sx-n-bureau{padding:.75rem .9rem;border:1px solid #e4ecf1;border-radius:9px;text-decoration:none;color:#27475c;display:flex;gap:.3rem .75rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+body.sx-n-ready .sx-n-bureau strong{font-size:.77rem;font-weight:620;color:#496a7e}
+body.sx-n-ready .sx-n-bureau small{color:#a35131;font-weight:700}
+body.sx-n-ready .sx-n-priority-header{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+body.sx-n-ready .sx-n-priority-row{display:flex;gap:1rem;align-items:center;justify-content:space-between;padding:.82rem 0;border-top:1px solid #edf0f4}
+body.sx-n-ready .sx-n-priority-row>div:first-child{min-width:0}
+body.sx-n-ready .sx-n-priority-row strong{font-weight:700;color:#1c4158;overflow-wrap:anywhere}
+body.sx-n-ready .sx-n-priority-row small{display:block;color:#708092;font-size:.76rem;margin-top:.27rem}
+body.sx-n-ready .sx-n-priority-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;flex-shrink:0}
+body.sx-n-ready .sx-n-state,body.sx-n-ready .sx-n-urgent{font-size:.75rem;font-weight:700;padding:.25rem .55rem;border-radius:7px;background:#edf2f6;color:#446176}
+body.sx-n-ready .sx-n-urgent{background:#fff1e9;color:#a34a25}
+body.sx-n-ready .sx-n-minilink{font-size:.82rem;font-weight:700;color:#146490}
+body.sx-n-ready .sx-n-registry-cta{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+body.sx-n-ready .sx-n-registry-cta p{max-width:55ch;font-size:.83rem;color:#5a7181;margin:.25rem 0}
+body.sx-n-ready .sx-n-primary{display:inline-block;padding:.72rem 1rem;background:#185777;color:white;border-radius:9px;text-decoration:none;font-size:.84rem;font-weight:700}
+body.sx-n-ready .sx-n-primary:hover{background:#0e425e}
+body.sx-n-ready .sx-m3-analytics{background:white;border:1px solid #e0e8ef;border-radius:13px;overflow:hidden}
+body.sx-n-ready .sx-m3-analytics>summary{cursor:pointer;padding:1rem 1.3rem;display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+body.sx-n-ready .sx-m3-analytics>summary span{font-size:.8rem;color:#62788a}
+body.sx-n-ready .sx-m3-analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;padding:1rem}
+body.sx-n-ready .sx-m3-analytics-grid>.sx-p2-block{min-width:0;padding:1rem;box-shadow:none}
+body.sx-n-ready .sx-n-old-lists{font-size:.8rem;color:#4f6879;padding:.6rem 1rem}
+body.sx-n-ready .sx-n-old-lists>summary{cursor:pointer}
+body.sx-n-ready .sx-n-old-lists #sx-p2-case-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;padding-top:.6rem}
+body.sx-n-ready .sx-n-old-lists #sx-p2-case-lists>.sx-p2-block{padding:.8rem}
+body.sx-n-ready .sx-n-note,body.sx-n-ready .sx-n-summary-status{font-size:.75rem;color:#667f91;margin:.5rem 0}
+body.sx-n-ready #sx-p2-admin{background:#fff;border:1px solid #e0e8ef;border-radius:12px;padding:.8rem 1rem}
+body.sx-n-ready #sx-p2-admin>summary{cursor:pointer}
+body.sx-n-ready .sx-p2-footer{margin-top:.25rem}
+body.sx-n-ready [hidden]{display:none!important}
+@media(max-width:850px){body.sx-n-ready .sx-p2-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}body.sx-n-ready .sx-m3-analytics-grid{grid-template-columns:1fr}}
+@media(max-width:600px){body.sx-n-ready .sx-n-waiting,body.sx-n-ready .sx-n-bureaux,body.sx-n-ready .sx-n-old-lists #sx-p2-case-lists{grid-template-columns:1fr}body.sx-n-ready .sx-n-priority-row{align-items:flex-start;flex-direction:column}body.sx-n-ready .sx-n-registry-cta{align-items:stretch;flex-direction:column}body.sx-n-ready .sx-n-registry-cta .sx-n-primary{text-align:center}}

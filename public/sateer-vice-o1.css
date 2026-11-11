@@ -1,0 +1,8 @@
+/* P3.3.5O1 — corrections ciblées du tableau Vice-Consul, complément à P3.3.5N */
+body.sx-n-ready .sx-n-legacy-analytics,body.sx-n-ready .sx-n-old-lists{display:none!important}
+body.sx-n-ready .sx-n-quicklinks{background:white;border:1px solid #e1e8ef;border-radius:13px;overflow:hidden}
+body.sx-n-ready .sx-n-quicklinks>summary{cursor:pointer;padding:14px 18px;font-size:.88rem;font-weight:700;color:#24485d}
+body.sx-n-ready .sx-n-quicklinks-list{display:flex;gap:.6rem;padding:0 16px 16px;flex-wrap:wrap}
+body.sx-n-ready .sx-n-quicklinks-list a{font-size:.82rem;font-weight:700;color:#1d617c;background:#f4f8fa;border:1px solid #dce6ec;border-radius:8px;padding:9px 13px;text-decoration:none}
+body.sx-n-ready .sx-n-quicklinks-list a:hover,body.sx-n-ready .sx-n-quicklinks-list a:focus-visible{background:#e8f2f7;text-decoration:underline}
+body.sx-n-ready .sx-n-quicklinks-list p{color:#647c8e;font-size:.78rem}
