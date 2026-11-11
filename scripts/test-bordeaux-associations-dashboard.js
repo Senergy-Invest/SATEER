@@ -86,11 +86,11 @@ async function scenario({dashboardAllowed, partnerAllowed}) {
     if(url.includes('/units/overview?')) return dashboardAllowed ? ok({unites:[]}) : denied();
     throw Error('Endpoint inattendu : '+url);
   };
-  const win={SATEER_CONTEXT_READY:Promise.resolve({tenantCode:null}),
+  const win={dispatchEvent(){},SATEER_CONTEXT_READY:Promise.resolve({tenantCode:null}),
     SATEER_choisirOrganisation:async()=>({id:70, nom:'Consulat Bordeaux',type:'CONSULAT', tenant_code:'P6V_3B5AC5AB9DB04657'})};
   const sandbox={document:doc,window:win,URLSearchParams:URLSearchParamsGlobal,
     location:{search:'?organisation=70&tenant=P6V_3B5AC5AB9DB04657'},
-    fetch:mockGet,MutationObserver:class{observe(){}},console};
+    fetch:mockGet,MutationObserver:class{observe(){}},CustomEvent:class{constructor(type){this.type=type;}},console};
   vm.runInNewContext(p2Source,sandbox,{filename:'sateer-p2.js'});
   await new Promise(resolve=>setTimeout(resolve,5));
   const network=doc.getElementById('sx-p2-associations');
