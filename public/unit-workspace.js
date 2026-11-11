@@ -612,10 +612,39 @@
             const submit = creerElement("button", "button button-primary", "Envoyer la réponse");
             submit.type = "submit";
 
-            form.append(label, textarea, submit);
+            const operationLabel = creerElement("label", "", "Nature de l'action");
+            const operation = document.createElement("select");
+            [
+                ["MESSAGE", "Envoyer une information — dossier toujours en cours"],
+                ["DOCUMENT_PRET", "Confirmer un document réellement prêt au retrait"],
+                ["DOCUMENT_REMIS", "Confirmer la remise effective du document — clôturer"]
+            ].forEach(([value, title]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = title;
+                operation.appendChild(option);
+            });
+            const validationLabel = creerElement("label", "unit-workspace-document-confirmation");
+            const validation = document.createElement("input");
+            validation.type = "checkbox";
+            const validationText = document.createElement("span");
+            validationText.textContent = " Je confirme personnellement la disponibilité physique du document ou sa remise effective, selon l'action choisie.";
+            validationLabel.append(validation, validationText);
+            validationLabel.hidden = true;
+            operation.addEventListener("change", () => {
+                validationLabel.hidden = operation.value === "MESSAGE";
+                validation.checked = false;
+                submit.textContent = operation.value === "MESSAGE" ? "Envoyer le message" : (operation.value === "DOCUMENT_PRET" ? "Confirmer document prêt" : "Confirmer la remise");
+            });
+            submit.textContent = "Envoyer le message";
+            form.append(operationLabel, operation, label, textarea, validationLabel, submit);
             form.addEventListener("submit", event => {
                 event.preventDefault();
-                respondCase(demande.id, textarea.value, submit);
+                if (operation.value !== "MESSAGE" && !validation.checked) {
+                    afficherToast("Confirme explicitement la disponibilité ou la remise avant de poursuivre.", "error");
+                    return;
+                }
+                respondCase(demande.id, textarea.value, submit, operation.value, validation.checked);
             });
             actions.appendChild(form);
         }
@@ -690,27 +719,72 @@
         }
     }
 
-    async function respondCase(caseId, contenu, button) {
+    async function respondCase(caseId, contenu, button, operation = "MESSAGE", confirmation = false) {
         if (!contenu.trim()) return;
 
         button.disabled = true;
         button.textContent = "Envoi…";
 
+        let operationEnregistree = false;
         try {
+            const capabilityResponse = await fetch('/api/pilot/document-workflow/capabilities', {
+                credentials: 'same-origin', cache: 'no-store'
+            });
+            if (!capabilityResponse.ok || (await capabilityResponse.json()).version !== 'P3.3.5G') {
+                throw new Error('Serveur non redémarré ou workflow indisponible : envoi bloqué.');
+            }
             await api(
                 `/api/organisations/${organisationId}/units/${unitId}/cases/${caseId}/respond`,
                 {
                     method: "POST",
-                    body: JSON.stringify({ tenantCode, contenu: contenu.trim() })
+                    body: JSON.stringify({ tenantCode, contenu: contenu.trim(), operation, confirmation })
                 }
             );
 
-            afficherToast("Réponse envoyée à l'usager.");
-            await loadInbox();
+            operationEnregistree = true;
+            const retourMetier = operation === "MESSAGE"
+                ? "Message enregistré — dossier toujours en cours."
+                : operation === "DOCUMENT_PRET"
+                    ? "Disponibilité du document enregistrée — dossier non clôturé."
+                    : "Remise du document enregistrée — dossier clôturé.";
+            afficherToast(retourMetier);
+            let actualisationReussie = true;
+            try {
+                await loadInbox();
+            } catch (erreurActualisation) {
+                actualisationReussie = false;
+            }
+            // Accusé visible après le rechargement de la boîte de réception.
+            // Le dossier et la nature de l'action restent identifiables par l'agent.
+            try {
+                const precedent = document.getElementById("sateer-workflow-accuse");
+                if (precedent) precedent.remove();
+                const accuse = document.createElement("div");
+                accuse.id = "sateer-workflow-accuse";
+                accuse.setAttribute("role", "status");
+                accuse.setAttribute("aria-live", "polite");
+                accuse.tabIndex = -1;
+                accuse.style.cssText = "border:1px solid #637e8e;border-left:4px solid #356b65;border-radius:6px;padding:12px 14px;margin:12px 0;font-weight:600;background:#f3f8f6;color:#183a34;";
+                accuse.textContent = "Dossier n°" + caseId + " — " + retourMetier +
+                    (actualisationReussie ? "" : " L'affichage des dossiers n'a pas pu être actualisé ; l'action a été acceptée par le serveur.");
+                const emplacement = document.querySelector(".unit-workspace-actions") || document.querySelector("main") || document.body;
+                emplacement.prepend(accuse);
+                accuse.focus({preventScroll: true});
+                accuse.scrollIntoView({block: "nearest"});
+            } catch (erreurAffichage) {
+                // Une erreur d'affichage ne doit jamais transformer une action
+                // déjà validée par le serveur en échec réessayable.
+                afficherToast(retourMetier);
+            }
         } catch (error) {
-            afficherToast(error.message, "error");
-            button.disabled = false;
-            button.textContent = "Envoyer la réponse";
+            if (operationEnregistree) {
+                afficherToast("Action acceptée par le serveur, mais son affichage a échoué. Ne renvoyez pas le message.", "error");
+            } else {
+                afficherToast(error.message, "error");
+                button.disabled = false;
+                button.textContent = operation === "MESSAGE" ? "Envoyer le message" :
+                    (operation === "DOCUMENT_PRET" ? "Confirmer document prêt" : "Confirmer la remise");
+            }
         }
     }
 

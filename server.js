@@ -2855,6 +2855,12 @@ app.post(
 
 
 // Répondre à un dossier depuis son unité de destination.
+app.get(
+    "/api/pilot/document-workflow/capabilities",
+    exigerSession,
+    (req, res) => res.json({version: "P3.3.5G", operations: ["MESSAGE", "DOCUMENT_PRET", "DOCUMENT_REMIS"]})
+);
+
 app.post(
     "/api/organisations/:organisationId/units/:unitId/cases/:demandeId/respond",
     exigerSession,
@@ -2864,6 +2870,8 @@ app.post(
             const unitId = Number(req.params.unitId);
             const demandeId = Number(req.params.demandeId);
             const tenantCode = String(req.body?.tenantCode || "").trim();
+            const operation = String(req.body?.operation || "MESSAGE").trim();
+            const confirmation = req.body?.confirmation === true;
             const contenu = typeof req.body?.contenu === "string"
                 ? req.body.contenu.trim()
                 : "";
@@ -2875,6 +2883,8 @@ app.post(
                 || !tenantCode
                 || !contenu
                 || contenu.length > 20000
+                || !['MESSAGE', 'DOCUMENT_PRET', 'DOCUMENT_REMIS'].includes(operation)
+                || (operation !== 'MESSAGE' && !confirmation)
             ) {
                 return res.status(400).json({
                     statut: "PARAMETRES_REPONSE_INVALIDES"
@@ -2900,13 +2910,20 @@ app.post(
                 });
             }
 
+            // Les confirmations doivent être explicites dans le texte visible par le citoyen.
+            const messageInstitution = operation === 'DOCUMENT_PRET'
+                ? 'DOCUMENT CONFIRMÉ PRÊT AU RETRAIT. Vérifiez les modalités communiquées par le bureau avant tout déplacement.\n\n' + contenu
+                : (operation === 'DOCUMENT_REMIS'
+                    ? 'REMISE DU DOCUMENT CONFIRMÉE par le bureau habilité.\n\n' + contenu
+                    : contenu);
             const resultat = await repondreDemandeDatabase(
                 demandeId,
                 Number(req.auth.personneId),
                 organisationId,
                 tenantCode,
-                contenu,
-                unitId
+                messageInstitution,
+                unitId,
+                operation
             );
 
             if (!resultat) {
@@ -2917,7 +2934,7 @@ app.post(
             }
 
             return res.json({
-                statut: "REPONSE_ENVOYEE",
+                statut: operation === "MESSAGE" ? "REPONSE_ENVOYEE" : (operation === "DOCUMENT_PRET" ? "DOCUMENT_PRET_CONFIRME" : "DOCUMENT_REMIS_CONFIRME"),
                 resultat
             });
         } catch (erreur) {

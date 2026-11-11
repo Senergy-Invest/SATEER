@@ -2403,8 +2403,13 @@ async function repondreDemandeDatabase(
     organisationId,
     tenantCode,
     contenu,
-    unitId = null
+    unitId = null,
+    operation = 'MESSAGE'
 ) {
+
+    if (!['MESSAGE', 'DOCUMENT_PRET', 'DOCUMENT_REMIS'].includes(operation)) {
+        throw new Error('OPERATION_WORKFLOW_INVALIDE');
+    }
 
     const resultat =
         await executerRequete(
@@ -2448,9 +2453,20 @@ async function repondreDemandeDatabase(
                     AND d.statut = 'EN_COURS'
 
                     AND (
+                        $7::text <> 'DOCUMENT_REMIS'
+                        OR d.metadata->'sateer_document'->>'statut' = 'PRET_A_RETIRER'
+                    )
+
+                    AND (
+                        $7::text <> 'DOCUMENT_PRET'
+                        OR COALESCE(d.metadata->'sateer_document'->>'statut', '') <> 'PRET_A_RETIRER'
+                    )
+
+                    AND (
                         $6::integer IS NULL
                         OR d.destination_unit_id = $6::integer
                     )
+                    FOR UPDATE OF d
             ),
 
 
@@ -2470,7 +2486,11 @@ async function repondreDemandeDatabase(
                     demande_id,
                     agent_id,
                     $5::text,
-                    'REPONSE',
+                    CASE
+                        WHEN $7::text = 'DOCUMENT_PRET' THEN 'DOCUMENT_PRET'
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN 'DOCUMENT_REMIS'
+                        ELSE 'REPONSE'
+                    END,
                     TRUE
 
                 FROM contexte
@@ -2490,7 +2510,37 @@ async function repondreDemandeDatabase(
                 UPDATE demandes d
 
                 SET
-                    statut = 'TRAITEE',
+                    statut = CASE
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN 'TRAITEE'
+                        ELSE d.statut
+                    END,
+
+                    metadata = CASE
+                        WHEN $7::text = 'DOCUMENT_PRET' THEN
+                            jsonb_set(
+                                COALESCE(d.metadata, '{}'::jsonb),
+                                '{sateer_document}',
+                                jsonb_build_object(
+                                    'statut', 'PRET_A_RETIRER',
+                                    'date_pret', CURRENT_TIMESTAMP,
+                                    'confirme_par', contexte.agent_id
+                                ),
+                                TRUE
+                            )
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN
+                            jsonb_set(
+                                COALESCE(d.metadata, '{}'::jsonb),
+                                '{sateer_document}',
+                                COALESCE(d.metadata->'sateer_document', '{}'::jsonb) ||
+                                jsonb_build_object(
+                                    'statut', 'REMIS',
+                                    'date_remise', CURRENT_TIMESTAMP,
+                                    'remis_par', contexte.agent_id
+                                ),
+                                TRUE
+                            )
+                        ELSE d.metadata
+                    END,
 
                     assignee_a =
                         contexte.agent_id,
@@ -2498,8 +2548,10 @@ async function repondreDemandeDatabase(
                     date_modification =
                         CURRENT_TIMESTAMP,
 
-                    date_cloture =
-                        CURRENT_TIMESTAMP
+                    date_cloture = CASE
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN CURRENT_TIMESTAMP
+                        ELSE d.date_cloture
+                    END
 
                 FROM contexte
 
@@ -2537,11 +2589,19 @@ async function repondreDemandeDatabase(
 
                     contexte.ancien_statut,
 
-                    'TRAITEE',
+                    CASE WHEN $7::text = 'DOCUMENT_REMIS' THEN 'TRAITEE' ELSE contexte.ancien_statut END,
 
-                    'REPONSE_ENVOYEE',
+                    CASE
+                        WHEN $7::text = 'DOCUMENT_PRET' THEN 'DOCUMENT_PRET_CONFIRME'
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN 'DOCUMENT_REMIS_CONFIRME'
+                        ELSE 'REPONSE_ENVOYEE'
+                    END,
 
-                    'Une réponse a été envoyée au citoyen.'
+                    CASE
+                        WHEN $7::text = 'DOCUMENT_PRET' THEN 'Disponibilité confirmée par le bureau habilité.'
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN 'Remise du document confirmée par le bureau habilité.'
+                        ELSE 'Information transmise au citoyen ; le dossier reste en cours.'
+                    END
 
                 FROM contexte
 
@@ -2575,7 +2635,11 @@ async function repondreDemandeDatabase(
 
                     'REPONSE_DEMANDE',
 
-                    'Votre demande a reçu une réponse',
+                    CASE
+                        WHEN $7::text = 'DOCUMENT_PRET' THEN 'Votre document est prêt au retrait'
+                        WHEN $7::text = 'DOCUMENT_REMIS' THEN 'Remise de votre document enregistrée'
+                        ELSE 'Votre demande a reçu une réponse'
+                    END,
 
                     'Une réponse est disponible pour votre demande : '
                         || contexte.objet,
@@ -2637,7 +2701,8 @@ async function repondreDemandeDatabase(
                 organisationId,
                 tenantCode,
                 contenu,
-                unitId
+                unitId,
+                operation
             ]
         );
 

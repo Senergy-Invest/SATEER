@@ -252,6 +252,11 @@ async function main() {
   i = await inbox(fixture.passport, fixture.cookies.unqualified); status(i, 403, "unité sans capacités de réception refusée");
   const take = await api(base, `/api/agent/demandes/${d.id}/prise-en-charge`, "POST", { organisationId: fixture.orgId, tenantCode: TENANT }, fixture.cookies.pass, false); status(take, 200, "agent habilité prend le dossier");
   const reply = await api(base, `/api/agent/demandes/${d.id}/reponse`, "POST", { organisationId: fixture.orgId, tenantCode: TENANT, contenu: `Réponse synthétique ${RUN}` }, fixture.cookies.pass, false); status(reply, 200, "agent habilité répond au citoyen");
+  if (process.env.SATEER_TEST_WORKFLOW === "1") {
+    await require("./maintenance/test-bordeaux-workflow-p6-scenarios")({
+      assert, api, status, ok, client, submit, fixture, TENANT, base
+    });
+  }
     const citizenDetail = await api(base, `/api/demandes/${d.id}?organisationId=${fixture.orgId}&tenant=${TENANT}`, "GET", undefined, fixture.cookies.citizen, false);
     status(citizenDetail, 200, "citoyen consulte le détail de sa demande");
     assert.ok(citizenDetail.json.reponses.some(x => x.contenu === `Réponse synthétique ${RUN}`), "La réponse de l'agent est visible au citoyen via l'API.");
