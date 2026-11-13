@@ -4612,8 +4612,14 @@ app.get("/api/organisations/:organisationId/publications/:publicationId/media/:m
         // d'une publication ciblee, meme sans rattachement a l'emetteur.
         const membreEmetteur=orgs.some(o=>Number(o.id)===org);
         const pubs=await listerPublicationsVisiblesPourPersonneDatabase(Number(req.auth.personneId),org,tenant);
+        const { listerIdsPublicationsGeneralesAbonne } = require('./communication-access');
+        const { executerRequete: requeteCommunication } = require('./database');
+        const generales = membreEmetteur ? null : await listerIdsPublicationsGeneralesAbonne(
+          requeteCommunication, Number(req.auth.personneId), org, tenant
+        );
         const pub=pubs.find(p=>Number(p.id)===id && (
             membreEmetteur || p.audience_type==='ORGANISATIONS' || p.audience_type==='ASSOCIATION'
+            || generales.has(String(p.id))
         ));
         if (!pub) return res.status(404).end();
         const media=(Array.isArray(pub.medias)?pub.medias:[]).find(m=>m.id===req.params.mediaId && (m.type==="IMAGE"||m.type==="DOCUMENT") && MEDIA_TYPES[m.format]);

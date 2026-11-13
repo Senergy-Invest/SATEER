@@ -10,10 +10,11 @@ async function verifierOrganisationCible(tenantCode, organisationId, cibleId) {
     JOIN organisations src ON src.tenant_id=t.id AND src.id=$2
     JOIN organisation_relationships rel ON rel.tenant_id=t.id
       AND rel.target_organisation_id=src.id AND rel.source_organisation_id=$3
+      AND rel.type='COMMUNITY_MEMBER'
       AND rel.actif=TRUE AND rel.statut='ACTIVE'
       AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
     JOIN organisations dest ON dest.id=rel.source_organisation_id
-      AND dest.tenant_id=t.id
+      AND dest.tenant_id=t.id AND dest.type='ASSOCIATION'
     WHERE t.code=$1 LIMIT 1`, [tenantCode,organisationId,cibleId]);
   return r.rowCount > 0;
 }

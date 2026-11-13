@@ -700,10 +700,12 @@ router.delete("/:organisationId/association-channels/:channelId/subscribe",
       WHERE sub.channel_id=channel.id AND sub.organisation_id=channel.organisation_id
         AND sub.tenant_id=channel.tenant_id AND sub.personne_id=$4
         AND channel.id=$3 AND t.id=channel.tenant_id AND t.code=$2
-        AND EXISTS(SELECT 1 FROM organisation_relationships rel
-          WHERE rel.source_organisation_id=$1 AND rel.target_organisation_id=channel.organisation_id
-            AND rel.tenant_id=t.id AND rel.type='COMMUNITY_MEMBER' AND rel.actif=TRUE AND rel.statut='ACTIVE'
-            AND (rel.date_fin IS NULL OR rel.date_fin>CURRENT_TIMESTAMP))
+        -- Le desabonnement est un droit du proprietaire de la souscription,
+        -- meme apres revocation du lien inter-organisations. Le middleware
+        -- verifierMembre conserve l'authentification du membre associatif.
+        AND EXISTS (SELECT 1 FROM organisations association
+          WHERE association.id=$1 AND association.tenant_id=t.id
+            AND association.type='ASSOCIATION')
     `, [organisationId, tenantCode, req.params.channelId, req.auth.personneId]);
     return res.json({ statut: "NOTIFICATIONS_DESACTIVEES" });
   });

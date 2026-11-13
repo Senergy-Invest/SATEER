@@ -4,6 +4,7 @@ const {exigerSession}=require("./auth-http");
 const {exigerPermission}=require("./auth-authorization");
 const {executerRequete}=require("./database");
 const {listerPublicationsVisiblesPourPersonneDatabase}=require("./services-database");
+const {listerIdsPublicationsGeneralesAbonne}=require("./communication-access");
 const router=express.Router();
 function scope(req,res,next){
   const id=Number(req.params.organisationId),tenant=req.query.tenant;
@@ -36,7 +37,15 @@ router.get("/:organisationId/communication-feed",exigerSession,scope,async(req,r
       JOIN organisations o ON o.id=r.organisation_id JOIN tenants t ON t.id=o.tenant_id
       WHERE r.personne_id=$1 AND r.organisation_id=$2 AND t.code=$3 LIMIT 1`,[personne,id,tenant]);
     const all=await listerPublicationsVisiblesPourPersonneDatabase(personne,id,tenant);
-    const visibles=member.rowCount?all:all.filter(p=>p.audience_type==='ORGANISATIONS'||p.audience_type==='ASSOCIATION');
+    // Un membre externe ne lit une audience generale que s'il est encore
+    // autorise par une relation active ET abonne au canal de cette publication.
+    const generales=member.rowCount ? null : await listerIdsPublicationsGeneralesAbonne(
+      executerRequete, personne, id, tenant
+    );
+    const visibles=member.rowCount ? all : all.filter(p=>
+      p.audience_type==='ORGANISATIONS' || p.audience_type==='ASSOCIATION'
+      || generales.has(String(p.id))
+    );
     return res.set("Cache-Control","private, no-store").json({statut:"PUBLICATIONS_CHARGEES",publications:visibles});
   }catch(e){console.error("Lecture fil communication",e);return res.status(500).json({statut:"ERREUR_FIL"});}
 });

@@ -1,4 +1,5 @@
 "use strict";
+const { ELIGIBILITE_ABONNE_SQL } = require("./communication-access");
 
 // Fan-out notifications only to active channel subscribers who are independently
 // eligible for the publication audience. The caller owns the surrounding SQL
@@ -34,6 +35,7 @@ async function notifierAbonnesPublication(client, publicationId) {
     JOIN personnes p ON p.id=sub.personne_id
     LEFT JOIN territories territory ON territory.id=p.residence_territory_id
     WHERE pub.id=$1 AND pub.statut='PUBLIEE'
+      AND ${ELIGIBILITE_ABONNE_SQL}
       AND (
         pub.audience_type='TOUS'
         OR (pub.audience_type='DEPARTEMENT'
@@ -43,10 +45,11 @@ async function notifierAbonnesPublication(client, publicationId) {
           SELECT 1
           FROM relations_personne_organisation member
           JOIN organisations association ON association.id=member.organisation_id
-            AND association.tenant_id=pub.tenant_id
+            AND association.tenant_id=pub.tenant_id AND association.type='ASSOCIATION'
           JOIN organisation_relationships rel ON rel.source_organisation_id=association.id
             AND rel.target_organisation_id=pub.organisation_id
-            AND rel.tenant_id=pub.tenant_id AND rel.actif=TRUE AND rel.statut='ACTIVE'
+            AND rel.tenant_id=pub.tenant_id AND rel.type='COMMUNITY_MEMBER'
+            AND rel.actif=TRUE AND rel.statut='ACTIVE'
             AND (rel.date_fin IS NULL OR rel.date_fin>CURRENT_TIMESTAMP)
           WHERE member.personne_id=p.id AND association.id::text=pub.audience_valeur
         ))

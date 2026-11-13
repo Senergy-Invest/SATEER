@@ -1607,8 +1607,11 @@ async function listerPublicationsVisiblesPourPersonneDatabase(
                             SELECT 1
                             FROM relations_personne_organisation r
                             INNER JOIN organisations o ON o.id=r.organisation_id
+                              AND o.type='ASSOCIATION'
                             INNER JOIN organisation_relationships rel
                               ON rel.source_organisation_id=o.id
+                             AND rel.type='COMMUNITY_MEMBER'
+
                              AND rel.target_organisation_id=pub.organisation_id
                              AND rel.tenant_id=pub.tenant_id
                              AND rel.actif=TRUE AND rel.statut='ACTIVE'
