@@ -1636,6 +1636,7 @@ async function listerPublicationsVisiblesPourPersonneDatabase(
                               ON rel.source_organisation_id=o.id
                              AND rel.target_organisation_id=pub.organisation_id
                              AND rel.tenant_id=pub.tenant_id
+                             AND rel.type='COMMUNITY_MEMBER'
                              AND rel.actif=TRUE AND rel.statut='ACTIVE'
                              AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
                             WHERE tgt.publication_id=pub.id

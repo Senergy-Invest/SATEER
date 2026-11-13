@@ -35,6 +35,7 @@ async function creerPublicationMultiOrganisationsDatabase({tenantCode,organisati
       JOIN scope s ON r.tenant_id=s.tenant_id
       JOIN organisations cible ON cible.id=r.source_organisation_id AND cible.tenant_id=s.tenant_id
       WHERE r.target_organisation_id=$2
+        AND r.type='COMMUNITY_MEMBER'
         AND r.source_organisation_id=ANY($10::bigint[])
         AND r.actif=TRUE AND r.statut='ACTIVE'
         AND (r.date_fin IS NULL OR r.date_fin > CURRENT_TIMESTAMP)

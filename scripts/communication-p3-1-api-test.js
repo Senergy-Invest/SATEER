@@ -213,7 +213,7 @@ async function main() {
   await client.query(
     `INSERT INTO organisation_relationships
        (tenant_id,source_organisation_id,target_organisation_id,type,statut,actif)
-     VALUES ($1,$2,$3,'TEST_P3_1','ACTIVE',TRUE),($1,$4,$5,'TEST_P3_1','ACTIVE',TRUE)`,
+     VALUES ($1,$2,$3,'COMMUNITY_MEMBER','ACTIVE',TRUE),($1,$4,$5,'COMMUNITY_MEMBER','ACTIVE',TRUE)`,
     [tenantId, organisationCibleA, organisationEmettriceA,
       organisationCibleB, organisationEmettriceB]
   );

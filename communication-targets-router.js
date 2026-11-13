@@ -21,7 +21,8 @@ router.get("/:organisationId/communication-destinations",...exigerPermission("TA
       FROM tenants t JOIN organisations source ON source.tenant_id=t.id AND source.id=$1
       JOIN organisation_relationships rel ON rel.target_organisation_id=source.id AND rel.tenant_id=t.id
       JOIN organisations o ON o.id=rel.source_organisation_id AND o.tenant_id=t.id
-      WHERE t.code=$2 AND rel.actif=TRUE AND rel.statut='ACTIVE'
+      WHERE t.code=$2 AND rel.type='COMMUNITY_MEMBER'
+        AND rel.actif=TRUE AND rel.statut='ACTIVE'
         AND (rel.date_fin IS NULL OR rel.date_fin > CURRENT_TIMESTAMP)
       ORDER BY o.nom,o.id`,[id,tenant]);
     return res.set("Cache-Control","no-store").json({statut:"DESTINATIONS_CHARGEES",organisations:r.rows});
