@@ -159,6 +159,26 @@ if (process.env.PGDATABASE === "sateer_test" &&
     );
 }
 
+// A4b : supervision ministérielle mondiale, LECTURE en recette uniquement.
+// Aucun fournisseur institutionnel réel n'est encore configuré. Ne jamais
+// déduire les droits de la tutelle ou recevoir une liste d'organisations du client.
+if (process.env.PGDATABASE === "sateer_test" &&
+    process.env.SATEER_ENABLE_MINISTRY_WORLDWIDE_READ === "1") {
+    const { creerRouteSupervisionMinisterielle } = require("./ministry-worldwide-http");
+    const { composerSupervisionMondiale } = require("./ministry-worldwide-reporting");
+    const { chargerLotNonConfigure } = require("./ministry-worldwide-source-contract");
+    const { verifierPermissionPersonneDatabase } = require("./auth-authorization");
+    app.use("/api/ministry-worldwide", exigerSession,
+        creerRouteSupervisionMinisterielle({
+            router: express.Router(),
+            trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
+            verifierPermission: verifierPermissionPersonneDatabase,
+            chargerLot: chargerLotNonConfigure,
+            composer: composerSupervisionMondiale
+        })
+    );
+}
+
 // P3.3.3A : API institutionnelle optionnelle, fermee par defaut.
 // Recette exclusivement, et uniquement lorsque le drapeau est explicitement active.
 if (process.env.PGDATABASE === "sateer_test" && process.env.SATEER_ENABLE_ORG_EXP_API === "1") {
