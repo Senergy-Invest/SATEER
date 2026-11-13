@@ -1,8 +1,15 @@
 # Règles permanentes du pilote SATEER
 
-- SATEER Core reste générique et configurable. Bordeaux est uniquement une configuration du pilote, jamais une règle codée en dur dans le cœur.
-- Ne jamais modifier la base PostgreSQL `sateer`, le serveur du port 3000, les secrets ou les sauvegardes.
-- Pour les tests autorisés qui utilisent PostgreSQL, utiliser exclusivement `sateer_test` et des comptes/données synthétiques isolés, avec nettoyage garanti.
-- Préserver l’instance du port 3100 et les dashboards existants ; ne pas les redémarrer ni en changer le comportement sans demande explicite.
-- Vérifier et imposer les permissions côté backend. Une protection dans l’interface seule ne suffit pas.
-- Ne faire aucun push, aucune migration et aucune opération destructive sans accord explicite.
+- L’architecture cible est : **Core générique → capacités transversales → moteurs spécialisés isolables → expériences configurables**.
+- Le Core porte les concepts partagés (organisations, personnes, identités, relations, territoires, rôles, permissions, référentiels, audit et isolation). Aucune règle métier de Bordeaux, AEME, SONAGED, SUNU Courant ou d’une autre organisation ne doit y être codée en dur. Les besoins locaux sont des configurations ou des extensions explicitement isolées.
+- Chaque moteur doit avoir une responsabilité, des dépendances, des contrats d’échange et des données canoniques identifiables. Préférer les interfaces explicites et documentées ; éviter les accès directs aux données privées d’un autre moteur, les dépendances circulaires et les couches techniques sans besoin démontré.
+- Un monolithe modulaire est adapté au projet. Ne pas créer de microservices ni entreprendre de refactorisation générale sans justification concrète. Toute extraction future doit pouvoir s’appuyer sur des frontières et contrats documentés.
+- Le code, les migrations, les procédures d’installation et les tests doivent être lisibles et maintenables par une équipe humaine sans IA. Garder les changements ciblés, les responsabilités compréhensibles et les migrations versionnées/documentées.
+- Les permissions, le tenant, l’organisation, l’expérience, le territoire, la personne, le rôle et le périmètre de ressource sont vérifiés côté backend. Une restriction d’interface ne constitue pas un contrôle d’accès.
+- Documenter les sources de vérité, les données dérivées, les flux entre moteurs, les erreurs et les stratégies de reprise. Ne pas créer de copies concurrentes de référentiels ou de dossiers sans propriétaire explicite.
+- Les tests doivent être reproductibles sans IA. Distinguer contrôles statiques, tests unitaires, intégration et parcours E2E ; ne déclarer réussi que ce qui a réellement été exécuté. Avant un test avec écritures, vérifier la cible, les données synthétiques, l’absence de modification de données préexistantes, le nettoyage et sa preuve.
+- Utiliser exclusivement `sateer_test` pour les tests PostgreSQL autorisés. Ne pas contourner ses protections. Ne pas accéder à des données personnelles réelles ou à des documents privés pour les tests.
+- Préserver tous les fichiers et données préexistants, y compris les éléments non suivis, médias, sauvegardes, logs et secrets. Ne jamais les supprimer, remplacer ou indexer implicitement. Vérifier le diff ciblé avant toute validation Git.
+- Ne jamais modifier la base PostgreSQL `sateer`, le serveur du port 3000, les secrets ou les sauvegardes. Préserver l’instance du port 3100 et les dashboards existants ; ne pas les redémarrer ni en changer le comportement sans demande explicite.
+- Ne faire aucun push, aucune migration, aucune opération destructive ni aucune connexion à un service réel sans accord explicite.
+- Consulter `docs/architecture/overview.md`, `docs/architecture/data-and-security.md` et `docs/development/testing.md` avant toute évolution touchant plusieurs capacités.
