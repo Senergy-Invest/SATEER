@@ -121,6 +121,44 @@ app.use("/api/institution-communications", exigerSession,
     }));
 
 
+// A3c : lecture du réseau institutionnel exclusivement en recette, désactivée par défaut.
+// Aucune permission attribuée : le Core exige VIEW_INSTITUTION_NETWORK sur la racine.
+if (process.env.PGDATABASE === "sateer_test" &&
+    process.env.SATEER_ENABLE_INSTITUTION_NETWORK_READ === "1") {
+    const { executerRequete } = require("./database");
+    const { verifierPermissionPersonneDatabase } = require("./auth-authorization");
+    const { creerServiceReseauInstitutionnel } = require("./institution-network-database");
+    const { creerRouteLectureReseau } = require("./institution-network-read-http");
+    const reseauInstitutionnel = creerServiceReseauInstitutionnel({
+        requete: executerRequete,
+        autoriser: async ({ acteur, organisationId, action }) => {
+            if (action !== "VIEW_INSTITUTION_NETWORK") return false;
+            const autorisation = await verifierPermissionPersonneDatabase({
+                personneId: acteur.personneId,
+                organisationId,
+                tenantCode: acteur.tenantCode,
+                permissionCode: action,
+                uniteId: null
+            });
+            return autorisation?.succes === true && autorisation?.autorise === true &&
+                autorisation?.portee === "ORGANISATION";
+        }
+    });
+    app.use("/api/institution-network", exigerSession,
+        creerRouteLectureReseau({
+            router: express.Router(),
+            resoudreTenantId: async tenantCode => {
+                const resultat = await executerRequete(
+                    "SELECT id FROM tenants WHERE code = $1 AND actif = TRUE LIMIT 1",
+                    [tenantCode]
+                );
+                return resultat.rows.length === 1 ? Number(resultat.rows[0].id) : null;
+            },
+            lireSousReseau: reseauInstitutionnel.lireSousReseau
+        })
+    );
+}
+
 // P3.3.3A : API institutionnelle optionnelle, fermee par defaut.
 // Recette exclusivement, et uniquement lorsque le drapeau est explicitement active.
 if (process.env.PGDATABASE === "sateer_test" && process.env.SATEER_ENABLE_ORG_EXP_API === "1") {
