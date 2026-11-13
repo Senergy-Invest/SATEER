@@ -331,9 +331,18 @@ async function chargerMonSateer() {
             experiencesContainer.append(carte);
             apercus.push({ organisation: org, tenantCode: tenant, personneId, resume });
         }
-        if (!apercus.length) {
+        // Ambassade : même accueil et même contexte de session, sans réutiliser l'API Mon Consulat.
+        // Cette carte ne confère aucun accès métier et ne crée aucune activation organisationnelle.
+        const ambassades = organisations.filter(org => org.type === "AMBASSADE" && org.id != null);
+        for (const org of ambassades) {
+            const tenant = org.tenant_code || contexte.tenantCode;
+            if (!tenant) continue;
+            const carte = window.SATEER_INSTITUTION_PRESENTATION?.creerCarte(org, tenant, document);
+            if (carte) experiencesContainer.append(carte);
+        }
+        if (!experiencesContainer.children.length) {
             experiencesContainer.append(element("div", "sx-empty-experience",
-                "Aucun Consulat rattaché à ce compte. Les expériences disponibles apparaîtront ici après rattachement."));
+                "Aucune institution rattachée à ce compte. Les expériences disponibles apparaîtront ici après rattachement."));
         }
         afficherIdentite(contexte.personne || {}, organisations);
 
