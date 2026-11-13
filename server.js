@@ -109,6 +109,17 @@ app.use(
 );
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
+// A2 : publications Ambassade via le service Communication commun, en lecture seule.
+// La session et l'appartenance tenant/organisation/type sont revalidées par le routeur.
+const { creerRoutesCommunicationsInstitutionnelles } = require("./institution-communications-http");
+app.use("/api/institution-communications", exigerSession,
+    creerRoutesCommunicationsInstitutionnelles({
+        router: express.Router(),
+        listerOrganisationsPersonne: listerOrganisationsPersonneDatabase,
+        trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
+        listerPublicationsVisibles: listerPublicationsVisiblesPourPersonneDatabase
+    }));
+
 
 // P3.3.3A : API institutionnelle optionnelle, fermee par defaut.
 // Recette exclusivement, et uniquement lorsque le drapeau est explicitement active.

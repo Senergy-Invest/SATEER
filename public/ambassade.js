@@ -1,5 +1,52 @@
 "use strict";
-/** Page A1 : aucune API métier propre à l'ambassade, aucune écriture. */
+/** A2 : lecture de publications à travers l'API SATEER existante; aucune écriture. */
+function afficherPublicationAmbassade(conteneur, publication) {
+    // textContent exclusivement : une publication est une donnée, jamais du HTML exécutable.
+    const carte = document.createElement("article");
+    const titre = document.createElement("h3");
+    titre.textContent = String(publication.titre || "Information institutionnelle");
+    const metadonnees = document.createElement("small");
+    const parties = [publication.categorie, publication.priorite, publication.communication_channel_nom]
+        .filter(Boolean).map(String);
+    metadonnees.textContent = parties.join(" · ") || "Information";
+    const contenu = document.createElement("p");
+    contenu.textContent = String(publication.contenu || "");
+    carte.append(titre, metadonnees, contenu);
+    conteneur.append(carte);
+}
+async function chargerPublicationsAmbassade(organisationId, tenantCode) {
+    const etat = document.getElementById("ambassadePublicationsStatut");
+    const liste = document.getElementById("ambassadePublicationsListe");
+    liste.replaceChildren();
+    etat.textContent = "Chargement des informations auxquelles votre profil a accès…";
+    try {
+        const endpoint = "/api/institution-communications/" + encodeURIComponent(organisationId) +
+            "/publications?" + new URLSearchParams({ tenant: tenantCode });
+        const response = await fetch(endpoint, {
+            method: "GET", credentials: "same-origin", cache: "no-store",
+            headers: { "Accept": "application/json" }
+        });
+        if (!response.ok) throw new Error("PUBLICATIONS_INDISPONIBLES");
+        const data = await response.json();
+        if (data.statut !== "PUBLICATIONS_INSTITUTIONNELLES" ||
+            Number(data.organisation?.id) !== Number(organisationId) ||
+            data.organisation?.type !== "AMBASSADE" || !Array.isArray(data.publications)) {
+            throw new Error("REPONSE_INVALIDE");
+        }
+        if (data.publications.length === 0) {
+            etat.textContent = "Aucune publication accessible à votre profil pour cette ambassade actuellement.";
+            return;
+        }
+        const maximum = 30;
+        data.publications.slice(0, maximum).forEach(p => afficherPublicationAmbassade(liste, p));
+        etat.textContent = data.publications.length + " publication(s) accessible(s) selon les audiences configurées."
+            + (data.publications.length > maximum ? " Seules les 30 premières sont affichées." : "");
+    } catch (erreur) {
+        console.warn("Mon Ambassade : informations institutionnelles indisponibles.", erreur);
+        etat.textContent = "Informations indisponibles pour le moment. Aucun contenu non autorisé n'est affiché.";
+    }
+}
+
 (async function initialiserAmbassade() {
     const statut = document.getElementById("ambassadeStatut");
     const contenu = document.getElementById("ambassadeContenu");
@@ -17,8 +64,9 @@
             return;
         }
         document.getElementById("ambassadeNom").textContent = organisation.nom || "Ambassade";
-        statut.textContent = "Rattachement confirmé. Prototype de présentation sans services métier activés.";
+        statut.textContent = "Organisation rattachée à la session. Les publications sont filtrées par les règles Communication.";
         contenu.hidden = false;
+        await chargerPublicationsAmbassade(Number(organisation.id), tenantCode);
     } catch (erreur) {
         console.warn("Mon Ambassade : session ou contexte indisponible.", erreur);
         statut.textContent = "Session ou contexte indisponible. Revenez à Mon SATEER.";

@@ -38,6 +38,7 @@ assert.match(index,/<script src="\/institution-experience-entry\.js"><\/script>/
 assert.match(page,/auth-client\.js/);
 assert.match(page,/institution-experience-entry\.js/);
 assert.match(page,/ambassade\.js/);
-assert.doesNotMatch(amb,/fetch\s*\(/, "Pas de nouvel appel métier ni d'envoi A1");
+assert.match(amb,/method:\s*"GET"/, "A2 n’autorise que la lecture");
+assert.doesNotMatch(amb,/method:\s*"(?:POST|PUT|PATCH|DELETE)"/, "Pas de mutation côté Ambassade");
 assert.doesNotMatch(amb,/innerHTML/, "Aucune injection HTML des noms institutionnels");
 console.log("AMBASSADE_A1_CONTRATS_PASS : rattachement tenant, type d'organisation, liens, XSS, absence de mutation, Consulat préservé");

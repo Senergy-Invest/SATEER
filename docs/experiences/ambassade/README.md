@@ -25,3 +25,12 @@ La page HTML statique n'est pas une barrière de sécurité. Les données person
 ## Prochain lot A2
 
 Cartographier les droits des endpoints existants et le type d'organisation attendu. Réutiliser l'API de publications pour des informations **autorisées par l'institution**, avec tests de visibilité publique, d'audience et d'isolation tenant/org, sans extrapoler les pouvoirs de la mission diplomatique.
+
+
+## A2 — Lecture des publications institutionnelles (13 novembre 2026)
+
+La route **GET `/api/institution-communications/:organisationId/publications?tenant=SN`** est un simple adaptateur de lecture. Elle réutilise `listerPublicationsVisiblesPourPersonneDatabase` du moteur Communication : pas de table, pas de requête métier dupliquée, pas de permission créée et aucune modification de `/api/mon-consulat`. Le backend exige une session, une relation personne–organisation effective dans le tenant demandé et vérifie que l'organisation réellement lue en base est de type `AMBASSADE`. Un identifiant dans l'URL ne confère aucun droit.
+
+La réponse projette uniquement les champs de publication utiles à l'affichage, sans exposer les pièces ou métadonnées de publication. L'interface insère le contenu avec `textContent` et reste en lecture seule. Si aucune publication n'est autorisée, le fil est vide. **Aucune publication fictive ou officielle n'est créée dans ce lot.**
+
+Les tests `node scripts/test-ambassade-a2.js` sont des tests de contrats injectés **sans réseau, sans PostgreSQL** ; ils ne démontrent pas le fonctionnement HTTP avec authentification réelle ou les audiences sur une vraie base. Ces tests devront être effectués dans un environnement autorisé et isolé avant toute exploitation institutionnelle. Aucune configuration d'activation ou rôle d'ambassade n'est supposé.
