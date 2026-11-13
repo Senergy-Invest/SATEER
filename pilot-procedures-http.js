@@ -253,6 +253,8 @@ function setup(app,exigerSession){
   const cap=await executerRequete(`SELECT 1 FROM organisation_unit_capabilities uc JOIN capabilities c ON c.id=uc.capability_id WHERE uc.organisation_unit_id=$1 AND uc.actif=TRUE AND c.actif=TRUE AND c.code='VIEW_INBOX'`,[d.destination_unit_id]);
   return cap.rowCount?d:null;
  }
+ // P3.3.5J — Journal Agent. Lecture seule, jamais les pièces privées.
+ // Autorisation par l'unité réelle du dossier, pas par une unité demandée arbitrairement.
  // P3.3.5L2 — Supervision organisationnelle des dossiers (lecture seule).
  // Ne donne aucun acces aux pieces jointes et ne modifie ni etat, ni notification.
  async function pilotSupervisionPermise(req, organisationId, tenantCode) {
@@ -403,8 +405,6 @@ function setup(app,exigerSession){
    return res.json({statut:'DETAIL_SUPERVISION',dossier:dossier.rows[0],messages:messages.rows,historique:historique.rows,limite:100,lectureSeule:true});
   }catch(err){console.error('P335L2 detail supervision',err);return status(res,503,'DETAIL_SUPERVISION_INDISPONIBLE');}
  });
- // P3.3.5J — Journal Agent. Lecture seule, jamais les pièces privées.
- // Autorisation par l'unité réelle du dossier, pas par une unité demandée arbitrairement.
  router.get('/dossiers/:id/journal-agent',async(req,res)=>{
   const id=validId(req.params.id),org=validId(req.query.organisationId),unitId=validId(req.query.unitId),tenant=validTenant(req.query.tenant);
   if(!id||!org||!unitId||!tenant)return status(res,400,'PARAMETRES_INVALIDES');
