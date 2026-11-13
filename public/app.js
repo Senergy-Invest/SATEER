@@ -340,6 +340,15 @@ async function chargerMonSateer() {
             const carte = window.SATEER_INSTITUTION_PRESENTATION?.creerCarte(org, tenant, document);
             if (carte) experiencesContainer.append(carte);
         }
+        // Ministère : expérience indépendante et seulement visible si rattachée.
+        // La carte n'attribue aucune permission; l'API A4b demeure seul arbitre.
+        const ministeres = organisations.filter(org => org.type === "MINISTERE" && org.id != null);
+        for (const org of ministeres) {
+            const tenant = org.tenant_code || contexte.tenantCode;
+            if (!tenant) continue;
+            const carte = window.SATEER_MINISTRY_PRESENTATION?.creerCarte(org, tenant, document);
+            if (carte) experiencesContainer.append(carte);
+        }
         if (!experiencesContainer.children.length) {
             experiencesContainer.append(element("div", "sx-empty-experience",
                 "Aucune institution rattachée à ce compte. Les expériences disponibles apparaîtront ici après rattachement."));

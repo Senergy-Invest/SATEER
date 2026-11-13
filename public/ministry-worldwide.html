@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Supervision ministérielle · SATEER</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/sateer-experiences.css">
+  <link rel="stylesheet" href="/ministry-worldwide.css">
+</head>
+<body class="sateer-experience mw-page">
+  <div class="app">
+    <header class="header"><a href="/index.html" class="mw-back">← Mon SATEER</a><div class="brand">SATEER</div></header>
+    <main class="mw-main">
+      <p class="mw-eyebrow">SUPERVISION NATIONALE · ENVIRONNEMENT DE RECETTE</p>
+      <h1>Réseau diplomatique et consulaire</h1>
+      <p class="mw-subtitle">Vue de supervision par organisation et par pays. La tutelle ne confère aucun accès aux dossiers individuels.</p>
+      <div id="mwStatut" class="mw-status" role="status" aria-live="polite">Vérification de la session institutionnelle…</div>
+      <section id="mwContenu" hidden>
+        <div class="mw-panel">
+          <h2 id="mwOrganisation">Organisation</h2>
+          <form id="mwForm" class="mw-form">
+            <label for="mwPeriode">Période du reporting</label>
+            <input id="mwPeriode" name="periode" type="month" required>
+            <button type="submit">Charger les données autorisées</button>
+          </form>
+        </div>
+        <section aria-labelledby="mwIndicateursTitre">
+          <h2 id="mwIndicateursTitre">Couverture et indicateurs</h2>
+          <div id="mwIndicateurs" class="mw-metrics" aria-live="polite"></div>
+        </section>
+        <section aria-labelledby="mwReseauTitre">
+          <h2 id="mwReseauTitre">Réseau institutionnel autorisé</h2>
+          <div id="mwReseau" aria-live="polite"></div>
+        </section>
+        <p id="mwProvenance" class="mw-provenance"></p>
+      </section>
+      <p class="mw-footnote">Les statistiques, lorsqu'elles existent, proviennent de rapports agrégés validés. Les postes non déployés et les données absentes ne sont jamais comptés comme une activité nulle.</p>
+    </main>
+  </div>
+  <script src="/auth-client.js"></script>
+  <script src="/ministry-worldwide-ui.js"></script>
+</body>
+</html>

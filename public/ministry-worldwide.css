@@ -1,0 +1,29 @@
+/* A4c — styles limités à l'expérience Ministère (pas de duplication du design system). */
+.mw-back { color:inherit; text-decoration:none; font-weight:600; }
+.mw-main { max-width:1060px; margin:0 auto; padding:30px 20px 75px; }
+.mw-main h1 { font-size:clamp(1.9rem,4vw,3rem); margin:8px 0 10px; }
+.mw-main h2 { font-size:1.18rem; margin:25px 0 14px; }
+.mw-eyebrow { letter-spacing:.09em; font-weight:700; font-size:.74rem; color:#476653; }
+.mw-subtitle,.mw-footnote { color:#455a61; max-width:850px; line-height:1.6; }
+.mw-status { border-left:4px solid #345e72; background:#eef3f6; color:#173c4e; padding:13px 16px; border-radius:8px; margin:20px 0; line-height:1.45; }
+.mw-panel { padding:20px; background:#f6f8f8; border:1px solid #d8e2e2; border-radius:12px; }
+.mw-panel h2 { margin:0 0 16px; }
+.mw-form { display:flex; gap:12px; align-items:end; flex-wrap:wrap; }
+.mw-form label { font-weight:600; }
+.mw-form input { min-height:42px; border:1px solid #a6bec4; padding:8px; border-radius:7px; }
+.mw-form button { min-height:42px; border:0; border-radius:7px; background:#173e55; color:white; font-weight:700; padding:9px 16px; cursor:pointer; }
+.mw-form button:focus-visible,.mw-back:focus-visible { outline:3px solid #0c7bd2; outline-offset:3px; }
+.mw-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.mw-stat { background:white; border:1px solid #d7e1e5; border-radius:11px; padding:16px; }
+.mw-stat strong { display:block; font-size:1.55rem; font-variant-numeric:tabular-nums; margin:5px 0; }
+.mw-stat small { color:#4d626a; }
+.mw-list { margin:0; padding:0; list-style:none; }
+.mw-node { border:1px solid #d7e1e5; background:white; border-radius:8px; margin:8px 0; padding:12px; overflow-wrap:anywhere; }
+.mw-node strong { display:block; }
+.mw-node small { display:block; color:#4e646c; margin-top:4px; }
+.mw-node[data-depth="1"] { margin-left:18px; }
+.mw-node[data-depth="2"] { margin-left:36px; }
+.mw-node[data-depth="3"] { margin-left:54px; }
+.mw-note,.mw-provenance { font-size:.88rem; line-height:1.55; color:#4f6169; }
+.mw-footnote { margin-top:28px; }
+@media(max-width:600px){.mw-node[data-depth="1"],.mw-node[data-depth="2"],.mw-node[data-depth="3"]{margin-left:10px}}
