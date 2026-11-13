@@ -1,0 +1,6 @@
+.ambassade-operations-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:16px 0}
+.ambassade-operations-metric{padding:18px 14px;border:1px solid #d5dfd7;border-radius:12px;background:#fff;display:grid;gap:7px}
+.ambassade-operations-metric strong{font-size:1.6rem;color:#183326}
+.ambassade-operations-metric span{font-size:.86rem;color:#496553}
+.ambassade-operations-units{padding-left:22px;line-height:1.8}
+.ambassade-operations-caution{border-left:3px solid #64748b;padding:10px 14px;background:#f6f8fa;color:#334155}

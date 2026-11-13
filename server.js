@@ -179,6 +179,24 @@ if (process.env.PGDATABASE === "sateer_test" &&
     );
 }
 
+// A5 : agrégats d'activité Ambassade, READ ONLY, disponibles uniquement en recette.
+// Aucun droit implicite : VIEW_ORGANISATION_ANALYTICS via RBAC organisationnel.
+if (process.env.PGDATABASE === "sateer_test" &&
+    process.env.SATEER_ENABLE_AMBASSADE_OPERATIONS === "1") {
+    const { executerRequete } = require("./database");
+    const { verifierPermissionPersonneDatabase } = require("./auth-authorization");
+    const { creerProjectionOperationsAmbassade } = require("./ambassade-operations");
+    const { creerRouteOperationsAmbassade } = require("./ambassade-operations-http");
+    app.use("/api/ambassade-operations", exigerSession,
+        creerRouteOperationsAmbassade({
+            router: express.Router(),
+            trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
+            verifierPermission: verifierPermissionPersonneDatabase,
+            charger: creerProjectionOperationsAmbassade({ requete: executerRequete })
+        })
+    );
+}
+
 // P3.3.3A : API institutionnelle optionnelle, fermee par defaut.
 // Recette exclusivement, et uniquement lorsque le drapeau est explicitement active.
 if (process.env.PGDATABASE === "sateer_test" && process.env.SATEER_ENABLE_ORG_EXP_API === "1") {

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/sateer-experiences.css">
   <link rel="stylesheet" href="/sateer-citizen-home.css">
   <link rel="stylesheet" href="/ambassade.css">
+  <link rel="stylesheet" href="/ambassade-operations.css">
 </head>
 <body class="sateer-experience sateer-ambassade">
   <div class="app">
@@ -32,6 +33,12 @@
           <p id="ambassadePublicationsStatut" role="status" aria-live="polite">Chargement…</p>
           <div id="ambassadePublicationsListe" class="ambassade-services"></div>
         </section>
+        <section aria-labelledby="ambassadeOperationsTitre">
+          <h2 id="ambassadeOperationsTitre">Activité opérationnelle de l’ambassade</h2>
+          <p>Demandes, bureaux et publications de cette ambassade, selon vos habilitations.</p>
+          <p id="ambassadeOperationsStatut" role="status" aria-live="polite">Vérification des droits…</p>
+          <div id="ambassadeOperationsContenu"></div>
+        </section>
         <h2>Autres services à configurer</h2>
         <div class="ambassade-services">
           <article><h3>Publication institutionnelle</h3><p>Le moteur de publication existant reste propriétaire de la création, des validations et des audiences. Aucun droit de publication n’est attribué par A2.</p><small>Lecture seule dans A2</small></article>
@@ -44,6 +51,7 @@
   </div>
   <script src="/auth-client.js"></script>
   <script src="/institution-experience-entry.js"></script>
+  <script src="/ambassade-operations-ui.js"></script>
   <script src="/ambassade.js"></script>
 </body>
 </html>

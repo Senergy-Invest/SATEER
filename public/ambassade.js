@@ -67,6 +67,9 @@ async function chargerPublicationsAmbassade(organisationId, tenantCode) {
         statut.textContent = "Organisation rattachée à la session. Les publications sont filtrées par les règles Communication.";
         contenu.hidden = false;
         await chargerPublicationsAmbassade(Number(organisation.id), tenantCode);
+        await window.SATEER_AMBASSADE_OPERATIONS?.charger({
+            organisationId: Number(organisation.id), tenantCode
+        });
     } catch (erreur) {
         console.warn("Mon Ambassade : session ou contexte indisponible.", erreur);
         statut.textContent = "Session ou contexte indisponible. Revenez à Mon SATEER.";
