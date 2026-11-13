@@ -26,17 +26,18 @@
     const categorie = categories.length === 1 ? categories[0] : null;
     const shared = { categorie, categorieLibelle: categorie ? themes[categorie].label : 'Non déterminée',
       categoriesDetectees:categories, envoiAutorise:false, creationDossierAutorisee:false,
-      routageAutomatiqueAutorise:false, mode:'SIMULATION_LOCALE' };
-    if (!body || texte.length < 12) return {...shared,intention:'SECRETARIAT',motif:'MESSAGE_INSUFFISANT',label:'À qualifier par le secrétariat'};
-    if (categories.length > 1) return {...shared,intention:'SECRETARIAT',motif:'PLUSIEURS_THEMES',label:'À qualifier par le secrétariat'};
+      routageAutomatiqueAutorise:false, validationHumaineRequise:true, orientation:null,
+      mode:'SIMULATION_LOCALE' };
+    if (!body || texte.length < 12) return {...shared,intention:'AMBIGU',orientation:'SECRETARIAT',motif:'MESSAGE_INSUFFISANT',label:'À qualifier par le secrétariat'};
+    if (categories.length > 1) return {...shared,intention:'AMBIGU',orientation:'SECRETARIAT',motif:'PLUSIEURS_THEMES',label:'À qualifier par le secrétariat'};
     const individuel = /\b(mon dossier (?:est|a ete|n avance|reste|bloque)|numero de dossier|reference de dossier|ma demande (?:est|a ete)|mon passeport (?:est|n est)|j ai deja (?:depose|envoye|fait)|reclamation|litige|refus|bloque|perdu|vole|perte de passeport|en attente depuis|ou en est ma demande|statut de ma demande)\b/.test(body);
-    if (individuel) return {...shared,intention:'SECRETARIAT',motif:'CAS_INDIVIDUEL',label:'Situation particulière — secrétariat'};
+    if (individuel) return {...shared,intention:'AMBIGU',orientation:'SECRETARIAT',motif:'CAS_INDIVIDUEL',label:'Situation particulière — secrétariat'};
     const information = /\b(quels?|quelles?|comment|combien|pourquoi|ou trouver|ou obtenir|renseignements?|informations?|liste des|pieces? (?:a|necessaires?|requises?|justificatives?)|documents? (?:a|necessaires?|requis?)|faut il|dois je|conditions?|tarifs?|horaires?|delais?|procedure|comment faire|avant de (?:deposer|soumettre)|pour (?:renouveler|deposer|faire)|savoir)\b/.test(body);
-    const depot = /\b(je (?:souhaite|veux|voudrais|demande) (?:de )?(?:deposer|soumettre|enregistrer)|je vous adresse (?:ma|une) demande|je joins (?:mes|les) pieces|ci joint (?:mon|le) dossier|veuillez enregistrer|depot de mon dossier|dossier complet en piece jointe)\b/.test(body);
+    const depot = /\b(je (?:souhaite|veux|voudrais|demande) (?:de )?(?:deposer|soumettre|enregistrer)|je demande (?:un|une|le|la|l) (?:acte|extrait|duplicata|copie)\b|je vous adresse (?:ma|une) demande|je joins (?:mes|les) pieces|ci joint (?:mon|le) dossier|veuillez enregistrer|depot de mon dossier|dossier complet en piece jointe)\b/.test(body);
     if (information && !depot && categorie) return {...shared,intention:'INFORMATION',motif:'QUESTION_GENERALE',label:'Information générale — Mon Consulat'};
-    if (information && depot) return {...shared,intention:'SECRETARIAT',motif:'INTENTION_AMBIGUE',label:'À qualifier par le secrétariat'};
+    if (information && depot) return {...shared,intention:'AMBIGU',orientation:'SECRETARIAT',motif:'INTENTION_AMBIGUE',label:'À qualifier par le secrétariat'};
     if (depot && categorie) return {...shared,intention:'DEMANDE',motif:'DEMANDE_EXPLICITE',label:'Démarche à vérifier avant orientation'};
-    return {...shared,intention:'SECRETARIAT',motif:!categorie?'THEME_NON_IDENTIFIE':/\bprepar(?:er|ation)\b/.test(body)?'PREPARATION_AMBIGUE':'INTENTION_INDETERMINEE',label:'À qualifier par le secrétariat'};
+    return {...shared,intention:'AMBIGU',orientation:'SECRETARIAT',motif:!categorie?'THEME_NON_IDENTIFIE':/\bprepar(?:er|ation)\b/.test(body)?'PREPARATION_AMBIGUE':'INTENTION_INDETERMINEE',label:'À qualifier par le secrétariat'};
   }
   const scenarios = Object.freeze([
     Object.freeze({id:'INFO_PASSEPORT',expediteur:'Citoyen fictif A',objet:'Documents pour renouvellement de passeport',texte:'Bonjour, quels documents faut-il fournir pour renouveler mon passeport ? Merci.'}),

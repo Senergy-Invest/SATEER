@@ -29,7 +29,7 @@ function createEmailDemoRouter(deps={}) {
   try {
    const d=await rights(Number(req.auth.personneId),ORG,TENANT);
    const permissions=d?.permissionsOrganisation||[];
-   if(!d?.succes || !(permissions.includes('VIEW_OPERATIONAL_DASHBOARD') || permissions.includes('VIEW_CONSULAR_MAIL_DEMO')))return deny(res,403,'CONSULTATION_INTERDITE');
+   if(!d?.succes || !permissions.includes('VIEW_CONSULAR_MAIL_DEMO'))return deny(res,403,'CONSULTATION_INTERDITE');
    const p=await query('SELECT current_database() AS db, system_identifier::text AS sid FROM pg_control_system()');
    if(p.rows[0]?.db!=='sateer_test'||p.rows[0]?.sid!==PG_SYSTEM_ID) return deny(res,503,'INSTANCE_RECETTE_INVALIDE');
    req.demoPermissions=permissions; // droits obtenus côté serveur, jamais du client
