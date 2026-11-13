@@ -110,6 +110,22 @@ app.use(
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
 
+// P3.3.3A : API institutionnelle optionnelle, fermee par defaut.
+// Recette exclusivement, et uniquement lorsque le drapeau est explicitement active.
+if (process.env.PGDATABASE === "sateer_test" && process.env.SATEER_ENABLE_ORG_EXP_API === "1") {
+    const { creerRoutesExperiencesOrganisation } = require("./organisation-experience-http");
+    const { executerRequete } = require("./database");
+    const { verifierPermissionPersonneDatabase } = require("./auth-authorization");
+    app.use("/api/organisation-experiences", exigerSession,
+        creerRoutesExperiencesOrganisation({
+            router: express.Router(),
+            requete: executerRequete,
+            verifierPermission: verifierPermissionPersonneDatabase,
+            origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN
+        })
+    );
+}
+
 // Lot 1R - Identité personnelle SATEER Core (session obligatoire côté route).
 const { identityRouter } = require("./identity-http");
 app.use("/api/mon-identite", identityRouter);
