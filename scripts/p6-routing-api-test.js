@@ -247,6 +247,12 @@ async function main() {
   ok(true, "PASSEPORT est active et dirigée vers Bureau Passeports");
   let d = await submit("PASSEPORT");
   fixture.passportDemandId = d.id;
+  const auditCreationConsulat = await client.query(
+    "SELECT metadata FROM demande_history WHERE demande_id=$1 AND action='CREATION'", [d.id]);
+  assert.equal(auditCreationConsulat.rowCount, 1);
+  assert.deepEqual(auditCreationConsulat.rows[0].metadata, {},
+    "P6 : la creation Consulat ne doit pas recevoir de metadata NULL ni d'intention Ambassade");
+  ok(true, "P6 Consulat : metadata de creation JSONB non-null sans intention Ambassade");
   console.log(`Observation P6 PASSEPORT : ${d.result.orientationAutomatique?.statut || "statut absent"}`);
   assert.equal(d.result.orientationAutomatique?.statut, "ORIENTEE", "La demande PASSEPORT doit être affectée par la règle active.");
   assert.equal(id(d.result.orientationAutomatique.destinationUnitId), fixture.passport); ok(true, "PASSEPORT routé directement au bureau compétent");
@@ -260,6 +266,9 @@ async function main() {
       assert, api, status, ok, client, fixture, TENANT, base, RUN
     });
     await require("./maintenance/test-ambassade-citoyen-e2e")({
+      assert, api, status, ok, client, fixture, TENANT, base, RUN
+    });
+    await require("./maintenance/test-ambassade-intentions-e2e")({
       assert, api, status, ok, client, fixture, TENANT, base, RUN
     });
   }

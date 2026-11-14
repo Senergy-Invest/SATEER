@@ -16,7 +16,7 @@ module.exports = async function recetteCitoyenAmbassade(ctx) {
   const form = (organisationId = orgId, typeCanal = canal) => ({
     organisationId, tenantCode: TENANT, categorie: "PASSEPORT", objet,
     message: "Quels justificatifs faut-il présenter ? Ceci est une question, pas un dossier de pièces.",
-    priorite: "NORMALE", canal: typeCanal
+    priorite: "NORMALE", canal: typeCanal, intention: "INFORMATION"
   });
   const before = await client.query("SELECT count(*)::int AS n FROM demandes WHERE organisation_id=$1 AND canal=$2", [orgId, canal]);
   let x = await api(base, "/api/demandes", "POST", form(), fixture.cookies.citizen, false);

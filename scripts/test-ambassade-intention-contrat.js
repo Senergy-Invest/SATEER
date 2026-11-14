@@ -1,0 +1,25 @@
+"use strict";
+/** Contrats statiques A9, exécutables sans base de données. L'E2E est obligatoire en plus. */
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const read = p => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
+const server = read("server.js");
+const services = read("services-database.js");
+const html = read("public/demande.html");
+const front = read("public/demande.js");
+const routing = read("pilot-routing-rules.js");
+const harness = read("scripts/p6-routing-api-test.js");
+assert.ok(server.includes('"INTENTION_AMBASSADE_INVALIDE"'));
+assert.ok(server.includes('!["INFORMATION", "DEMARCHE", "INCERTAIN"].includes(intention)'));
+assert.ok(services.includes("jsonb_build_object('intention', $9::text, 'source', 'MON_AMBASSADE')"));
+assert.ok(services.includes("$9::text AS intention"));
+assert.ok(services.includes("CASE WHEN $9::text IS NULL THEN '{}'::jsonb"));
+assert.ok(html.indexOf('id="intention"') < html.indexOf('id="categorie"'));
+for (const key of ["INFORMATION", "DEMARCHE", "INCERTAIN"]) assert.ok(html.includes(`value="${key}"`));
+assert.ok(front.includes('SOURCE === "MON_AMBASSADE" ? { intention } : {}'));
+assert.ok(front.includes('intentionInput.required = SOURCE === "MON_AMBASSADE"'));
+assert.ok(routing.includes("if (canal === 'MON_AMBASSADE') return {statut:'QUALIFICATION_MANUELLE_REQUISE'"));
+assert.ok(harness.includes('require("./maintenance/test-ambassade-citoyen-e2e")'));
+assert.ok(harness.includes('require("./maintenance/test-ambassade-intentions-e2e")'));
+console.log("A9_AMBASSADE_INTENTIONS_CONTRAT_PASS");

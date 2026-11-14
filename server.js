@@ -886,7 +886,8 @@ app.post(
                 objet,
                 message,
                 priorite,
-                canal
+                canal,
+                intention
             } = req.body;
 
 
@@ -914,6 +915,16 @@ app.post(
                     });
             }
 
+
+            // A9 : l'intention est saisie explicitement, jamais inférée du thème.
+            // Le contrôle serveur reste obligatoire, indépendamment du formulaire.
+            if (canal === "MON_AMBASSADE" &&
+                !["INFORMATION", "DEMARCHE", "INCERTAIN"].includes(intention)) {
+                return res.status(400).json({
+                    statut: "INTENTION_AMBASSADE_INVALIDE",
+                    erreur: "Choisissez l'intention de votre message pour l'ambassade."
+                });
+            }
 
             const organisationsAutorisees = await listerOrganisationsPersonneDatabase(
                 Number(req.auth.personneId),
@@ -957,7 +968,8 @@ app.post(
                         "NORMALE",
 
                     canal ||
-                        "MON_CONSULAT"
+                        "MON_CONSULAT",
+                    canal === "MON_AMBASSADE" ? intention : null
                 );
 
             // SATEER P6 : appliquer la règle, avec historique et repli sûr si indisponible.
@@ -978,7 +990,13 @@ app.post(
                         "DEMANDE_CREEE",
 
                     message:
-                        "Votre demande a bien été envoyée.",
+                        canal === "MON_AMBASSADE"
+                            ? ({
+                                INFORMATION: "Votre question a été enregistrée pour qualification humaine. Aucun dossier de pièces n'a été constitué.",
+                                DEMARCHE: "Votre démarche a été enregistrée pour qualification humaine, sans orientation automatique.",
+                                INCERTAIN: "Votre situation a été enregistrée pour clarification par un service habilité de l'ambassade."
+                            })[intention]
+                            : "Votre demande a bien été envoyée.",
 
                     demande:
                         demande,

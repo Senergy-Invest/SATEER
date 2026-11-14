@@ -1682,7 +1682,8 @@ async function creerDemandeDatabase(
     objet,
     description,
     priorite = "NORMALE",
-    canal = "MON_CONSULAT"
+    canal = "MON_CONSULAT",
+    intention = null
 ) {
 
     const resultat =
@@ -1762,7 +1763,8 @@ async function creerDemandeDatabase(
                     ancien_statut,
                     nouveau_statut,
                     action,
-                    commentaire
+                    commentaire,
+                    metadata
                 )
 
                 SELECT
@@ -1772,7 +1774,10 @@ async function creerDemandeDatabase(
                     NULL,
                     'NOUVELLE',
                     'CREATION',
-                    'Demande créée par le citoyen.'
+                    'Demande créée par le citoyen.',
+                    CASE WHEN $9::text IS NULL THEN '{}'::jsonb
+                         ELSE jsonb_build_object('intention', $9::text, 'source', 'MON_AMBASSADE')
+                    END
 
                 FROM nouvelle_demande
 
@@ -1793,6 +1798,7 @@ async function creerDemandeDatabase(
                 d.statut,
                 d.priorite,
                 d.canal,
+                $9::text AS intention,
                 d.date_creation,
 
                 h.id AS history_id
@@ -1810,7 +1816,8 @@ async function creerDemandeDatabase(
                 objet,
                 description,
                 priorite,
-                canal
+                canal,
+                intention
             ]
         );
 

@@ -47,6 +47,12 @@ const categorieInput =
         "categorie"
     );
 
+const intentionInput = document.getElementById("intention");
+const ambassadeIntentionGroup = document.getElementById("ambassadeIntentionGroup");
+// Aucun changement de parcours pour le Consulat ou SATEER.
+ambassadeIntentionGroup.hidden = SOURCE !== "MON_AMBASSADE";
+intentionInput.required = SOURCE === "MON_AMBASSADE";
+
 
 const objetInput =
     document.getElementById(
@@ -238,6 +244,7 @@ demandeForm.addEventListener(
             true;
 
 
+        const intention = SOURCE === "MON_AMBASSADE" ? intentionInput.value : null;
         const categorie =
             categorieInput.value;
 
@@ -255,6 +262,7 @@ demandeForm.addEventListener(
         // =================================================
 
         if (
+            (SOURCE === "MON_AMBASSADE" && !["INFORMATION", "DEMARCHE", "INCERTAIN"].includes(intention)) ||
             !categorie ||
             !objet ||
             !message
@@ -322,7 +330,8 @@ demandeForm.addEventListener(
                                     "NORMALE",
 
                                 canal:
-                                    SOURCE
+                                    SOURCE,
+                                ...(SOURCE === "MON_AMBASSADE" ? { intention } : {})
                             })
                     }
                 );
@@ -351,12 +360,7 @@ demandeForm.addEventListener(
             // SUCCÈS
             // =================================================
 
-            afficherSucces(
-                SOURCE === "MON_AMBASSADE" &&
-                resultat.orientationAutomatique?.statut === "QUALIFICATION_MANUELLE_REQUISE"
-                    ? "Votre message est enregistré. L'ambassade devra d'abord en qualifier l'intention avant toute orientation."
-                    : (resultat.message || "Votre demande a bien été envoyée.")
-            );
+            afficherSucces(resultat.message || "Votre demande a bien été envoyée.");
 
 
             demandeForm.reset();
