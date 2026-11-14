@@ -64,6 +64,13 @@ async function chargerPublicationsAmbassade(organisationId, tenantCode) {
             return;
         }
         document.getElementById("ambassadeNom").textContent = organisation.nom || "Ambassade";
+        // Le lien utilise le contexte déjà vérifié ; l'API contrôle de nouveau
+        // session, tenant, organisation et canal au moment de l'envoi.
+        const demandeLink = document.getElementById("ambassadeDemandeLink");
+        if (demandeLink) demandeLink.href = "/demande.html?" + new URLSearchParams({
+            organisation: String(organisation.id), tenant: tenantCode,
+            source: "MON_AMBASSADE"
+        }).toString();
         statut.textContent = "Organisation rattachée à la session. Les publications sont filtrées par les règles Communication.";
         contenu.hidden = false;
         await chargerPublicationsAmbassade(Number(organisation.id), tenantCode);

@@ -259,6 +259,9 @@ async function main() {
     await require("./maintenance/test-ambassade-p6-e2e")({
       assert, api, status, ok, client, fixture, TENANT, base, RUN
     });
+    await require("./maintenance/test-ambassade-citoyen-e2e")({
+      assert, api, status, ok, client, fixture, TENANT, base, RUN
+    });
   }
   if (process.env.SATEER_TEST_WORKFLOW === "1") {
     await require("./maintenance/test-bordeaux-workflow-p6-scenarios")({

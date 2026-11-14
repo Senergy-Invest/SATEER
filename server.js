@@ -922,6 +922,16 @@ app.post(
             if (!organisationsAutorisees.some(item => Number(item.id) === Number(organisationId))) {
                 return res.status(403).json({ statut: "PERSONNE_HORS_ORGANISATION" });
             }
+            // A8 : MON_AMBASSADE est réservé à une Ambassade du Core réellement
+            // rattachée à ce tenant ; le canal ne confère aucun droit nouveau.
+            if (canal === "MON_AMBASSADE") {
+                const organisationAmbassade = await trouverOrganisationParIdEtTenantDatabase(
+                    Number(organisationId), tenantCode
+                );
+                if (organisationAmbassade?.type !== "AMBASSADE") {
+                    return res.status(422).json({ statut: "CANAL_AMBASSADE_INCOMPATIBLE" });
+                }
+            }
             // =================================================
             // CRÉATION POSTGRESQL
             // =================================================

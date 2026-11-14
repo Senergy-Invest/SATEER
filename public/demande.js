@@ -103,7 +103,10 @@ function configurerContexte() {
 
         demandeContextLabel.textContent =
             "MON AMBASSADE";
-
+        // L'intention précède le sujet : aucun routage automatique par mot-clé.
+        const information = document.querySelector(".form-information p");
+        if (information) information.textContent =
+            "Votre message sera d'abord qualifié par un service habilité de l'ambassade. La catégorie indiquée ne crée pas automatiquement un dossier de pièces.";
         return;
     }
 
@@ -148,9 +151,14 @@ backButton.addEventListener(
             "MON_AMBASSADE"
         ) {
 
-            window.location.href =
-                "/ambassade.html";
-
+            const retour = new URL("/ambassade.html", window.location.origin);
+            const tenant = params.get("tenant") || window.SATEER_CONTEXT?.tenantCode;
+            const organisationId = Number(params.get("organisation") || ORGANISATION_ID);
+            if (tenant && Number.isSafeInteger(organisationId) && organisationId > 0) {
+                retour.searchParams.set("organisation", String(organisationId));
+                retour.searchParams.set("tenant", tenant);
+            }
+            window.location.href = retour.pathname + retour.search;
             return;
         }
 
@@ -214,7 +222,8 @@ demandeForm.addEventListener(
         event.preventDefault();
 
         const contexte = await window.SATEER_CONTEXT_READY;
-        const organisation = await window.SATEER_choisirOrganisation(ORGANISATION_ID);
+        const typeAttendu = SOURCE === "MON_AMBASSADE" ? "AMBASSADE" : undefined;
+        const organisation = await window.SATEER_choisirOrganisation(ORGANISATION_ID, typeAttendu);
         if (!organisation) {
             afficherErreur("Aucune organisation unique n’est associée à votre demande. Sélectionnez d’abord une organisation dans votre espace SATEER.");
             return;
@@ -343,8 +352,10 @@ demandeForm.addEventListener(
             // =================================================
 
             afficherSucces(
-                resultat.message ||
-                "Votre demande a bien été envoyée."
+                SOURCE === "MON_AMBASSADE" &&
+                resultat.orientationAutomatique?.statut === "QUALIFICATION_MANUELLE_REQUISE"
+                    ? "Votre message est enregistré. L'ambassade devra d'abord en qualifier l'intention avant toute orientation."
+                    : (resultat.message || "Votre demande a bien été envoyée.")
             );
 
 

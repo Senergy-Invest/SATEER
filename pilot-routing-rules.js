@@ -107,6 +107,10 @@ function installRoutingRoutes(app, exigerSession) {
 // The new request is NOT lost if a rule is unavailable. Unassigned requests remain in authorized intake.
 async function routeNewCitizenCase({ demandeId, organisationId, tenantCode, categorie, canal }) {
   if (!p6TestDatabase()) return {statut:'P6_RESERVE_BASE_TEST'};
+  // A8 : une question de citoyen à l'Ambassade exige une qualification de l'intention.
+  // Aucune règle P6 de MON_CONSULAT ne peut orienter automatiquement cette demande.
+  if (canal === 'MON_AMBASSADE') return {statut:'QUALIFICATION_MANUELLE_REQUISE',
+    motif:'INTENTION_AVANT_THEME',execution:false};
   if (canal !== 'MON_CONSULAT')return {statut:'CANAL_NON_COUVERT'};
   const cat=key(categorie),id=validId(demandeId),org=validId(organisationId),tenant=validTenant(tenantCode);
   if(!cat||!id||!org||!tenant)return {statut:'AUCUNE_REGLE'};
