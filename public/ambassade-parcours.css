@@ -1,0 +1,8 @@
+/* A6 : accès légers aux capacités existantes, sans seconde interface de traitement. */
+.ambassade-parcours-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:12px 0 24px}
+.ambassade-parcours-card{display:grid;gap:8px;align-content:start;background:#fff;border:1px solid #d5dfd5;border-radius:12px;padding:18px}
+.ambassade-parcours-card h3{margin:0;color:#173b2d;font-size:16px}
+.ambassade-parcours-card p,.ambassade-parcours-card small{margin:0;color:#52695e}
+.ambassade-parcours-link{display:inline-block;padding:10px 14px;background:#176746;color:#fff;border-radius:9px;font-weight:650;text-decoration:none;max-width:max-content}
+.ambassade-parcours-link:focus-visible{outline:3px solid #d19a26;outline-offset:3px}
+.ambassade-parcours-notice{font-size:13px;color:#51675a;max-width:760px}

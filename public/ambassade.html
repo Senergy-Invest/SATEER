@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/sateer-citizen-home.css">
   <link rel="stylesheet" href="/ambassade.css">
   <link rel="stylesheet" href="/ambassade-operations.css">
+  <link rel="stylesheet" href="/ambassade-parcours.css">
 </head>
 <body class="sateer-experience sateer-ambassade">
   <div class="app">
@@ -39,6 +40,15 @@
           <p id="ambassadeOperationsStatut" role="status" aria-live="polite">Vérification des droits…</p>
           <div id="ambassadeOperationsContenu"></div>
         </section>
+        <section aria-labelledby="ambassadeParcoursTitre">
+          <h2 id="ambassadeParcoursTitre">Bureaux et traitement des demandes</h2>
+          <p class="ambassade-parcours-notice">Accès aux Workspaces communs : réception, orientation interne, prise en charge et réponse selon les permissions et capacités configurées.</p>
+          <p id="ambassadeParcoursStatut" role="status" aria-live="polite">Vérification des Workspaces…</p>
+          <div id="ambassadeParcoursBureaux"></div>
+          <h3>Gestion de la communication</h3>
+          <p id="ambassadeParcoursCommunicationStatut" role="status" aria-live="polite">Vérification du droit de publication…</p>
+          <div id="ambassadeParcoursCommunicationActions"></div>
+        </section>
         <h2>Autres services à configurer</h2>
         <div class="ambassade-services">
           <article><h3>Publication institutionnelle</h3><p>Le moteur de publication existant reste propriétaire de la création, des validations et des audiences. Aucun droit de publication n’est attribué par A2.</p><small>Lecture seule dans A2</small></article>
@@ -52,6 +62,7 @@
   <script src="/auth-client.js"></script>
   <script src="/institution-experience-entry.js"></script>
   <script src="/ambassade-operations-ui.js"></script>
+  <script src="/ambassade-parcours-ui.js"></script>
   <script src="/ambassade.js"></script>
 </body>
 </html>
