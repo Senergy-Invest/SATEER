@@ -1,0 +1,23 @@
+"use strict";
+/** A7 : contrat structurel hors base du mode ambassade du harnais P6. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const code=fs.readFileSync(path.join(root,'scripts/p6-routing-api-test.js'),'utf8');
+const helper=fs.readFileSync(path.join(root,'scripts/maintenance/test-ambassade-p6-e2e.js'),'utf8');
+let n=0;
+const ok=(condition,name)=>{assert.ok(condition,name);n++;};
+ok(code.includes('SATEER_P6_AMBASSADE_TEST === "1"'),'Mode Ambassade explicite, pas de substitution implicite');
+ok(code.includes("EMBASSY_MODE ? 'AMBASSADE' : 'TEST_SYNTHETIQUE'"),'Type source conservé hors A7');
+ok(code.includes('VIEW_ORGANISATION_ANALYTICS')&&code.includes('TARGET_COMMUNICATION'),'Permissions limitées à la fixture synthétique');
+ok(code.includes('test-ambassade-p6-e2e'),'Harnais complète les scénarios sans supprimer P6');
+ok(code.includes('test-bordeaux-workflow-p6-scenarios'),'Non-régression Bordeaux P6 conservée');
+ok(code.includes('ROLLBACK')&&code.includes('zéro résidu'),'Rollback natif du harnais conservé');
+ok(helper.includes('OPERATIONS_AMBASSADE')&&helper.includes('A7_AMBASSADE_E2E_'),'Parcours analytique réel');
+ok(helper.includes('PUBLICATION_CREEE')||helper.includes('status(r,201'),'Publication transactionnelle réelle');
+ok(helper.includes('fixture.cookies.vice')&&helper.includes('fixture.cookies.citizen'),'Session responsable et citoyen distinctes');
+ok(helper.includes('institution-communications')&&helper.includes('units/overview'),'Communication et Workspace couverts');
+ok(!helper.includes('INSERT INTO')&&!helper.includes('UPDATE ')&&!helper.includes('DELETE FROM'),'Fixture centralisée dans P6; helper sans SQL mutations directes');
+ok(!code.includes('SATEER_ENABLE_INSTITUTION_NETWORK_READ=1'),'Aucune activation tutelle ministérielle');
+console.log('A7_HARNAIS_ISOLE_PASS='+n);

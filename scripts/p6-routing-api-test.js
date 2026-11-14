@@ -11,6 +11,7 @@ const express = require("express");
 const DB_NAME = "sateer_test";
 const AUTHORIZED_SYSTEM_ID = "7699611241381229531";
 const RUN = randomUUID().replace(/-/g, "");
+const EMBASSY_MODE = process.env.SATEER_P6_AMBASSADE_TEST === "1";
 const TENANT = `P6T_${RUN.slice(0, 8).toUpperCase()}`;
 const EMAIL_TAG = `p6.${RUN}@sateer.test`;
 const PASSWORD = `P6!${randomBytes(32).toString("base64url")}`;
@@ -130,7 +131,7 @@ async function main() {
   assert.ok(["RECEIVE_INCOMING","VIEW_INBOX","TAKE_CASES","PROCESS_CASES","RESPOND_CASES","ROUTE_CASES"].every(x => capIds[x]), "Capacités de test manquantes.");
   const t = await client.query("INSERT INTO tenants(code,nom,type) VALUES($1,$2,'TEST_SYNTHETIQUE') RETURNING id", [TENANT, `P6 ${RUN}`]);
   fixture.tenantId = id(t.rows[0].id); fixture.personIds = []; fixture.orgIds = []; fixture.demandIds = [];
-  const org = await client.query("INSERT INTO organisations(nom,type,tenant_id) VALUES($1,'TEST_SYNTHETIQUE',$2) RETURNING id", [`P6 organisation ${RUN}`, fixture.tenantId]);
+  const org = await client.query("INSERT INTO organisations(nom,type,tenant_id) VALUES($1,$2,$3) RETURNING id", [`P6 organisation ${RUN}`, EMBASSY_MODE ? 'AMBASSADE' : 'TEST_SYNTHETIQUE', fixture.tenantId]);
   fixture.orgId = id(org.rows[0].id); fixture.orgIds.push(fixture.orgId);
   const org2 = await client.query("INSERT INTO organisations(nom,type,tenant_id) VALUES($1,'TEST_SYNTHETIQUE',$2) RETURNING id", [`P6 autre organisation ${RUN}`, fixture.tenantId]);
   fixture.org2 = id(org2.rows[0].id); fixture.orgIds.push(fixture.org2);
@@ -163,7 +164,9 @@ async function main() {
     await client.query("INSERT INTO relations_personne_organisation(personne_id,organisation_id,type) VALUES($1,$2,'TEST_SYNTHETIQUE')", [p, fixture.orgId]);
   }
   await client.query("INSERT INTO relations_personne_organisation(personne_id,organisation_id,type) VALUES($1,$2,'TEST_SYNTHETIQUE')", [fixture.otherOrgPerson, fixture.org2]);
-  await creerRole(fixture.orgId, fixture.tenantId, fixture.vice, "VICE", ["CREATE_UNIT","VIEW_INCOMING","ROUTE_CASE"]);
+  await creerRole(fixture.orgId, fixture.tenantId, fixture.vice, "VICE", EMBASSY_MODE ?
+    ["CREATE_UNIT","VIEW_INCOMING","ROUTE_CASE","VIEW_ORGANISATION","VIEW_ORGANISATION_ANALYTICS","TARGET_COMMUNICATION"] :
+    ["CREATE_UNIT","VIEW_INCOMING","ROUTE_CASE"]);
   await creerRole(fixture.orgId, fixture.tenantId, fixture.agentPass, "AGENT_PASS", ["VIEW_INCOMING","VIEW_CASE","TAKE_CASE","PROCESS_CASE","RESPOND_CASE"], fixture.passport);
   await creerRole(fixture.orgId, fixture.tenantId, fixture.agentCivil, "AGENT_CIVIL", ["VIEW_INCOMING","VIEW_CASE","TAKE_CASE","PROCESS_CASE","RESPOND_CASE"], fixture.civil);
   await creerRole(fixture.orgId, fixture.tenantId, fixture.unqualified, "VIEW_ONLY", ["VIEW_INCOMING","VIEW_CASE"], fixture.viewOnly);
@@ -252,6 +255,11 @@ async function main() {
   i = await inbox(fixture.passport, fixture.cookies.unqualified); status(i, 403, "unité sans capacités de réception refusée");
   const take = await api(base, `/api/agent/demandes/${d.id}/prise-en-charge`, "POST", { organisationId: fixture.orgId, tenantCode: TENANT }, fixture.cookies.pass, false); status(take, 200, "agent habilité prend le dossier");
   const reply = await api(base, `/api/agent/demandes/${d.id}/reponse`, "POST", { organisationId: fixture.orgId, tenantCode: TENANT, contenu: `Réponse synthétique ${RUN}` }, fixture.cookies.pass, false); status(reply, 200, "agent habilité répond au citoyen");
+  if (EMBASSY_MODE) {
+    await require("./maintenance/test-ambassade-p6-e2e")({
+      assert, api, status, ok, client, fixture, TENANT, base, RUN
+    });
+  }
   if (process.env.SATEER_TEST_WORKFLOW === "1") {
     await require("./maintenance/test-bordeaux-workflow-p6-scenarios")({
       assert, api, status, ok, client, submit, fixture, TENANT, base
