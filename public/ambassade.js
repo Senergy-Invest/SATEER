@@ -88,6 +88,13 @@ async function chargerPublicationsAmbassade(organisationId, tenantCode) {
                 organisationId: Number(organisation.id), tenantCode
             })
         ]);
+        // A16 : le contenu était caché lors de la première résolution du fragment.
+        // Faire défiler vers le suivi une fois les sections chargées et affichées.
+        if (window.location.hash === "#ambassadeDemandesSection") {
+            document.getElementById("ambassadeDemandesSection")?.scrollIntoView({
+                behavior: "auto", block: "start"
+            });
+        }
     } catch (erreur) {
         console.warn("Mon Ambassade : session ou contexte indisponible.", erreur);
         statut.textContent = "Session ou contexte indisponible. Revenez à Mon SATEER.";

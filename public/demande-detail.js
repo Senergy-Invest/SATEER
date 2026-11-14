@@ -179,9 +179,20 @@ backButton.addEventListener(
             "MON_AMBASSADE"
         ) {
 
-            window.location.href =
-                "/ambassade.html";
-
+            // A16 : préserver le contexte institutionnel du détail.
+            // Ne pas essayer d'ouvrir une ambassade sans tenant ni organisation.
+            const tenant = params.get("tenant");
+            const organisationId = Number(params.get("organisation"));
+            if (!tenant || !/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant) ||
+                !Number.isSafeInteger(organisationId) || organisationId <= 0) {
+                window.location.href = "/index.html";
+                return;
+            }
+            const retour = new URL("/ambassade.html", window.location.origin);
+            retour.searchParams.set("organisation", String(organisationId));
+            retour.searchParams.set("tenant", tenant);
+            retour.hash = "ambassadeDemandesSection";
+            window.location.href = retour.pathname + retour.search + retour.hash;
             return;
         }
 
