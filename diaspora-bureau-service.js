@@ -55,13 +55,13 @@ function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase}) {
       const next = mode==='SUBMIT'?'SOUMISE':mode==='APPROVE'?'DIFFUSEE':'REJETEE';
       const update=await client.query(`
         UPDATE publications SET statut_diffusion_diaspora=$1,
-          date_soumission_diaspora=CASE WHEN $2='SUBMIT' THEN NOW() ELSE date_soumission_diaspora END,
-          date_diffusion_diaspora=CASE WHEN $2='APPROVE' THEN NOW() ELSE NULL END,
-          validee_par_sateer=CASE WHEN $2='APPROVE' THEN $3 ELSE NULL END,
-          rejetee_par_sateer=CASE WHEN $2='REJECT' THEN $3 ELSE NULL END,
-          motif_rejet_diaspora=CASE WHEN $2='REJECT' THEN $4 ELSE NULL END,
-          date_rejet_diaspora=CASE WHEN $2='REJECT' THEN NOW() ELSE NULL END
-        WHERE id=$5 AND tenant_id=$6 RETURNING id,statut_diffusion_diaspora`,
+          date_soumission_diaspora=CASE WHEN $2::text='SUBMIT' THEN NOW() ELSE date_soumission_diaspora END,
+          date_diffusion_diaspora=CASE WHEN $2::text='APPROVE' THEN NOW() ELSE NULL END,
+          validee_par_sateer=CASE WHEN $2::text='APPROVE' THEN $3::integer ELSE NULL END,
+          rejetee_par_sateer=CASE WHEN $2::text='REJECT' THEN $3::integer ELSE NULL END,
+          motif_rejet_diaspora=CASE WHEN $2::text='REJECT' THEN $4::text ELSE NULL END,
+          date_rejet_diaspora=CASE WHEN $2::text='REJECT' THEN NOW() ELSE NULL END
+        WHERE id=$5::integer AND tenant_id=$6::integer RETURNING id,statut_diffusion_diaspora`,
         [next,mode,acteurId,motif,publicationId,p.tenant_id]);
       if(update.rowCount!==1)throw new Error('UPDATE_PUBLICATION_INCOHERENT');
       await client.query(`
