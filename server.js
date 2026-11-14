@@ -107,6 +107,13 @@ app.use(
     "/api/auth",
     authRouter
 );
+// Diaspora D1 — lecture uniquement de publications déjà validées pour diffusion générale.
+const { creerRouteLectureDiaspora } = require('./diaspora-feed-http');
+app.use('/api/diaspora', exigerSession, creerRouteLectureDiaspora({
+    router: express.Router(),
+    listerOrganisations: listerOrganisationsPersonneDatabase,
+    listerPublications: require('./services-database').listerPublicationsDiasporaPourPersonneDatabase
+}));
 // A15 — suivi de toutes les demandes propres à la session (Consulat/Ambassade).
 // Aucun ID de citoyen fourni par le navigateur.
 const { creerRouteMesDemandes } = require('./citizen-cases-http');

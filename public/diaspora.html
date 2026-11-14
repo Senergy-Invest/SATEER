@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SATEER Diaspora — Informations vérifiées</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+ body{background:#f5f7fb;color:#17283a;font-family:system-ui,-apple-system,sans-serif}
+ .diaspora-main{max-width:970px;margin:0 auto;padding:42px 22px 96px}
+ .diaspora-head{border-radius:20px;padding:32px;background:#163f4d;color:#fff}
+ .diaspora-head h1{font-size:clamp(1.9rem,4vw,2.8rem);margin:12px 0}
+ .diaspora-head p{max-width:650px;line-height:1.55;color:#e7eff0}
+ .diaspora-kicker{letter-spacing:.12em;font-weight:700;font-size:.73rem;text-transform:uppercase}
+ .diaspora-toplink{color:#124755;display:inline-block;margin:0 0 20px}
+ .diaspora-section{margin-top:32px}
+ .diaspora-feed{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px;margin-top:18px}
+ .diaspora-card{border:1px solid #d6dfe6;border-radius:15px;background:#fff;padding:22px;box-shadow:0 4px 14px #1930440a}
+ .diaspora-card h3{margin:8px 0 12px;font-size:1.16rem;line-height:1.35}
+ .diaspora-card p{line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+ .diaspora-meta{font-size:.82rem;color:#475d6b}
+ .diaspora-tag{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:#0b5661}
+ .diaspora-status{padding:18px;background:#fff;border:1px solid #d6dfe6;border-radius:12px}
+ .diaspora-note{color:#425461;font-size:.92rem;line-height:1.55}
+</style>
+</head>
+<body>
+<main class="diaspora-main">
+ <a class="diaspora-toplink" href="/index.html">← Mon SATEER</a>
+ <header class="diaspora-head">
+  <div class="diaspora-kicker">Diaspora & Institutions · Expérience Diaspora</div>
+  <h1>Infos et rencontres de la diaspora</h1>
+  <p>Retrouvez les informations destinées à la diaspora, diffusées après validation. Leur source reste toujours identifiable.</p>
+ </header>
+ <section class="diaspora-section" aria-labelledby="feedTitle">
+  <h2 id="feedTitle">Informations diffusées</h2>
+  <p class="diaspora-note">Seules les informations autorisées pour une audience générale dans votre périmètre sont affichées dans cette première tranche. Les soumissions en attente, les informations privées et les campagnes ciblées ne sont pas affichées.</p>
+  <p id="diasporaStatus" class="diaspora-status" role="status" aria-live="polite">Vérification de votre session…</p>
+  <div id="diasporaFeed" class="diaspora-feed" aria-live="polite"></div>
+ </section>
+ <section class="diaspora-section"><h2>Associations et événements</h2><p class="diaspora-note">L'annuaire, l'agenda et les abonnements ciblés seront ouverts dans les prochaines tranches, après contrôle des permissions du Bureau de Communication. Aucun accès associatif n'est présumé.</p></section>
+</main>
+<script src="/auth-client.js"></script>
+<script src="/diaspora.js?v=d1" defer></script>
+</body>
+</html>

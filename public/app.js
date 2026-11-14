@@ -364,6 +364,22 @@ async function chargerMonSateer() {
         // seul rattachement. Un bloc informatif n'est jamais un lien navigable.
         if (!consulats.length) experiencesContainer.append(carteExperienceNonRattachee("CONSULAT"));
         if (!ambassades.length) experiencesContainer.append(carteExperienceNonRattachee("AMBASSADE"));
+        // Diaspora D1 : accès personnel pour les tenants où la session possède
+        // un rattachement réel. Pas de droit implicite ni de regroupement Univers.
+        const diasporaTenants = [...new Set(organisations.map(org =>
+            org && org.id != null ? (org.tenant_code || contexte.tenantCode) : null
+        ).filter(code => typeof code === "string" && /^[A-Z][A-Z0-9_-]{0,49}$/.test(code)))];
+        for (const tenant of diasporaTenants) {
+            const carte = element("article", "sx-consulat-card");
+            carte.append(element("p", "sx-card-kicker", "EXPÉRIENCE DIASPORA"));
+            carte.append(element("h3", "sx-card-title", "Diaspora"));
+            carte.append(element("p", "sx-card-description",
+                "Informations diffusées et vérifiées, vie associative et rencontres à venir. Pas de doublon de vos démarches consulaires."));
+            const ouvrir = element("a", "sx-open-consulat", "Découvrir Diaspora →");
+            ouvrir.href = "/diaspora.html?" + new URLSearchParams({tenant});
+            carte.append(ouvrir);
+            experiencesContainer.append(carte);
+        }
         // Ministère : expérience indépendante et seulement visible si rattachée.
         // La carte n'attribue aucune permission; l'API A4b demeure seul arbitre.
         const ministeres = organisations.filter(org => org.type === "MINISTERE" && org.id != null);
