@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="/ambassade-identity.css">
   <link rel="stylesheet" href="/ambassade-theme-v2.css">
   <link rel="stylesheet" href="/ambassade-network.css">
+  <link rel="stylesheet" href="/ambassade-demandes.css">
 </head>
 <body class="sateer-experience sateer-ambassade">
   <div class="app">
@@ -48,6 +49,13 @@
           <p>Une demande envoyée depuis Mon Ambassade est d'abord qualifiée par le personnel habilité.
              Son sujet ne détermine jamais automatiquement le bureau compétent.</p>
           <a id="ambassadeDemandeLink" class="ambassade-retour" href="/index.html">Déposer une demande auprès de cette ambassade</a>
+        </section>
+        <section id="ambassadeDemandesSection" class="ambassade-carte" aria-labelledby="ambassadeDemandesTitre">
+          <h2 id="ambassadeDemandesTitre">Mes demandes auprès de cette ambassade</h2>
+          <p>Retrouvez toutes vos demandes précédentes, leur statut et les réponses reçues. Une nouvelle demande n'efface pas les autres.</p>
+          <p id="ambassadeDemandesStatut" role="status" aria-live="polite">Chargement…</p>
+          <div id="ambassadeDemandesListe" class="ambassade-demandes-grid"></div>
+          <button id="ambassadeDemandesActualiser" type="button">Actualiser mes demandes</button>
         </section>
         <section aria-labelledby="ambassadeOperationsTitre">
           <h2 id="ambassadeOperationsTitre">Activité opérationnelle de l’ambassade</h2>
@@ -85,6 +93,7 @@
   <script src="/ambassade-operations-ui.js"></script>
   <script src="/ambassade-parcours-ui.js"></script>
   <script src="/ambassade-network-ui.js"></script>
+  <script src="/ambassade-demandes-ui.js"></script>
   <script src="/ambassade.js"></script>
   <script src="/ambassade-identity.js"></script>
 </body>

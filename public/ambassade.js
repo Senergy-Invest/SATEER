@@ -75,6 +75,9 @@ async function chargerPublicationsAmbassade(organisationId, tenantCode) {
         contenu.hidden = false;
         await chargerPublicationsAmbassade(Number(organisation.id), tenantCode);
         await Promise.all([
+            window.SATEER_AMBASSADE_DEMANDES?.charger({
+                organisationId: Number(organisation.id), tenantCode
+            }),
             window.SATEER_AMBASSADE_OPERATIONS?.charger({
                 organisationId: Number(organisation.id), tenantCode
             }),

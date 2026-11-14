@@ -1,0 +1,8 @@
+/* A15 — Suivi des demandes citoyennes, propre à la façade Ambassade. */
+body.sateer-ambassade .ambassade-demandes-grid {display:grid;gap:12px;margin:15px 0 18px}
+body.sateer-ambassade .ambassade-demande-item {padding:18px 20px;border:1px solid #e1cddd;border-left:4px solid #ac6b58;border-radius:14px;background:#fffaf7}
+body.sateer-ambassade .ambassade-demande-item h3 {font-size:16px;margin:0 0 8px;color:#4b2855;overflow-wrap:anywhere}
+body.sateer-ambassade .ambassade-demande-meta {color:#705875;font-size:13px;margin:0 0 10px}
+body.sateer-ambassade .ambassade-demande-suivi {display:inline-flex;color:#713151;font-weight:750;min-height:35px;align-items:center}
+body.sateer-ambassade #ambassadeDemandesActualiser {border:1px solid #bd879e;border-radius:10px;padding:9px 14px;color:#592c4a;background:#fffaf7;cursor:pointer;font-weight:700}
+body.sateer-ambassade #ambassadeDemandesActualiser:hover {background:#f9eaf2}

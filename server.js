@@ -107,6 +107,15 @@ app.use(
     "/api/auth",
     authRouter
 );
+// A15 — suivi de toutes les demandes propres à la session (Consulat/Ambassade).
+// Aucun ID de citoyen fourni par le navigateur.
+const { creerRouteMesDemandes } = require('./citizen-cases-http');
+app.use('/api/citizen', exigerSession, creerRouteMesDemandes({
+    router: express.Router(),
+    listerOrganisations: listerOrganisationsPersonneDatabase,
+    trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
+    listerDemandes: listerDemandesPersonneDatabase
+}));
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
 // A2 : publications Ambassade via le service Communication commun, en lecture seule.

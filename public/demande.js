@@ -361,7 +361,31 @@ demandeForm.addEventListener(
             // =================================================
 
             afficherSucces(resultat.message || "Votre demande a bien été envoyée.");
-
+            // A15 : accusé de réception avec numéro et liens de suivi. Le reset
+            // visuel ne doit jamais laisser croire que la demande est remplacée.
+            if (SOURCE === "MON_AMBASSADE") {
+                const numero = Number(resultat.demande?.id);
+                if (Number.isSafeInteger(numero) && numero > 0) {
+                    succesContainer.textContent = "Demande n°" + numero + " enregistrée. " +
+                        "Elle reste conservée lorsque vous créez une autre demande.";
+                    const contexteLien = new URLSearchParams({
+                        organisation: String(ORGANISATION_ID), tenant: String(contexte.tenantCode)
+                    });
+                    const suivi = document.createElement("a");
+                    const q = new URLSearchParams(contexteLien);
+                    q.set("demande", String(numero)); q.set("source", "MON_AMBASSADE");
+                    suivi.href = "/demande-detail.html?" + q.toString();
+                    suivi.textContent = "Voir la demande n°" + numero;
+                    const autres = document.createElement("a");
+                    autres.href = "/ambassade.html?" + contexteLien.toString() + "#ambassadeDemandesSection";
+                    autres.textContent = "Voir toutes mes demandes";
+                    const actions = document.createElement("div");
+                    actions.className = "ambassade-demande-recu-actions";
+                    actions.style.cssText = "display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-weight:750";
+                    actions.append(suivi, autres);
+                    succesContainer.append(actions);
+                }
+            }
 
             demandeForm.reset();
 
