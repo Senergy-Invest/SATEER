@@ -1,0 +1,58 @@
+"use strict";
+(async function(){
+ const find=id=>document.getElementById(id);
+ const orgSelect=find('dcOrg'), status=find('dcStatus'),sourceSection=find('dcSourceSection'),reviewSection=find('dcReviewSection');
+ const param=new URLSearchParams(location.search),tenant=param.get('tenant');
+ if(!tenant || !/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant)) {status.textContent='Tenant invalide : ouvrez cette page depuis Diaspora.';return;}
+ find('dcDiasporaLink').href='/diaspora.html?'+new URLSearchParams({tenant});
+ const make=(tag,txt,cls)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!=null)x.textContent=String(txt);return x;};
+ const call=async(url,options={})=>{const response=await fetch(url,{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json', 'Content-Type':'application/json'},...options});
+  const body=await response.json().catch(()=>({}));if(!response.ok)throw Error(body.statut||('HTTP '+response.status));return body;};
+ let organisations=[];
+ try { const c=await window.SATEER_CONTEXT_READY;
+  organisations=(Array.isArray(c.organisations)?c.organisations:[]).filter(o=>o.tenant_code===tenant && Number.isSafeInteger(Number(o.id)) && Number(o.id)>0);
+  orgSelect.replaceChildren(make('option','Choisir une organisation'));
+  for(const o of organisations){const opt=make('option',o.nom+' · '+o.type);opt.value=String(o.id);orgSelect.append(opt);}
+  if(!organisations.length){status.textContent='Aucune organisation accessible dans ce tenant.';return;}
+  const suggested=param.get('organisation');if(organisations.some(o=>String(o.id)===suggested))orgSelect.value=suggested;
+  status.textContent='Choisis une organisation pour vérifier tes droits.';
+ }catch(e){status.textContent='Contexte professionnel indisponible : '+e.message;return;}
+ async function load(){
+  const selected=organisations.find(o=>String(o.id)===orgSelect.value);
+  sourceSection.hidden=true;reviewSection.hidden=true;
+  if(!selected){status.textContent='Sélectionne une organisation.';return;}
+  const base='/api/organisations/'+encodeURIComponent(selected.id)+'/diaspora/';
+  const q='?'+new URLSearchParams({tenant});const errors=[];let hasAccess=false;
+  try{
+   const data=await call(base+'source-publications'+q);hasAccess=true;sourceSection.hidden=false;
+   const container=find('dcSourceList');container.replaceChildren();
+   if(!data.publications.length)container.append(make('p','Aucune publication disponible.','dc-info'));
+   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p',p.categorie+' · '+p.audienceType+' · '+p.etatDiffusion,'dc-meta'));
+    const eligible=p.audienceType==='TOUS' && p.etatDiffusion==='NON_DEMANDEE' && p.mediaCount===0;
+    if(eligible){const acts=make('div',null,'dc-actions'),btn=make('button','Soumettre au Bureau SATEER');
+      btn.type='button';btn.addEventListener('click',async()=>{btn.disabled=true;try{await call(base+'submit/'+encodeURIComponent(p.id)+q,{method:'POST',body:JSON.stringify({tenantCode:tenant})});status.textContent='Publication '+p.id+' soumise pour revue.';await load();}catch(e){btn.disabled=false;status.textContent='Soumission refusée : '+e.message;}});
+      acts.append(btn);card.append(acts);
+    }else card.append(make('p','Aucune nouvelle soumission possible dans cet état ou cette audience.','dc-info'));
+    container.append(card);
+   }
+  }catch(e){errors.push('Soumission : '+e.message);}
+  if(selected.type==='SATEER')try{
+   const data=await call(base+'review-queue'+q);hasAccess=true;reviewSection.hidden=false;
+   const container=find('dcReviewList');container.replaceChildren();if(!data.publications.length)container.append(make('p','Aucune publication en attente.','dc-info'));
+   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType,'dc-meta'),make('p',p.contenu));
+    const acts=make('div',null,'dc-actions');
+    if(p.audienceType==='TOUS'){
+      const yes=make('button','Approuver la diffusion');yes.type='button';yes.addEventListener('click',async()=>{
+        if(!window.confirm('Approuver la diffusion générale de cette publication dans Diaspora ?'))return;
+        yes.disabled=true;try{await call(base+'approve/'+p.id+q,{method:'POST',body:JSON.stringify({tenantCode:tenant})});status.textContent='Publication '+p.id+' approuvée.';await load();}catch(e){yes.disabled=false;status.textContent='Approbation refusée : '+e.message;}});acts.append(yes);
+    }else card.append(make('p','Audience non autorisée pour D2A : rejet motivé uniquement.','dc-meta'));
+    const motif=make('textarea');motif.placeholder='Motif de rejet obligatoire (10 caractères minimum)';motif.maxLength=2000;
+    const no=make('button','Rejeter','dc-reject');no.type='button';no.addEventListener('click',async()=>{no.disabled=true;try{await call(base+'reject/'+p.id+q,{method:'POST',body:JSON.stringify({tenantCode:tenant,motif:motif.value})});status.textContent='Publication '+p.id+' rejetée.';await load();}catch(e){no.disabled=false;status.textContent='Rejet refusé : '+e.message;}});
+    acts.append(no);card.append(motif,acts);container.append(card);
+   }
+  }catch(e){errors.push('Revue : '+e.message);}
+  status.textContent=hasAccess?'Accès vérifiés pour '+selected.nom+(errors.length?' · '+errors.join(' ; '):''):'Aucune fonction autorisée pour '+selected.nom+'. '+errors.join(' ; ');
+ }
+ orgSelect.addEventListener('change',load);
+ if(orgSelect.value)await load();
+})();

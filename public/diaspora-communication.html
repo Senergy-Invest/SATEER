@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SATEER Communication · Diffusion Diaspora</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+body{font-family:system-ui,sans-serif;background:#f4f7f8;color:#172a39}
+.dc-main{max-width:1000px;margin:0 auto;padding:35px 22px 90px}.dc-head{border-radius:18px;padding:26px 30px;background:#193e48;color:white}
+.dc-head p{line-height:1.55;color:#ecf1f3}.dc-section{margin-top:25px;border:1px solid #d7e2e6;border-radius:15px;background:white;padding:22px}
+.dc-section h2{margin-top:0}.dc-card{border:1px solid #dce4e8;border-radius:11px;padding:18px;margin:12px 0;overflow-wrap:anywhere}
+.dc-meta,.dc-info{color:#52646e;font-size:.9rem;line-height:1.55}.dc-card p{white-space:pre-wrap;line-height:1.55}
+.dc-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}.dc-actions button{padding:10px 15px;background:#145c66;color:white;border:0;border-radius:8px;cursor:pointer}
+.dc-actions button.dc-reject{background:#933b3b}.dc-actions button:disabled{opacity:.55;cursor:wait}
+.dc-card textarea{width:100%;min-height:85px;box-sizing:border-box;padding:9px;border:1px solid #acbbc4;border-radius:6px}
+.dc-status{padding:12px;border-radius:9px;background:#f1f5f7}.dc-main select{max-width:100%;min-height:40px;padding:8px}
+.dc-section[hidden]{display:none!important}a{color:#134e63}
+</style></head>
+<body><main class="dc-main">
+<a href="/index.html">← Mon SATEER</a>
+<header class="dc-head"><small>SATEER · COMMUNICATION TRANSVERSALE · RECETTE</small><h1>Diffusion vers Diaspora</h1>
+<p>La source conserve sa publication. Le Bureau SATEER contrôle séparément la diffusion générale. Les autorisations sont vérifiées sur le serveur.</p></header>
+<section class="dc-section"><h2>Contexte professionnel</h2><label for="dcOrg">Organisation de travail</label>
+<select id="dcOrg"><option value="">Chargement des organisations…</option></select>
+<p class="dc-info">Seules les organisations rattachées à ton compte sont proposées. Le rattachement ne suffit pas : les permissions sont contrôlées par le Core.</p>
+<p id="dcStatus" class="dc-status" role="status" aria-live="polite">Vérification des accès…</p></section>
+<section id="dcSourceSection" class="dc-section" hidden><h2>Mes publications à soumettre</h2>
+<p class="dc-info">Seules les publications déjà publiées par ton organisation, textuelles, sans médias, d'audience TOUS et jamais soumises sont éligibles. Une publication rejetée nécessite une nouvelle publication corrigée.</p>
+<div id="dcSourceList"></div></section>
+<section id="dcReviewSection" class="dc-section" hidden><h2>Bureau SATEER · File de validation</h2>
+<p class="dc-info">La revue nécessite les droits organisationnels TARGET_COMMUNICATION et MANAGE_PUBLICATIONS sur l'organisation SATEER concernée.</p>
+<div id="dcReviewList"></div></section>
+<section class="dc-section"><h2>Limites de cette tranche</h2><p class="dc-info">Pas de publicité payante, pas de campagne ciblée, pas de médias, pas de notifications automatiques. Une approbation publie uniquement dans le fil général Diaspora du tenant. Tous les changements sont audités.</p>
+<a id="dcDiasporaLink" href="/index.html">Retour à Diaspora</a></section>
+</main><script src="/auth-client.js"></script><script defer src="/diaspora-communication.js?v=d2a"></script></body></html>

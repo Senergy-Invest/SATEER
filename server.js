@@ -114,6 +114,15 @@ app.use('/api/diaspora', exigerSession, creerRouteLectureDiaspora({
     listerOrganisations: listerOrganisationsPersonneDatabase,
     listerPublications: require('./services-database').listerPublicationsDiasporaPourPersonneDatabase
 }));
+// Diaspora D2A — soumission et revue editoriale, controlees par le Core.
+const { creerRoutesBureauDiaspora } = require('./diaspora-bureau-http');
+const { creerServiceBureauDiaspora } = require('./diaspora-bureau-service');
+app.use('/api/organisations', exigerSession, creerRoutesBureauDiaspora({
+    router: express.Router(),
+    verifierPermission: require('./auth-authorization').verifierPermissionPersonneDatabase,
+    trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
+    service: creerServiceBureauDiaspora(require('./database'))
+}));
 // A15 — suivi de toutes les demandes propres à la session (Consulat/Ambassade).
 // Aucun ID de citoyen fourni par le navigateur.
 const { creerRouteMesDemandes } = require('./citizen-cases-http');
