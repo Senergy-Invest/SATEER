@@ -57,7 +57,7 @@
         icone.setAttribute("aria-hidden", "true");
         const titre = element("div", "sx-card-heading");
         titre.append(
-            element("p", "sx-card-kicker", "EXPÉRIENCE INSTITUTIONNELLE · EN PRÉPARATION"),
+            element("p", "sx-card-kicker", "MISSION DIPLOMATIQUE · ACCÈS RATTACHÉ"),
             element("h3", "sx-card-title", presentation.titre),
             element("p", "sx-card-subtitle", organisation.nom || "Ambassade")
         );

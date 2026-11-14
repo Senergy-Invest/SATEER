@@ -1,0 +1,56 @@
+/* A13 : identité diplomatique BOURGOGNE / PRUNE / CUIVRE / IVOIRE.
+ * Le Consulat conserve son thème vert. Les pages partagées n'obtiennent cette
+ * classe qu'après contrôle du type AMBASSADE et du rattachement par A11.
+ */
+body.sateer-ambassade, body.sx-ambassade-mode {
+  --sx-deep:#351b4a;--sx-accent:#a54f36;--sx-pale:#f4e8f0;
+  --sx-border:#e3d5df;--background:#f1e9f1;--surface:#fffaf5;
+  --text:#34243f;--muted:#705e76;--primary:#74304f;--primary-dark:#57243e;
+  --primary-soft:#f7e9ec;--border:#e5d5e2;
+  background:linear-gradient(155deg,#e8d5e8 0%,#f2e9f3 44%,#fff6ec 100%);
+  color:#34243f;min-height:100vh;
+}
+body.sateer-ambassade .header,body.sx-ambassade-mode .header,
+body.sx-ambassade-mode .unit-workspace-header {
+  background:#351b4a;border-bottom:4px solid #c47d52;color:#fff8ef;
+}
+body.sateer-ambassade .ambassade-hero {
+  background:linear-gradient(115deg,#351b4a 0%,#613352 68%,#8a4a50 100%);
+  border-bottom-color:#d8a16b;box-shadow:0 18px 52px #46234838;
+}
+body.sateer-ambassade .ambassade-hero::after {
+  border-color:#e9b58066;box-shadow:0 0 0 55px #eab68015,0 0 0 110px #eab6800b;
+}
+body.sateer-ambassade .ambassade-hero-kicker {color:#f9cc9a}
+body.sateer-ambassade .ambassade-hero-tags span {background:#faf3eb15;border-color:#f2c9949c;color:#fff0d6}
+body.sateer-ambassade .ambassade-carte,body.sateer-ambassade .ambassade-services article,
+body.sateer-ambassade .ambassade-parcours-card,body.sateer-ambassade .ambassade-operations-metric {
+  background:#fffaf7;border-color:#e2cbd8;color:#35243d;box-shadow:0 10px 28px #4b234414;
+}
+body.sateer-ambassade .ambassade-statut {background:#fff0e1;color:#753e51;border-left-color:#bf7950}
+body.sateer-ambassade .ambassade-carte h2,
+body.sateer-ambassade .ambassade-main section>h2,
+body.sateer-ambassade .ambassade-services h3,
+body.sateer-ambassade .ambassade-parcours-card h3 {color:#4b2855}
+body.sateer-ambassade .ambassade-operations-metric strong {color:#76394f}
+body.sateer-ambassade .ambassade-services small,body.sateer-ambassade .ambassade-parcours-card small {color:#8b5d6a}
+body.sateer-ambassade .ambassade-parcours-link,body.sateer-ambassade #ambassadeDemandeLink {background:#733751;color:#fff8ef}
+body.sateer-ambassade .ambassade-parcours-link:hover,body.sateer-ambassade #ambassadeDemandeLink:hover {background:#51223c}
+body.sateer-ambassade .ambassade-reference a {color:#833e59}
+body.sx-ambassade-mode .consulat-hero {background:linear-gradient(115deg,#371b4b,#743d55);border-color:#a06366}
+body.sx-ambassade-mode .unit-workspace-page {background:linear-gradient(145deg,#ecdaeb,#fff6ec);color:#34243f}
+body.sx-ambassade-mode .unit-workspace-section,body.sx-ambassade-mode .unit-workspace-case-detail,
+body.sx-ambassade-mode .unit-workspace-case-list,body.sx-ambassade-mode .panel {background:#fffaf7;border-color:#dfcddc}
+body.sx-ambassade-mode .primary-button,body.sx-ambassade-mode .com-cta {background:#74304f;border-color:#74304f}
+body.sx-ambassade-mode .primary-button:hover,body.sx-ambassade-mode .com-cta:hover {background:#57243e}
+body.sx-ambassade-mode .unit-workspace-tabs button[aria-selected="true"],body.sx-ambassade-mode .unit-workspace-tabs button.active {border-bottom-color:#c47d52;color:#713751}
+body.sx-ambassade-mode .com-page {--ink:#3b2545;--sub:#735f74;--line:#e1ccdc;--green:#74304f}
+body.sx-ambassade-mode .com-banner {background:linear-gradient(120deg,#361c49,#743b55,#92515a);box-shadow:0 18px 50px #582b4c40}
+body.sx-ambassade-mode .com-back {color:#7e3d59}
+body.sx-ambassade-mode .com-pill {background:#f6e3e9;color:#763e55}
+body.sx-ambassade-mode .sx-ambassade-context {background:#fff4e8;border-left-color:#c47d52;color:#5d3350}
+body.sx-ambassade-mode .sx-ambassade-context-title {color:#652f4e}
+body.sx-ambassade-mode .sx-ambassade-context-detail {color:#765d71}
+body.sx-ambassade-mode :is(a,button,input,select,textarea):focus-visible,
+body.sateer-ambassade :is(a,button,input,select,textarea):focus-visible {outline:3px solid #bf774d;outline-offset:3px}
+@media(prefers-reduced-motion:reduce) {body.sx-ambassade-mode *,body.sateer-ambassade * {transition:none;scroll-behavior:auto}}

@@ -197,6 +197,17 @@ if (process.env.PGDATABASE === "sateer_test" &&
     );
 }
 
+// A12 : réseau du responsable Ambassade — strictement read-only en recette.
+// Aucun droit hérité de la tutelle ni ouverture des routes de gestion Consulat.
+if (process.env.PGDATABASE === "sateer_test" &&
+    process.env.SATEER_ENABLE_AMBASSADE_NETWORK === "1") {
+    const { creerChargerReseau } = require("./ambassade-network");
+    const { creerRouteReseauAmbassade } = require("./ambassade-network-http");
+    const { executerRequete } = require("./database");
+    app.use("/api/ambassade-network", exigerSession,
+        creerRouteReseauAmbassade({router:express.Router(),charger:creerChargerReseau({requete:executerRequete})}));
+}
+
 // P3.3.3A : API institutionnelle optionnelle, fermee par defaut.
 // Recette exclusivement, et uniquement lorsque le drapeau est explicitement active.
 if (process.env.PGDATABASE === "sateer_test" && process.env.SATEER_ENABLE_ORG_EXP_API === "1") {

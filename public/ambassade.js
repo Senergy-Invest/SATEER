@@ -80,6 +80,9 @@ async function chargerPublicationsAmbassade(organisationId, tenantCode) {
             }),
             window.SATEER_AMBASSADE_PARCOURS?.charger({
                 organisationId: Number(organisation.id), tenantCode
+            }),
+            window.SATEER_AMBASSADE_RESEAU?.charger({
+                organisationId: Number(organisation.id), tenantCode
             })
         ]);
     } catch (erreur) {

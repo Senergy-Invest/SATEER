@@ -1,0 +1,12 @@
+/* A12 : vue du réseau, sans effet sur Consulat et Mon SATEER. */
+body.sateer-ambassade #ambassadeReseauSection{background:#fffaf5;border:1px solid #d9bca2;border-radius:22px;padding:clamp(20px,3vw,30px);margin:26px 0 30px;box-shadow:0 13px 32px #4d2a5e12}
+body.sateer-ambassade #ambassadeReseauSection h2{color:#3b234e}
+body.sateer-ambassade .amb-network-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:14px;margin:20px 0}
+body.sateer-ambassade .amb-network-card{background:#fff;border:1px solid #e5d6e8;border-radius:16px;padding:20px;min-width:0;box-shadow:0 6px 14px #24142e0a}
+body.sateer-ambassade .amb-network-number{font:800 28px/1.1 system-ui;color:#9b5235}
+body.sateer-ambassade .amb-network-card h3{margin:8px 0;color:#452b57}
+body.sateer-ambassade .amb-network-card p{font-size:13px;color:#6b5c72;line-height:1.55}
+body.sateer-ambassade .amb-network-list{padding:0 0 0 18px;margin:13px 0 0;line-height:1.8;color:#382b42}
+body.sateer-ambassade .amb-network-detail{font-size:12px;color:#845e70}
+body.sateer-ambassade .amb-network-empty{color:#87798b;font-style:italic}
+body.sateer-ambassade .amb-network-disclaimer{border-left:3px solid #c68452;padding:12px 14px;background:#fff0df;color:#604554;font-size:13px;line-height:1.6}

@@ -313,6 +313,26 @@ async function afficherAccesProfessionnels(contexte) {
     section.hidden = !container.children.length;
 }
 
+function carteExperienceNonRattachee(type) {
+    const ambassade = type === "AMBASSADE";
+    const carte = element("article", "sx-consulat-card sx-experience-locked" + (ambassade ? " sx-ambassade-locked" : ""));
+    carte.setAttribute("aria-label", ambassade ? "Mon Ambassade · accès non configuré" : "Mon Consulat · accès non configuré");
+    const haut = element("div", "sx-card-top");
+    const icon = element("div", "sx-consulat-icon", ambassade ? "🏛️" : "🇸🇳");
+    icon.setAttribute("aria-hidden", "true");
+    const titres = element("div", "sx-card-heading");
+    titres.append(element("p", "sx-card-kicker", "EXPÉRIENCE INSTITUTIONNELLE"),
+        element("h3", "sx-card-title", ambassade ? "Mon Ambassade" : "Mon Consulat"),
+        element("p", "sx-card-subtitle", "Accès non configuré pour ce compte"));
+    haut.append(icon, titres);
+    carte.append(haut,
+        element("p", "sx-card-description", ambassade
+            ? "Informations de la mission, demandes et réseau diplomatique, selon vos autorisations."
+            : "Informations consulaires, démarches et suivi des demandes, selon vos autorisations."),
+        element("p", "sx-locked-notice", "Aucune organisation de ce type n’est rattachée à votre session. Un rattachement autorisé est nécessaire ; ce bloc n’ouvre aucun accès."));
+    return carte;
+}
+
 async function chargerMonSateer() {
     const experiencesContainer = document.getElementById("experiencesContainer");
     try {
@@ -340,6 +360,10 @@ async function chargerMonSateer() {
             const carte = window.SATEER_INSTITUTION_PRESENTATION?.creerCarte(org, tenant, document);
             if (carte) experiencesContainer.append(carte);
         }
+        // A14 : découverte des deux expériences même quand ce compte n'a qu'un
+        // seul rattachement. Un bloc informatif n'est jamais un lien navigable.
+        if (!consulats.length) experiencesContainer.append(carteExperienceNonRattachee("CONSULAT"));
+        if (!ambassades.length) experiencesContainer.append(carteExperienceNonRattachee("AMBASSADE"));
         // Ministère : expérience indépendante et seulement visible si rattachée.
         // La carte n'attribue aucune permission; l'API A4b demeure seul arbitre.
         const ministeres = organisations.filter(org => org.type === "MINISTERE" && org.id != null);

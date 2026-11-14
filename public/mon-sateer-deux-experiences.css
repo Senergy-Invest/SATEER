@@ -1,0 +1,20 @@
+/* A14 : deux expériences identifiables sans créer d'accès non autorisé.
+ * Les liens restent générés exclusivement depuis les organisations de session.
+ */
+body.sateer-home #experiencesContainer{grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));align-items:stretch}
+body.sateer-home #experiencesContainer .sx-consulat-card{height:100%}
+body.sateer-home .sx-consulat-card.sx-institution-card {background:linear-gradient(165deg,#fff8f1 0%,#f4e2ef 100%);border:2px solid #d2a8ba;box-shadow:0 14px 32px #512b4a21}
+body.sateer-home .sx-consulat-card.sx-institution-card::before {background:linear-gradient(180deg,#653054,#c08359);width:7px}
+body.sateer-home .sx-institution-card .sx-consulat-icon{background:#e7d3e8;color:#51284b}
+body.sateer-home .sx-institution-card .sx-card-title{color:#4b2450}
+body.sateer-home .sx-institution-card .sx-card-kicker{color:#995443}
+body.sateer-home .sx-institution-card .sx-open-consulat{background:#683251;color:#fff7ee;border-color:#683251}
+body.sateer-home .sx-institution-card .sx-open-consulat:hover{background:#4b2440}
+body.sateer-home .sx-experience-locked{border:2px dashed #c5cad2;background:#f8f8fa;box-shadow:none;opacity:.89}
+body.sateer-home .sx-experience-locked::before{background:#a5a6b0;width:5px}
+body.sateer-home .sx-experience-locked .sx-card-kicker{color:#5d6874}
+body.sateer-home .sx-experience-locked .sx-card-description{color:#596474}
+body.sateer-home .sx-experience-locked .sx-locked-notice{font-size:13px;color:#555f70;border:1px solid #d6dbe2;padding:10px 12px;border-radius:12px;background:#fff}
+body.sateer-home .sx-experience-locked.sx-ambassade-locked{border-color:#cbb2cd;background:#fbf6fa}
+body.sateer-home .sx-experience-locked.sx-ambassade-locked .sx-card-title{color:#583757}
+@media(max-width:700px){body.sateer-home #experiencesContainer{grid-template-columns:1fr}}

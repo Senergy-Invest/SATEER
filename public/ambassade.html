@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="/ambassade-operations.css">
   <link rel="stylesheet" href="/ambassade-parcours.css">
   <link rel="stylesheet" href="/ambassade-identity.css">
+  <link rel="stylesheet" href="/ambassade-theme-v2.css">
+  <link rel="stylesheet" href="/ambassade-network.css">
 </head>
 <body class="sateer-experience sateer-ambassade">
   <div class="app">
@@ -62,6 +64,12 @@
           <p id="ambassadeParcoursCommunicationStatut" role="status" aria-live="polite">Vérification du droit de publication…</p>
           <div id="ambassadeParcoursCommunicationActions"></div>
         </section>
+        <section id="ambassadeReseauSection" aria-labelledby="ambassadeReseauTitre" hidden>
+          <h2 id="ambassadeReseauTitre">Réseau institutionnel et partenaires</h2>
+          <p>Consulats de la mission, associations liées à la mission ou à ses postes, partenaires et relations en attente. Visibilité selon le droit du responsable.</p>
+          <p id="ambassadeReseauStatut" role="status" aria-live="polite">Vérification des relations autorisées…</p>
+          <div id="ambassadeReseauContenu"></div>
+        </section>
         <h2 class="ambassade-limites">Périmètre et réserves du pilote</h2>
         <div class="ambassade-services">
           <article><h3>Communication partagée</h3><p>La lecture et la publication utilisent le moteur commun, sous contrôle des droits de l’organisation et des audiences.</p><small>Disponible selon habilitation</small></article>
@@ -76,6 +84,7 @@
   <script src="/institution-experience-entry.js"></script>
   <script src="/ambassade-operations-ui.js"></script>
   <script src="/ambassade-parcours-ui.js"></script>
+  <script src="/ambassade-network-ui.js"></script>
   <script src="/ambassade.js"></script>
   <script src="/ambassade-identity.js"></script>
 </body>
