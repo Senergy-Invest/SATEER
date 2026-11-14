@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/ambassade.css">
   <link rel="stylesheet" href="/ambassade-operations.css">
   <link rel="stylesheet" href="/ambassade-parcours.css">
+  <link rel="stylesheet" href="/ambassade-identity.css">
 </head>
 <body class="sateer-experience sateer-ambassade">
   <div class="app">
@@ -19,14 +20,20 @@
       <div class="brand">SATEER</div>
     </header>
     <main class="ambassade-main">
-      <p class="eyebrow">EXPÉRIENCE INSTITUTIONNELLE · PROTOTYPE</p>
-      <h1>Mon Ambassade</h1>
+      <section class="ambassade-hero" aria-labelledby="ambassadeTitre">
+        <p class="ambassade-hero-kicker">SATEER · MISSION DIPLOMATIQUE · RECETTE</p>
+        <h1 id="ambassadeTitre">Mon Ambassade</h1>
+        <p>Information institutionnelle, accompagnement des demandes et coordination des bureaux, dans un espace propre à la mission diplomatique.</p>
+        <div class="ambassade-hero-tags" aria-label="Périmètre du pilote">
+          <span>Informations de la mission</span><span>Demandes et qualification</span><span>Suivi des bureaux</span>
+        </div>
+      </section>
       <div id="ambassadeStatut" class="ambassade-statut" role="status" aria-live="polite">Contrôle de votre rattachement institutionnel…</div>
       <section id="ambassadeContenu" hidden>
         <div class="ambassade-carte">
           <p class="eyebrow">ORGANISATION ACCESSIBLE À VOTRE COMPTE</p>
           <h2 id="ambassadeNom"></h2>
-          <p>Votre ambassade dispose d'un espace distinct dans SATEER. Les informations autorisées sont lues par le moteur Communication commun. Les dossiers et la supervision restent à configurer.</p>
+          <p>Vous êtes dans l’espace de cette ambassade. Les informations, demandes, bureaux et indicateurs disponibles dépendent de vos autorisations. Le même moteur SATEER sert les services communs sans confondre les institutions.</p>
         </div>
         <section aria-labelledby="ambassadeInfosTitre">
           <h2 id="ambassadeInfosTitre">Informations institutionnelles</h2>
@@ -55,11 +62,11 @@
           <p id="ambassadeParcoursCommunicationStatut" role="status" aria-live="polite">Vérification du droit de publication…</p>
           <div id="ambassadeParcoursCommunicationActions"></div>
         </section>
-        <h2>Autres services à configurer</h2>
+        <h2 class="ambassade-limites">Périmètre et réserves du pilote</h2>
         <div class="ambassade-services">
-          <article><h3>Publication institutionnelle</h3><p>Le moteur de publication existant reste propriétaire de la création, des validations et des audiences. Aucun droit de publication n’est attribué par A2.</p><small>Lecture seule dans A2</small></article>
-          <article><h3>Courriers et demandes</h3><p>Le circuit commun de qualification, d'orientation et de suivi sera raccordé avec les droits métier propres à l'ambassade.</p><small>Non activé dans A1</small></article>
-          <article><h3>Services et supervision</h3><p>Les unités, délégations et tableaux de bord seront configurés selon les directives autorisées de la mission diplomatique.</p><small>À cadrer avec l'institution</small></article>
+          <article><h3>Communication partagée</h3><p>La lecture et la publication utilisent le moteur commun, sous contrôle des droits de l’organisation et des audiences.</p><small>Disponible selon habilitation</small></article>
+          <article><h3>Qualification des demandes</h3><p>Les demandes de recette sont enregistrées, qualifiées humainement et suivies par les bureaux autorisés. Aucun routage par simple mot-clé.</p><small>Parcours A8–A9 en recette</small></article>
+          <article><h3>Services non connectés</h3><p>Pas de boîte e-mail officielle, de visa automatisé ni de transferts entre postes. Les habilitations institutionnelles réelles restent à obtenir.</p><small>Hors périmètre du pilote</small></article>
         </div>
         <p class="ambassade-reference">Référence publique documentaire : <a href="https://www.ambasenparis.gouv.sn/lambassadeur/" target="_blank" rel="noopener noreferrer">site officiel de l'Ambassade du Sénégal en France</a>. Aucun lien technique ni échange de données n'est établi avec ce site.</p>
       </section>
@@ -70,5 +77,6 @@
   <script src="/ambassade-operations-ui.js"></script>
   <script src="/ambassade-parcours-ui.js"></script>
   <script src="/ambassade.js"></script>
+  <script src="/ambassade-identity.js"></script>
 </body>
 </html>

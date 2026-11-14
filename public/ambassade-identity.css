@@ -1,0 +1,205 @@
+/* A11 — Signature diplomatique de l'Ambassade, isolation stricte par classe.
+ * Aucun style global du Consulat/Mon SATEER ne doit être modifié par ce fichier.
+ * La classe sx-ambassade-mode est ajoutée après validation du contexte Core.
+ */
+body.sateer-ambassade,
+body.sx-ambassade-mode {
+  --sx-deep: #111e39;
+  --sx-accent: #b28b48;
+  --sx-pale: #f5f3ee;
+  --sx-border: #dfe3eb;
+  --background: #f4f5f8;
+  --surface: #fff;
+  --text: #17253c;
+  --muted: #52627a;
+  --primary: #213f71;
+  --primary-dark: #152d52;
+  --primary-soft: #e9eef7;
+  --border: #dfe3eb;
+  background: #f4f5f8;
+  color: #17253c;
+}
+body.sateer-ambassade .header,
+body.sx-ambassade-mode .header,
+body.sx-ambassade-mode .unit-workspace-header {
+  background: #101d37;
+  color: #f7f4ed;
+  border-bottom: 3px solid #bd985b;
+}
+body.sateer-ambassade .header .brand,
+body.sateer-ambassade .header a,
+body.sx-ambassade-mode .header .brand,
+body.sx-ambassade-mode .header a,
+body.sx-ambassade-mode .unit-workspace-header h1,
+body.sx-ambassade-mode .unit-workspace-header .eyebrow,
+body.sx-ambassade-mode .unit-workspace-header .muted,
+body.sx-ambassade-mode .unit-workspace-header .unit-workspace-back {
+  color: #f7f4ed;
+}
+body.sx-ambassade-mode .unit-workspace-header .unit-workspace-user {color: #f7f4ed}
+body.sateer-ambassade .header .brand,
+body.sx-ambassade-mode .header .brand {letter-spacing:.075em;font-weight:800}
+body.sx-ambassade-mode .header .back-button {
+  color:#f7f4ed;
+  border-color:rgba(255,255,255,.35);
+}
+body.sx-ambassade-mode .header .avatar {
+  color:#17253c;
+  background:#f1dfb9;
+}
+.sx-ambassade-signature {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 11px;
+  border:1px solid rgba(239,207,144,.58);
+  background:rgba(189,152,91,.12);
+  color:#f5deae;
+  border-radius:999px;
+  font-size:10px;
+  line-height:1.3;
+  letter-spacing:.09em;
+  font-weight:800;
+  text-transform:uppercase;
+}
+body.sx-ambassade-mode .sx-ambassade-context {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px 28px;
+  padding:14px 20px;
+  margin:0 0 26px;
+  border-radius:14px;
+  background:#e8edf5;
+  color:#203957;
+  border-left:4px solid #b58c4d;
+  box-shadow:0 6px 20px rgba(26,45,77,.06);
+}
+body.sx-ambassade-mode .sx-ambassade-context-title {font-size:14px;font-weight:800}
+body.sx-ambassade-mode .sx-ambassade-context-detail {font-size:12px;color:#45566f;overflow-wrap:anywhere}
+body.sx-ambassade-mode .primary-button,
+body.sx-ambassade-mode .com-cta {
+  background:#213f71;
+  color:#fff;
+  border-color:#213f71;
+}
+body.sx-ambassade-mode .primary-button:hover,
+body.sx-ambassade-mode .com-cta:hover {background:#152d52}
+body.sx-ambassade-mode .consulat-hero {
+  background:linear-gradient(115deg,#112342,#23476f);
+  color:#fff;
+  border:1px solid #294a74;
+  border-radius:20px;
+  padding:clamp(22px,4vw,36px);
+  box-shadow:0 15px 35px rgba(17,30,57,.12);
+}
+body.sx-ambassade-mode .consulat-hero h1,
+body.sx-ambassade-mode .consulat-hero p,
+body.sx-ambassade-mode .consulat-hero .eyebrow {color:#fff}
+body.sx-ambassade-mode .consulat-flag {
+  background:rgba(255,255,255,.12);
+  color:#f5d99b;
+}
+body.sx-ambassade-mode .panel {
+  background:#fff;
+  border-color:#dce3ec;
+  box-shadow:0 12px 30px rgba(22,37,60,.06);
+}
+body.sx-ambassade-mode .form-group input:focus,
+body.sx-ambassade-mode .form-group textarea:focus,
+body.sx-ambassade-mode .form-group select:focus {outline-color:#b58c4d;border-color:#b58c4d}
+body.sx-ambassade-mode .unit-workspace-page {background:#f4f5f8;color:#17253c}
+body.sx-ambassade-mode .unit-workspace-tabs button[aria-selected="true"],
+body.sx-ambassade-mode .unit-workspace-tabs button.active {border-bottom-color:#b58c4d;color:#173c65}
+body.sx-ambassade-mode .unit-workspace-section,
+body.sx-ambassade-mode .unit-workspace-case-detail,
+body.sx-ambassade-mode .unit-workspace-case-list {border-color:#dce3ec}
+body.sx-ambassade-mode .com-page {
+  --ink:#17253c;
+  --sub:#52627a;
+  --line:#dce3ec;
+  --green:#213f71;
+}
+body.sx-ambassade-mode .com-banner {
+  background:linear-gradient(116deg,#101d37,#23436c 76%,#38577b);
+  box-shadow:0 18px 45px #0c22412b;
+}
+body.sx-ambassade-mode .com-back {color:#27466b}
+body.sx-ambassade-mode .com-banner .com-kicker {color:#f5d99b}
+body.sx-ambassade-mode .com-pill {background:#e9eef7;color:#1e3b65}
+body.sx-ambassade-mode .com-cta:focus-visible,
+body.sx-ambassade-mode .primary-button:focus-visible,
+body.sx-ambassade-mode a:focus-visible,
+body.sateer-ambassade a:focus-visible {outline:3px solid #cda661;outline-offset:3px}
+/* Mon Ambassade : une façade qui se distingue réellement du Consulat. */
+body.sateer-ambassade .ambassade-main {max-width:1160px;padding-top:22px}
+body.sateer-ambassade .ambassade-hero {
+  position:relative;isolation:isolate;overflow:hidden;
+  background:linear-gradient(110deg,#101d37 0%,#223e67 68%,#334e72 100%);
+  color:#fff;
+  padding:clamp(25px,4.5vw,52px);
+  margin:0 0 24px;
+  border-radius:25px;
+  border-bottom:4px solid #cda661;
+  box-shadow:0 18px 45px rgba(16,29,55,.17);
+}
+body.sateer-ambassade .ambassade-hero::after {
+  content:"";pointer-events:none;position:absolute;z-index:-1;
+  width:370px;height:370px;right:-90px;top:-140px;
+  border-radius:50%;border:1px solid rgba(242,213,153,.45);
+  box-shadow:0 0 0 55px rgba(242,213,153,.055),0 0 0 112px rgba(242,213,153,.035);
+}
+body.sateer-ambassade .ambassade-hero-kicker {color:#f5d99b;font-size:12px;font-weight:800;letter-spacing:.17em;margin:0 0 18px}
+body.sateer-ambassade .ambassade-hero h1 {color:#fff;font-size:clamp(2.2rem,4vw,3.65rem);letter-spacing:-.035em;line-height:1.05;margin:0 0 18px}
+body.sateer-ambassade .ambassade-hero p {max-width:690px;line-height:1.65;color:#e0e8f4;margin:0}
+body.sateer-ambassade .ambassade-hero-tags {display:flex;flex-wrap:wrap;gap:9px;margin-top:23px}
+body.sateer-ambassade .ambassade-hero-tags span {
+  font-size:12px;font-weight:700;letter-spacing:.025em;
+  padding:8px 12px;border:1px solid rgba(232,211,165,.5);border-radius:50px;
+  color:#fbe9c6;background:rgba(255,255,255,.07)
+}
+body.sateer-ambassade .ambassade-statut {background:#eaf0fa;color:#234368;border-left-color:#b58c4d;border-radius:12px}
+body.sateer-ambassade .ambassade-carte {
+  background:#fff;border:1px solid #dce3ec;border-radius:20px;
+  box-shadow:0 10px 30px rgba(16,29,55,.06)
+}
+body.sateer-ambassade .ambassade-carte h2,
+body.sateer-ambassade .ambassade-main section>h2 {color:#1c365b;letter-spacing:-.02em}
+body.sateer-ambassade .ambassade-main section[aria-labelledby] {margin-bottom:27px}
+body.sateer-ambassade .ambassade-services {gap:15px}
+body.sateer-ambassade .ambassade-services article,
+body.sateer-ambassade .ambassade-parcours-card,
+body.sateer-ambassade .ambassade-operations-metric {
+  border-color:#dbe1ea;background:#fff;border-radius:16px;
+  box-shadow:0 7px 20px rgba(16,29,55,.05)
+}
+body.sateer-ambassade .ambassade-services article {color:#233e62}
+body.sateer-ambassade .ambassade-services h3,
+body.sateer-ambassade .ambassade-parcours-card h3 {color:#1a365e}
+body.sateer-ambassade .ambassade-services small,
+body.sateer-ambassade .ambassade-parcours-card p,
+body.sateer-ambassade .ambassade-parcours-card small {color:#596c84}
+body.sateer-ambassade .ambassade-operations-metric strong {color:#1b3b69}
+body.sateer-ambassade .ambassade-operations-metric span {color:#526780}
+body.sateer-ambassade .ambassade-parcours-link,
+body.sateer-ambassade #ambassadeDemandeLink {
+  display:inline-flex;align-items:center;padding:12px 17px;
+  background:#193967;color:#fff;text-decoration:none;border-radius:11px;
+  font-weight:750;box-shadow:0 5px 14px rgba(25,57,103,.15)
+}
+body.sateer-ambassade .ambassade-parcours-link:hover,
+body.sateer-ambassade #ambassadeDemandeLink:hover {background:#102b51}
+body.sateer-ambassade .ambassade-reference a {color:#224c86}
+body.sateer-ambassade .ambassade-limites {padding-top:12px;border-top:1px solid #dfe3eb}
+@media(max-width:680px){
+  body.sateer-ambassade .ambassade-main {padding:14px 14px 52px}
+  body.sateer-ambassade .ambassade-hero {padding:28px 21px;border-radius:19px}
+  body.sateer-ambassade .ambassade-hero h1 {font-size:2.25rem}
+  body.sx-ambassade-mode .sx-ambassade-context {padding:13px 15px;margin:12px 0 20px}
+  body.sx-ambassade-mode .unit-workspace-header {flex-wrap:wrap;gap:12px}
+  body.sx-ambassade-mode .sx-ambassade-signature {font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  body.sateer-ambassade *,body.sx-ambassade-mode * {scroll-behavior:auto;transition:none}
+}
