@@ -50,7 +50,7 @@ function creerRoutesOptinDiaspora({router,service}){
       id:Number(p.id),titre:String(p.titre||'').slice(0,255),contenu:String(p.contenu||'').slice(0,20000),
       categorie:String(p.categorie||'').slice(0,100),priorite:String(p.priorite||'NORMALE').slice(0,100),
       organisation:String(p.organisation||'').slice(0,255),organisationType:String(p.organisation_type||'').slice(0,100),
-      dateDiffusion:p.date_diffusion_diaspora||null}))});
+      dateDiffusion:p.date_diffusion_diaspora||null,sponsorisee:p.sponsorisee===true}))});
   }));
   return router;
 }

@@ -112,7 +112,8 @@ const { creerRouteLectureDiaspora } = require('./diaspora-feed-http');
 app.use('/api/diaspora', exigerSession, creerRouteLectureDiaspora({
     router: express.Router(),
     listerOrganisations: listerOrganisationsPersonneDatabase,
-    listerPublications: require('./services-database').listerPublicationsDiasporaPourPersonneDatabase
+    listerPublications: require('./services-database').listerPublicationsDiasporaPourPersonneDatabase,
+    listerMarquages: require('./diaspora-sponsored-service').creerServiceSponsorDiaspora(require('./database')).listerMarquages
 }));
 // Diaspora D2A — soumission et revue editoriale, controlees par le Core.
 const { creerRoutesBureauDiaspora } = require('./diaspora-bureau-http');
@@ -148,6 +149,18 @@ app.use('/api/organisations',exigerSession,creerRoutesCiblageGeo({
   router:express.Router(),service:geoDiaspora,
   verifierPermission:require('./auth-authorization').verifierPermissionPersonneDatabase,
   trouverOrganisation:trouverOrganisationParIdEtTenantDatabase
+}));
+// Diaspora D2B-C1 : sponsorisation déclarative et consentement séparé.
+const {creerServiceSponsorDiaspora}=require('./diaspora-sponsored-service');
+const sponsorDiaspora=creerServiceSponsorDiaspora(require('./database'));
+const {creerRoutesSponsorDiaspora,creerRoutesMarquageSponsor}=require('./diaspora-sponsored-http');
+app.use('/api/diaspora',exigerSession,creerRoutesSponsorDiaspora({
+ router:express.Router(),service:sponsorDiaspora,contexteCitoyen:optinDiaspora.contexteCitoyen
+}));
+app.use('/api/organisations',exigerSession,creerRoutesMarquageSponsor({
+ router:express.Router(),service:sponsorDiaspora,
+ verifierPermission:require('./auth-authorization').verifierPermissionPersonneDatabase,
+ trouverOrganisation:trouverOrganisationParIdEtTenantDatabase
 }));
 // A15 — suivi de toutes les demandes propres à la session (Consulat/Ambassade).
 // Aucun ID de citoyen fourni par le navigateur.

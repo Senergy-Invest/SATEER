@@ -34,13 +34,22 @@
       btn.type='button';btn.addEventListener('click',async()=>{btn.disabled=true;try{await call(base+'submit/'+encodeURIComponent(p.id)+q,{method:'POST',body:JSON.stringify({tenantCode:tenant})});status.textContent='Publication '+p.id+' soumise pour revue.';await load();}catch(e){btn.disabled=false;status.textContent='Soumission refusée : '+e.message;}});
       acts.append(btn);card.append(acts);
     }else card.append(make('p','Aucune nouvelle soumission possible dans cet état ou cette audience.','dc-info'));
+    if(p.etatDiffusion==='NON_DEMANDEE' && p.audienceType==='TOUS' && p.mediaCount===0){
+      const mark=make('button',p.sponsorisee?'Retirer le marquage sponsorisé':'Déclarer sponsorisée');
+      mark.type='button';mark.addEventListener('click',async()=>{
+        if(!window.confirm('Confirmer le marquage commercial de cette publication de ton organisation ?'))return;
+        mark.disabled=true;
+        try{await call(base+'sponsorisation/'+p.id+q,{method:'PUT',body:JSON.stringify({sponsorise:!p.sponsorisee})});await load();}
+        catch(e){mark.disabled=false;status.textContent='Marquage refusé : '+e.message;}});
+      const panel=make('div',null,'dc-actions');panel.append(mark);card.append(panel);
+    }
     container.append(card);
    }
   }catch(e){errors.push('Soumission : '+e.message);}
   if(selected.type==='SATEER')try{
    const data=await call(base+'review-queue'+q);hasAccess=true;reviewSection.hidden=false;
    const container=find('dcReviewList');container.replaceChildren();if(!data.publications.length)container.append(make('p','Aucune publication en attente.','dc-info'));
-   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType+' · Zone notification : '+(p.geoTerritoryName||'Générale'),'dc-meta'),make('p',p.contenu));
+   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType+' · Zone notification : '+(p.geoTerritoryName||'Générale')+' · '+(p.sponsorisee?'Sponsorisé · Sponsor : '+p.sponsorNom:'Non sponsorisé'),'dc-meta'),make('p',p.contenu));
     const acts=make('div',null,'dc-actions');
     if(p.audienceType==='TOUS'){
       const yes=make('button','Approuver la diffusion');yes.type='button';yes.addEventListener('click',async()=>{

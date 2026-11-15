@@ -27,6 +27,8 @@ async function main(){
       statut text,statut_diffusion_diaspora text,audience_type text,categorie text,titre text,
       medias jsonb,priorite text,contenu text,date_diffusion_diaspora timestamptz,
       date_publication timestamptz DEFAULT NOW(),date_soumission_diaspora timestamptz) ON COMMIT DROP`,
+   `CREATE TEMP TABLE diaspora_sponsored_publications(publication_id integer,tenant_id integer,organisation_id integer) ON COMMIT DROP`,
+   `CREATE TEMP TABLE diaspora_sponsor_optins(tenant_id integer,personne_id integer,actif boolean) ON COMMIT DROP`,
    `CREATE TEMP TABLE diaspora_association_directory(tenant_id integer,organisation_id integer,statut text) ON COMMIT DROP`,
    `CREATE TEMP TABLE diaspora_subscriptions(tenant_id integer,personne_id integer,association_id integer,theme_code text,actif boolean) ON COMMIT DROP`,
    `CREATE TEMP TABLE diaspora_geo_preferences(tenant_id integer,personne_id integer,territory_id integer,

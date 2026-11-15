@@ -7,7 +7,7 @@
  */
 const TENANT = /^[A-Z][A-Z0-9_-]{0,49}$/;
 
-function creerRouteLectureDiaspora({router, listerOrganisations, listerPublications} = {}) {
+function creerRouteLectureDiaspora({router, listerOrganisations, listerPublications, listerMarquages=null} = {}) {
   if (!router || typeof router.get !== 'function' ||
       typeof listerOrganisations !== 'function' || typeof listerPublications !== 'function') {
     throw new TypeError('DEPENDANCES_DIASPORA_REQUISES');
@@ -34,6 +34,12 @@ function creerRouteLectureDiaspora({router, listerOrganisations, listerPublicati
       // Double filtre volontaire : le service SQL doit filtrer DIFFUSEE, mais la
       // projection HTTP ne laisse jamais passer des soumissions ou une audience
       // restreinte en cas de régression du service sous-jacent.
+      // Un marquage commercial n'accorde pas d'accès privé et n'entraîne aucun push.
+      // Il est cependant affiché clairement sur toute publication consultable.
+      const marques=typeof listerMarquages==='function'
+        ? await listerMarquages(publications.map(p=>Number(p?.id)).filter(x=>Number.isSafeInteger(x)&&x>0),tenant)
+        : [];
+      const mapSponsors=new Map(marques.map(x=>[Number(x.id),String(x.sponsor_nom||'')]));
       const visibles = publications.filter(p =>
         p && p.statut_diffusion_diaspora === 'DIFFUSEE' && p.audience_type === 'TOUS')
         .slice(0, 100).map(p => ({
@@ -44,7 +50,8 @@ function creerRouteLectureDiaspora({router, listerOrganisations, listerPublicati
           priorite: String(p.priorite || 'NORMALE').slice(0,100),
           organisation: String(p.organisation || '').slice(0,255),
           organisationType: String(p.organisation_type || '').slice(0,100),
-          dateDiffusion: p.date_diffusion_diaspora || null
+          dateDiffusion: p.date_diffusion_diaspora || null,
+          sponsorisee:mapSponsors.has(Number(p.id)),sponsorNom:mapSponsors.get(Number(p.id))||null
         }))
         .filter(p=>Number.isSafeInteger(p.id)&&p.id>0);
       return res.json({statut:'DIASPORA_FEED_CHARGE',tenant,publications:visibles,

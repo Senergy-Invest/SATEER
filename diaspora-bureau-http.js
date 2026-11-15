@@ -56,7 +56,8 @@ function creerRoutesBureauDiaspora({router, verifierPermission, trouverOrganisat
       audienceType:String(x.audience_type||''),etatDiffusion:String(x.statut_diffusion_diaspora||''),
       datePublication:x.date_publication||null,mediaCount:Number(x.media_count||0),
       geoTerritoryId:x.geo_territory_id==null?null:Number(x.geo_territory_id),
-      geoTerritoryName:x.geo_territory_nom||null}))});
+      geoTerritoryName:x.geo_territory_nom||null,
+      sponsorisee:x.sponsor_publication_id!=null,sponsorNom:x.sponsor_publication_id!=null?String(x.sponsor_nom||''):null}))});
   }));
   router.post('/:organisationId/diaspora/submit/:publicationId',envelope(async(req,res)=>{
     const c=await contexte(req,res);if(c.fail)return;
@@ -74,7 +75,8 @@ function creerRoutesBureauDiaspora({router, verifierPermission, trouverOrganisat
       organisation:String(x.organisation||''),organisationType:String(x.organisation_type||''),
       dateSoumission:x.date_soumission_diaspora||null,
       geoTerritoryId:x.geo_territory_id==null?null:Number(x.geo_territory_id),
-      geoTerritoryName:x.geo_territory_nom||null}))});
+      geoTerritoryName:x.geo_territory_nom||null,
+      sponsorisee:x.sponsor_publication_id!=null,sponsorNom:x.sponsor_publication_id!=null?String(x.sponsor_nom||''):null}))});
   }));
   for(const [mode,verb] of [['APPROVE','approve'],['REJECT','reject']]){
     router.post('/:organisationId/diaspora/'+verb+'/:publicationId',envelope(async(req,res)=>{

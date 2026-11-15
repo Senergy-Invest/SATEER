@@ -14,6 +14,8 @@
     if (bureauLink) bureauLink.href = '/diaspora-communication.html?' + new URLSearchParams({tenant});
     const geoLink = document.getElementById('diasporaGeoLink');
     if (geoLink) geoLink.href = '/diaspora-geographie.html?' + new URLSearchParams({tenant});
+    const sponsorLink=document.getElementById('diasporaSponsorLink');
+    if(sponsorLink) sponsorLink.href='/diaspora-partenariats.html?'+new URLSearchParams({tenant});
     const context = await window.SATEER_CONTEXT_READY;
     const organisations = Array.isArray(context?.organisations) ? context.organisations : [];
     if (!organisations.some(o => o && o.tenant_code === tenant)) {
@@ -34,7 +36,7 @@
       : 'Aucune information générale validée pour la diaspora dans ce périmètre actuellement.';
     for (const item of data.publications) {
       const article = document.createElement('article');article.className='diaspora-card';article.id='publication-'+Number(item.id);
-      const tag = document.createElement('div');tag.className='diaspora-tag';tag.textContent=item.categorie || 'Information';
+      const tag = document.createElement('div');tag.className='diaspora-tag';tag.textContent=(item.sponsorisee?'Communication sponsorisée · ':'')+(item.categorie||'Information');
       const title = document.createElement('h3');title.textContent=item.titre || 'Information';
       const source = document.createElement('p');source.className='diaspora-meta';
       source.textContent='Source : '+(item.organisation || 'Non renseignée') +

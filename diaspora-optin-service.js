@@ -79,14 +79,19 @@ function creerServiceOptinDiaspora({executerRequete,obtenirClientDatabase}) {
   async function listerSuivies(personneId,tenant){
     const r=await executerRequete(`
       SELECT p.id,p.titre,p.contenu,p.categorie,p.priorite,p.date_diffusion_diaspora,
-        o.nom AS organisation,o.type AS organisation_type
+        o.nom AS organisation,o.type AS organisation_type,
+        (sponsor_p.publication_id IS NOT NULL) AS sponsorisee
       FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
+      LEFT JOIN diaspora_sponsored_publications sponsor_p
+        ON sponsor_p.publication_id=p.id AND sponsor_p.tenant_id=p.tenant_id
       LEFT JOIN diaspora_publication_geo_targets geo_target
         ON geo_target.publication_id=p.id AND geo_target.tenant_id=p.tenant_id
            AND geo_target.organisation_id=p.organisation_id
       JOIN tenants t ON t.id=p.tenant_id AND t.actif=TRUE
       WHERE t.code=$2 AND p.statut='PUBLIEE' AND p.statut_diffusion_diaspora='DIFFUSEE'
         AND p.audience_type='TOUS'
+        AND (sponsor_p.publication_id IS NULL OR EXISTS(SELECT 1 FROM diaspora_sponsor_optins so
+          WHERE so.tenant_id=p.tenant_id AND so.personne_id=$1::integer AND so.actif=TRUE))
         AND (geo_target.publication_id IS NULL OR EXISTS (
           SELECT 1 FROM diaspora_geo_preferences gp
           JOIN territories area ON area.id=gp.territory_id AND area.actif=TRUE

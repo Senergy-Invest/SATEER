@@ -19,7 +19,7 @@
   followedStatus.textContent=pubs.length?pubs.length+' publication(s) correspondant à tes abonnements.':'Aucune information suivie actuellement.';
   for(const pub of pubs){
     const card=node('article',null,'diaspora-card');card.id='publication-'+Number(pub.id);
-    card.append(node('p',pub.categorie||'Information','diaspora-tag'),node('h3',pub.titre||'Information'),
+    card.append(node('p',(pub.sponsorisee?'Communication sponsorisée · ':'')+(pub.categorie||'Information'),'diaspora-tag'),node('h3',pub.titre||'Information'),
       node('p','Source : '+(pub.organisation||'Non renseignée'),'diaspora-meta'),node('p',pub.contenu||''));
     followed.append(card);
   }

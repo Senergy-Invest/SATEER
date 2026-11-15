@@ -11,10 +11,13 @@ function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase, not
       SELECT p.id, p.titre, p.categorie, p.audience_type, p.statut,
              p.statut_diffusion_diaspora, p.date_publication,
              geo_target.territory_id AS geo_territory_id,geo_area.nom AS geo_territory_nom,
+             sp.publication_id AS sponsor_publication_id,o.nom AS sponsor_nom,
              CASE WHEN jsonb_typeof(p.medias)='array' THEN jsonb_array_length(p.medias) ELSE 999 END AS media_count
       FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
       LEFT JOIN diaspora_publication_geo_targets geo_target
         ON geo_target.publication_id=p.id AND geo_target.tenant_id=p.tenant_id
+      LEFT JOIN diaspora_sponsored_publications sp
+        ON sp.publication_id=p.id AND sp.tenant_id=p.tenant_id AND sp.organisation_id=p.organisation_id
       LEFT JOIN territories geo_area ON geo_area.id=geo_target.territory_id
       JOIN tenants t ON t.id=o.tenant_id AND t.actif=TRUE
       WHERE p.organisation_id=$1 AND t.code=$2 AND p.statut='PUBLIEE'
@@ -26,10 +29,13 @@ function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase, not
       SELECT p.id, p.titre, p.contenu, p.categorie, p.audience_type,
              p.statut_diffusion_diaspora, p.date_soumission_diaspora,
              o.id AS organisation_id, o.nom AS organisation, o.type AS organisation_type,
-             geo_target.territory_id AS geo_territory_id,geo_area.nom AS geo_territory_nom
+             geo_target.territory_id AS geo_territory_id,geo_area.nom AS geo_territory_nom,
+             sp.publication_id AS sponsor_publication_id,o.nom AS sponsor_nom
       FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
       LEFT JOIN diaspora_publication_geo_targets geo_target
         ON geo_target.publication_id=p.id AND geo_target.tenant_id=p.tenant_id
+      LEFT JOIN diaspora_sponsored_publications sp
+        ON sp.publication_id=p.id AND sp.tenant_id=p.tenant_id AND sp.organisation_id=p.organisation_id
       LEFT JOIN territories geo_area ON geo_area.id=geo_target.territory_id
       JOIN tenants t ON t.id=p.tenant_id AND t.actif=TRUE
       WHERE t.code=$1 AND p.statut='PUBLIEE' AND p.statut_diffusion_diaspora='SOUMISE'
@@ -44,7 +50,9 @@ function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase, not
       await client.query('BEGIN'); begun = true;
       const r = await client.query(`
         SELECT p.id,p.organisation_id,p.tenant_id,p.statut,p.statut_diffusion_diaspora,
-               p.audience_type,p.medias
+               p.audience_type,p.medias,
+               EXISTS(SELECT 1 FROM diaspora_sponsored_publications sp
+                 WHERE sp.publication_id=p.id AND sp.tenant_id=p.tenant_id) AS sponsorise
         FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
         JOIN tenants t ON t.id=p.tenant_id AND t.actif=TRUE
         WHERE p.id=$1 AND t.code=$2 AND ($3::integer IS NULL OR p.organisation_id=$3)
@@ -80,7 +88,7 @@ function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase, not
         INSERT INTO audit_trail (tenant_id,organisation_id,personne_id,action,entity_type,entity_id,details)
         VALUES ($1,$2,$3,$4,'publications',$5,$6::jsonb)`,
         [p.tenant_id,p.organisation_id,acteurId,'DIASPORA_'+mode,String(publicationId),
-          JSON.stringify({avant:current,apres:next,motif:mode==='REJECT'?motif:null,sourceOrganisationId:p.organisation_id,notificationsEnvoyees})]);
+          JSON.stringify({avant:current,apres:next,motif:mode==='REJECT'?motif:null,sourceOrganisationId:p.organisation_id,sponsorise:p.sponsorise===true,notificationsEnvoyees})]);
       await client.query('COMMIT'); begun=false;
       return {ok:true,id:Number(update.rows[0].id),statut:next};
     } catch(e) {if(begun)await client.query('ROLLBACK').catch(()=>{});throw e;}

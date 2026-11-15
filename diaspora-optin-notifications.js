@@ -17,9 +17,14 @@ async function notifierAbonnesDiaspora(client,publicationId){
       reference_type,reference_id,canal,metadata)
     SELECT DISTINCT p.tenant_id,s.personne_id,p.organisation_id,
       'DIASPORA_ABONNEMENT',p.titre,
-      'Une information correspondant à vos abonnements Diaspora a été validée.',
+      CASE WHEN EXISTS(SELECT 1 FROM diaspora_sponsored_publications sp
+          WHERE sp.publication_id=p.id AND sp.tenant_id=p.tenant_id)
+        THEN 'Communication sponsorisée : une publication correspond à vos choix volontaires.'
+        ELSE 'Une information correspondant à vos abonnements Diaspora a été validée.' END,
       'PUBLICATION',p.id,'DIASPORA',
-      jsonb_build_object('experience','DIASPORA','sourceOrganisationId',p.organisation_id)
+      jsonb_build_object('experience','DIASPORA','sourceOrganisationId',p.organisation_id,
+       'sponsorise',EXISTS(SELECT 1 FROM diaspora_sponsored_publications sp
+         WHERE sp.publication_id=p.id AND sp.tenant_id=p.tenant_id))
     FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
     JOIN tenants t ON t.id=p.tenant_id AND t.actif=TRUE
     JOIN diaspora_subscriptions s ON s.tenant_id=t.id AND s.actif=TRUE
@@ -35,6 +40,18 @@ async function notifierAbonnesDiaspora(client,publicationId){
         JOIN territories area ON area.id=gp.territory_id AND area.actif=TRUE
         WHERE gp.tenant_id=p.tenant_id AND gp.personne_id=s.personne_id
           AND gp.actif=TRUE AND gp.territory_id=geo_target.territory_id))
+      -- Le consentement commercial ne peut être déduit des suivis ordinaires.
+      AND (NOT EXISTS (SELECT 1 FROM diaspora_sponsored_publications sp
+        WHERE sp.publication_id=p.id AND sp.tenant_id=p.tenant_id)
+        OR EXISTS (SELECT 1 FROM diaspora_sponsor_optins so
+          WHERE so.tenant_id=p.tenant_id AND so.personne_id=s.personne_id AND so.actif=TRUE))
+      -- Les alertes sponsorisées ont un quota distinct d'une seule par 24 heures.
+      AND (NOT EXISTS (SELECT 1 FROM diaspora_sponsored_publications sp
+        WHERE sp.publication_id=p.id AND sp.tenant_id=p.tenant_id)
+        OR (SELECT COUNT(*) FROM notifications promo
+         WHERE promo.tenant_id=p.tenant_id AND promo.personne_id=s.personne_id
+           AND promo.type='DIASPORA_ABONNEMENT' AND promo.metadata->>'sponsorise'='true'
+           AND promo.date_creation>=NOW()-INTERVAL '24 hours') < 1)
       AND (o.type<>'ASSOCIATION' OR EXISTS(
         SELECT 1 FROM diaspora_association_directory d
         WHERE d.tenant_id=p.tenant_id AND d.organisation_id=o.id AND d.statut='VERIFIEE'))
