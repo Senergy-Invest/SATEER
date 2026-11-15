@@ -186,6 +186,15 @@ function afficherNotifications(notifications) {
             link.href = destination.pathname + destination.search + destination.hash;
             texte.append(link);
         }
+        if (notification.type === "DIASPORA_ABONNEMENT" && notification.reference_type === "PUBLICATION"
+            && Number.isSafeInteger(Number(notification.reference_id)) && notification.tenant_code) {
+            const link = element("a", "", "Voir dans Diaspora →");
+            const destination = new URL("/diaspora.html", window.location.origin);
+            destination.searchParams.set("tenant", notification.tenant_code);
+            destination.hash = `publication-${Number(notification.reference_id)}`;
+            link.href = destination.pathname + destination.search + destination.hash;
+            texte.append(link);
+        }
         item.append(element("span", "sx-notification-symbol", "🔔"), texte);
         cible.append(item);
     }

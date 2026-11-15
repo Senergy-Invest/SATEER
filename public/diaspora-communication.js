@@ -19,7 +19,7 @@
  }catch(e){status.textContent='Contexte professionnel indisponible : '+e.message;return;}
  async function load(){
   const selected=organisations.find(o=>String(o.id)===orgSelect.value);
-  sourceSection.hidden=true;reviewSection.hidden=true;
+  sourceSection.hidden=true;reviewSection.hidden=true;find('dcDirectorySection').hidden=true;
   if(!selected){status.textContent='Sélectionne une organisation.';return;}
   const base='/api/organisations/'+encodeURIComponent(selected.id)+'/diaspora/';
   const q='?'+new URLSearchParams({tenant});const errors=[];let hasAccess=false;
@@ -51,6 +51,27 @@
     acts.append(no);card.append(motif,acts);container.append(card);
    }
   }catch(e){errors.push('Revue : '+e.message);}
+  // D2B-A : verification volontaire des associations, strictement bureau SATEER.
+  if(selected.type==='SATEER')try{
+    const data=await call(base+'association-directory'+q);hasAccess=true;
+    const dir=find('dcDirectorySection'),list=find('dcDirectoryList');
+    dir.hidden=false;list.replaceChildren();
+    if(!data.associations.length)list.append(make('p','Aucune association dans ce tenant.','dc-info'));
+    for(const a of data.associations){
+      const card=make('article',null,'dc-card');
+      card.append(make('strong',a.nom),make('p','Statut SATEER : '+a.statut,'dc-meta'));
+      const next=a.statut==='VERIFIEE'?'SUSPENDUE':'VERIFIEE';
+      const btn=make('button',next==='VERIFIEE'?'Vérifier cette association':'Suspendre la vérification');btn.type='button';
+      btn.addEventListener('click',async()=>{
+        if(!window.confirm('Confirmer le statut '+next+' pour '+a.nom+' ?'))return;
+        btn.disabled=true;
+        try{await call(base+'association-directory/'+encodeURIComponent(a.id)+q,{method:'POST',body:JSON.stringify({statut:next})});
+          status.textContent='Statut associatif enregistré : '+next;await load();}
+        catch(e){btn.disabled=false;status.textContent='Modification refusée : '+e.message;}
+      });
+      const acts=make('div',null,'dc-actions');acts.append(btn);card.append(acts);list.append(card);
+    }
+  }catch(e){errors.push('Répertoire : '+e.message);}
   status.textContent=hasAccess?'Accès vérifiés pour '+selected.nom+(errors.length?' · '+errors.join(' ; '):''):'Aucune fonction autorisée pour '+selected.nom+'. '+errors.join(' ; ');
  }
  orgSelect.addEventListener('change',load);

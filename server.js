@@ -121,8 +121,22 @@ app.use('/api/organisations', exigerSession, creerRoutesBureauDiaspora({
     router: express.Router(),
     verifierPermission: require('./auth-authorization').verifierPermissionPersonneDatabase,
     trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
-    service: creerServiceBureauDiaspora(require('./database'))
+    service: creerServiceBureauDiaspora({
+      ...require('./database'),
+      notifierAbonnesDiaspora: require('./diaspora-optin-notifications').notifierAbonnesDiaspora
+    })
 }));
+// Diaspora D2B-A : abonnements volontaires, lecture suivie, annuaire verifie.
+const { creerServiceOptinDiaspora } = require('./diaspora-optin-service');
+const optinDiaspora = creerServiceOptinDiaspora(require('./database'));
+app.use('/api/diaspora', exigerSession,
+    require('./diaspora-optin-http').creerRoutesOptinDiaspora({router:express.Router(),service:optinDiaspora}));
+app.use('/api/organisations', exigerSession,
+    require('./diaspora-directory-http').creerRoutesRepertoireDiaspora({
+        router:express.Router(),service:optinDiaspora,
+        verifierPermission:require('./auth-authorization').verifierPermissionPersonneDatabase,
+        trouverOrganisation:trouverOrganisationParIdEtTenantDatabase
+    }));
 // A15 — suivi de toutes les demandes propres à la session (Consulat/Ambassade).
 // Aucun ID de citoyen fourni par le navigateur.
 const { creerRouteMesDemandes } = require('./citizen-cases-http');

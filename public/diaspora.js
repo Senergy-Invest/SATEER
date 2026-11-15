@@ -31,7 +31,7 @@
       ? data.publications.length + ' information(s) diffusée(s) dans votre périmètre.'
       : 'Aucune information générale validée pour la diaspora dans ce périmètre actuellement.';
     for (const item of data.publications) {
-      const article = document.createElement('article');article.className='diaspora-card';
+      const article = document.createElement('article');article.className='diaspora-card';article.id='publication-'+Number(item.id);
       const tag = document.createElement('div');tag.className='diaspora-tag';tag.textContent=item.categorie || 'Information';
       const title = document.createElement('h3');title.textContent=item.titre || 'Information';
       const source = document.createElement('p');source.className='diaspora-meta';

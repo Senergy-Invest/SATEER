@@ -21,6 +21,7 @@
  .diaspora-tag{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:#0b5661}
  .diaspora-status{padding:18px;background:#fff;border:1px solid #d6dfe6;border-radius:12px}
  .diaspora-note{color:#425461;font-size:.92rem;line-height:1.55}
+.diaspora-optin-controls{display:grid;gap:9px;margin:15px 0 28px}.diaspora-optin-controls h3{margin:15px 0 5px}.diaspora-optin-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #d9e1e5;border-radius:9px;padding:10px 14px;cursor:pointer}.diaspora-optin-row input{width:18px;height:18px;accent-color:#0c5962}
 </style>
 </head>
 <body>
@@ -37,12 +38,22 @@
   <p id="diasporaStatus" class="diaspora-status" role="status" aria-live="polite">Vérification de votre session…</p>
   <div id="diasporaFeed" class="diaspora-feed" aria-live="polite"></div>
  </section>
- <section class="diaspora-section"><h2>Associations et événements</h2><p class="diaspora-note">L'annuaire, l'agenda et les abonnements ciblés seront ouverts dans les prochaines tranches, après contrôle des permissions du Bureau de Communication. Aucun accès associatif n'est présumé.</p></section>
+ <section class="diaspora-section" aria-labelledby="subscriptionsTitle">
+  <h2 id="subscriptionsTitle">Mes abonnements volontaires</h2>
+  <p class="diaspora-note">Choisis tes thèmes ou les associations vérifiées par le Bureau SATEER. Ces choix ne donnent à aucune organisation accès à ton identité. Trois notifications Diaspora maximum sur 24 heures.</p>
+  <p id="diasporaSubscriptionStatus" class="diaspora-status" role="status" aria-live="polite">Chargement des abonnements…</p>
+  <div id="diasporaSubscriptionControls" class="diaspora-optin-controls"></div>
+  <h2>Mes informations suivies</h2>
+  <p id="diasporaFollowedStatus" class="diaspora-note" role="status" aria-live="polite">Chargement…</p>
+  <div id="diasporaFollowedFeed" class="diaspora-feed"></div>
+</section>
+<section class="diaspora-section"><h2>Associations et événements</h2><p class="diaspora-note">Seules les associations vérifiées par le Bureau SATEER apparaissent dans l'annuaire d'abonnement. La vérification ne vaut pas agrément officiel. Les inscriptions aux événements seront disponibles ultérieurement.</p></section>
 <section class="diaspora-section"><h2>Diffusion professionnelle</h2>
 <p class="diaspora-note">Les personnes habilitées peuvent proposer une diffusion ou contrôler la file éditoriale du Bureau de Communication SATEER. Aucun droit n’est accordé par ce lien.</p>
 <p><a id="diasporaBureauLink" href="/index.html">Accéder aux outils de communication →</a></p></section>
 </main>
 <script src="/auth-client.js"></script>
-<script src="/diaspora.js?v=d1" defer></script>
+<script src="/diaspora.js?v=d2b" defer></script>
+<script src="/diaspora-optin.js?v=d2b" defer></script>
 </body>
 </html>

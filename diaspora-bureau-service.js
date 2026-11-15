@@ -3,7 +3,7 @@
  * La validation des droits et du type d'organisation revient exclusivement
  * à la route HTTP. Ce service persiste les transitions et leur audit atomiquement.
  */
-function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase}) {
+function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase, notifierAbonnesDiaspora = null}) {
   if (typeof executerRequete !== "function" || typeof obtenirClientDatabase !== "function")
     throw new TypeError("DEPENDANCES_DB_REQUISES");
   const listSource = async (orgId, tenant) => {
@@ -64,11 +64,15 @@ function creerServiceBureauDiaspora({executerRequete, obtenirClientDatabase}) {
         WHERE id=$5::integer AND tenant_id=$6::integer RETURNING id,statut_diffusion_diaspora`,
         [next,mode,acteurId,motif,publicationId,p.tenant_id]);
       if(update.rowCount!==1)throw new Error('UPDATE_PUBLICATION_INCOHERENT');
+      // D2B-A : notification opt-in atomique avec l'approbation, jamais à la soumission.
+      // Injection explicite afin que le moteur de revue reste testable et isolable.
+      const notificationsEnvoyees = mode==='APPROVE' && notifierAbonnesDiaspora
+        ? await notifierAbonnesDiaspora(client,Number(publicationId)) : 0;
       await client.query(`
         INSERT INTO audit_trail (tenant_id,organisation_id,personne_id,action,entity_type,entity_id,details)
         VALUES ($1,$2,$3,$4,'publications',$5,$6::jsonb)`,
         [p.tenant_id,p.organisation_id,acteurId,'DIASPORA_'+mode,String(publicationId),
-          JSON.stringify({avant:current,apres:next,motif:mode==='REJECT'?motif:null,sourceOrganisationId:p.organisation_id})]);
+          JSON.stringify({avant:current,apres:next,motif:mode==='REJECT'?motif:null,sourceOrganisationId:p.organisation_id,notificationsEnvoyees})]);
       await client.query('COMMIT'); begun=false;
       return {ok:true,id:Number(update.rows[0].id),statut:next};
     } catch(e) {if(begun)await client.query('ROLLBACK').catch(()=>{});throw e;}
