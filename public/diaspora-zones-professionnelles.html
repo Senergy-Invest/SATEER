@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SATEER Diaspora — Ciblage professionnel</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+.g-main{max-width:950px;margin:30px auto 90px;padding:0 20px}.g-head{padding:26px;border-radius:17px}
+.g-head p{line-height:1.5}.g-section{border-radius:14px;margin-top:23px;padding:24px}
+.g-item{padding:14px;margin:10px 0}.g-item strong{display:block;margin-bottom:6px}
+.g-actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}.g-actions button{border:0;padding:10px 14px;border-radius:7px;cursor:pointer}
+.g-actions button:disabled{opacity:.6;cursor:not-allowed}.g-muted{font-size:.91rem;line-height:1.55}
+.g-status{padding:13px;border-radius:9px}input,select{max-width:100%;padding:10px;margin:6px 0}
+</style>
+<link rel="stylesheet" href="/diaspora-theme.css?v=ux1">
+</head>
+<body class="diaspora-experience">
+<main class="g-main">
+<p><a id="proBack" href="/index.html">← Retour à la diffusion professionnelle</a></p>
+<header class="g-head"><small class="dia-kicker">SATEER · DIASPORA · SOURCE AUTORISÉE</small>
+<h1>Ciblage géographique des publications</h1>
+<p>Définissez la zone des notifications avant soumission au Bureau. La publication générale reste consultable ; aucune zone ne peut être modifiée après soumission.</p></header>
+<section class="g-section"><h2>Organisation émettrice</h2>
+<label for="proOrga">Sélectionner l'organisation</label>
+<select id="proOrga"><option value="">Choisir une organisation</option></select>
+<p class="g-muted">Le Core vérifie le droit TARGET_COMMUNICATION pour chaque publication. Une simple appartenance ne donne aucun droit supplémentaire.</p>
+<p id="proContext" class="g-status" role="status" aria-live="polite">Chargement du contexte professionnel…</p></section>
+<section class="g-section"><h2>1. Rechercher la zone</h2>
+<div class="g-actions"><input type="search" id="proSearch" aria-label="Ville, département ou région" maxlength="60" placeholder="Ville, département ou région">
+<button type="button" id="proFind">Rechercher</button></div>
+<p id="proStatus" class="g-status" role="status" aria-live="polite">Choisissez une zone pour une publication.</p>
+<div id="proResults"></div></section>
+<section class="g-section"><h2>2. Appliquer à une publication</h2>
+<p class="g-muted">Affectez la zone choisie à une publication textuelle générale non soumise. Une publication déjà soumise ou diffusée est verrouillée.</p>
+<div id="proPublications"></div></section>
+</main>
+<script src="/auth-client.js"></script>
+<script defer src="/diaspora-zones-professionnelles.js?v=ux1"></script>
+</body></html>

@@ -1,92 +1,86 @@
 "use strict";
+/** UX1 : preferences geographiques strictement citoyennes.
+ * Les choix d'audience professionnelle sont dans diaspora-zones-professionnelles.
+ */
 (async function(){
-  const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),tenant=params.get('tenant');
-  const status=$('geoStatus'),results=$('geoResults'),prefs=$('geoPrefs'),orgSelector=$('geoOrga');
-  const TENANT=/^[A-Z][A-Z0-9_-]{0,49}$/;
-  if(!tenant||!TENANT.test(tenant)){status.textContent='Tenant invalide : ouvrez cette page depuis Diaspora.';return;}
+  const $=id=>document.getElementById(id);
+  const tenant=new URLSearchParams(location.search).get('tenant');
+  const status=$('geoStatus'),results=$('geoResults'),prefs=$('geoPrefs');
+  if(!status||!results||!prefs||!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant)){
+    if(status)status.textContent='Contexte Diaspora invalide.';return;
+  }
   $('geoBack').href='/diaspora.html?'+new URLSearchParams({tenant});
   const query='?'+new URLSearchParams({tenant});
-  const el=(tag,text)=>{const node=document.createElement(tag);if(text!=null)node.textContent=String(text);return node;};
-  async function call(endpoint,options={}){
-    const r=await fetch(endpoint,{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json'},...options});
-    const v=await r.json().catch(()=>({}));if(!r.ok)throw Error(v.statut||'HTTP '+r.status);return v;
+  const el=(tag,value)=>{const element=document.createElement(tag);if(value!=null)element.textContent=String(value);return element;};
+  async function api(endpoint,options={}){
+    const res=await fetch(endpoint,{credentials:'same-origin',cache:'no-store',
+      headers:{Accept:'application/json','Content-Type':'application/json'},...options});
+    const body=await res.json().catch(()=>({}));
+    if(!res.ok)throw Error(body.statut||'HTTP '+res.status);
+    return body;
   }
-  let selectedArea=null;
-  let organisations=[];
+  let activeAreas=new Set();
   async function loadPrefs(){
-    const d=await call('/api/diaspora/geo-preferences'+query);
+    const body=await api('/api/diaspora/geo-preferences'+query);
+    const preferences=Array.isArray(body.preferences)?body.preferences:[];
+    activeAreas=new Set(preferences.filter(p=>p.actif===true).map(p=>Number(p.id)));
     prefs.replaceChildren();
-    if(!d.preferences.length)prefs.append(el('p','Aucune zone sélectionnée pour le moment.'));
-    for(const p of d.preferences){
+    if(!preferences.length)prefs.append(el('p','Aucune zone choisie pour le moment.'));
+    for(const pref of preferences){
       const card=el('div');card.className='g-item';
-      card.append(el('strong',p.nom+' · '+p.type+' · '+p.pays),el('p',p.actif?'Abonnement actif':'Désabonné'));
-      const buttons=el('div');buttons.className='g-actions';
-      const button=el('button',p.actif?'Ne plus suivre':'Suivre à nouveau');button.type='button';
-      button.addEventListener('click',async()=>{button.disabled=true;
-        try{await call('/api/diaspora/geo-preferences/'+p.id+query,{method:'PUT',body:JSON.stringify({actif:!p.actif})});await loadPrefs();status.textContent='Préférence de zone mise à jour.';}
-        catch(e){status.textContent='Modification refusée : '+e.message;button.disabled=false;}});
-      buttons.append(button);card.append(buttons);prefs.append(card);
+      card.append(el('strong',pref.nom+' · '+pref.type+' · '+pref.pays),
+        el('p',pref.actif?'Abonnement actif':'Abonnement inactif'));
+      const acts=el('div');acts.className='g-actions';
+      const button=el('button',pref.actif?'Ne plus suivre':'Suivre à nouveau');button.type='button';
+      button.addEventListener('click',async()=>{
+        button.disabled=true;
+        try{
+          await api('/api/diaspora/geo-preferences/'+encodeURIComponent(pref.id)+query,
+            {method:'PUT',body:JSON.stringify({actif:!pref.actif})});
+          await loadPrefs();await search();
+          status.textContent=pref.actif?'Zone retirée : aucune nouvelle alerte pour '+pref.nom+'.':
+            'Zone suivie : '+pref.nom+'.';
+        }catch(err){status.textContent='Modification refusée : '+err.message;button.disabled=false;}
+      });
+      acts.append(button);card.append(acts);prefs.append(card);
     }
   }
-  async function listSource(){
-    const id=orgSelector.value,container=$('geoPublications');container.replaceChildren();
-    if(!id){$('geoProStatus').textContent='Choisir une organisation.';return;}
-    try{
-      const d=await call('/api/organisations/'+encodeURIComponent(id)+'/diaspora/source-publications'+query);
-      $('geoProStatus').textContent='Source autorisée. Choisis une zone dans la recherche avant de l’affecter à une publication.';
-      for(const p of d.publications){
-        const card=el('div');card.className='g-item';
-        card.append(el('strong',p.titre),el('p','État : '+p.etatDiffusion+' · Zone : '+(p.geoTerritoryName||'Aucune zone ciblée')));
-        if(p.etatDiffusion==='NON_DEMANDEE'&&p.audienceType==='TOUS'&&p.mediaCount===0){
-          const actions=el('div');actions.className='g-actions';
-          for(const [label,territory] of [['Utiliser la zone choisie',false],['Retirer le ciblage',true]]){
-            const btn=el('button',label);btn.type='button';
-            if(territory)btn.className='secondary';
-            btn.addEventListener('click',async()=>{
-              if(!territory&&!selectedArea){status.textContent='Sélectionne d’abord une zone dans la recherche.';return;}
-              btn.disabled=true;
-              try{await call('/api/organisations/'+encodeURIComponent(id)+'/diaspora/geo-target/'+p.id+query,
-                {method:'PUT',body:JSON.stringify({territoryId:territory?null:selectedArea.id})});
-                status.textContent='Ciblage enregistré avant soumission.';await listSource();}
-              catch(e){status.textContent='Ciblage refusé : '+e.message;btn.disabled=false;}});
-            actions.append(btn);
-          }
-          card.append(actions);
-        }
-        container.append(card);
-      }
-    }catch(e){$('geoProStatus').textContent='Accès professionnel indisponible : '+e.message;}
-  }
   async function search(){
-    const q=$('geoSearch').value.trim();const u='/api/diaspora/geo-options?'+new URLSearchParams({tenant,q});
-    status.textContent='Recherche des territoires…';results.replaceChildren();
+    const q=$('geoSearch').value.trim();results.replaceChildren();
+    if(!q){status.textContent='Saisis une ville, un département ou une région.';return;}
+    status.textContent='Recherche en cours…';
     try{
-      const data=await call(u);
-      status.textContent=data.territoires.length+' territoire(s) trouvé(s).';
-      for(const area of data.territoires){
-        const card=el('div');card.className='g-item';card.append(el('strong',area.nom+' · '+area.type+' · '+area.pays));
-        const acts=el('div');acts.className='g-actions';
-        const choose=el('button','Choisir pour un ciblage professionnel');choose.type='button';
-        choose.addEventListener('click',()=>{selectedArea=area;status.textContent='Zone sélectionnée : '+area.nom+'. Utilise-la dans une publication ci-dessous.';});
-        const follow=el('button','Suivre cette zone');follow.type='button';
-        follow.addEventListener('click',async()=>{follow.disabled=true;
-          try{await call('/api/diaspora/geo-preferences/'+area.id+query,{method:'PUT',body:JSON.stringify({actif:true})});
-            status.textContent='Tu suis maintenant '+area.nom+'.';await loadPrefs();}
-          catch(e){status.textContent='Abonnement refusé : '+e.message;follow.disabled=false;}});
-        acts.append(follow,choose);card.append(acts);results.append(card);
+      const body=await api('/api/diaspora/geo-options?'+new URLSearchParams({tenant,q}));
+      const areas=Array.isArray(body.territoires)?body.territoires:[];
+      status.textContent=areas.length+' territoire(s) trouvé(s).';
+      for(const area of areas){
+        const card=el('div');card.className='g-item';
+        card.append(el('strong',area.nom+' · '+area.type+' · '+area.pays));
+        const actions=el('div');actions.className='g-actions';
+        const followed=activeAreas.has(Number(area.id));
+        const btn=el('button',followed?'Déjà suivi':'Suivre cette zone');
+        btn.type='button';btn.disabled=followed;
+        btn.addEventListener('click',async()=>{
+          btn.disabled=true;
+          try{
+            await api('/api/diaspora/geo-preferences/'+encodeURIComponent(area.id)+query,
+              {method:'PUT',body:JSON.stringify({actif:true})});
+            await loadPrefs();await search();status.textContent='Tu suis maintenant '+area.nom+'.';
+          }catch(e){status.textContent='Abonnement refusé : '+e.message;btn.disabled=false;}
+        });
+        actions.append(btn);card.append(actions);results.append(card);
       }
     }catch(e){status.textContent='Recherche indisponible : '+e.message;}
   }
   $('geoFind').addEventListener('click',search);
-  $('geoSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();search();}});
+  $('geoSearch').addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();search();}
+  });
   try{
-    const c=await window.SATEER_CONTEXT_READY;
-    organisations=(Array.isArray(c?.organisations)?c.organisations:[]).filter(o=>o.tenant_code===tenant);
-    if(!organisations.length){status.textContent='Aucun rattachement autorisé à ce tenant.';return;}
-    await loadPrefs();
-    $('geoProSection').hidden=false;
-    for(const org of organisations){const opt=el('option',org.nom+' · '+org.type);opt.value=String(org.id);orgSelector.append(opt);}
-    orgSelector.addEventListener('change',listSource);
-    $('geoSearch').value='Bordeaux';await search();
-  }catch(e){status.textContent='Session ou préférences indisponibles : '+e.message;}
+    const context=await window.SATEER_CONTEXT_READY;
+    if(!Array.isArray(context?.organisations)||!context.organisations.some(o=>o.tenant_code===tenant)){
+      status.textContent='Accès à cette expérience non autorisé.';return;
+    }
+    await loadPrefs();status.textContent='Saisis un territoire pour le suivre ou le retirer.';
+  }catch(e){status.textContent='Préférences indisponibles : '+e.message;}
 })();

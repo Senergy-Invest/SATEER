@@ -1,0 +1,97 @@
+/* SATEER / Experience Diaspora — theme isole UX1.
+ * Aucune variable globale : Consulat, Ambassade et autres experiences intacts.
+ * Violet 523785 (contraste blanc > 9), ocre A7492A (contraste blanc > 5).
+ */
+body.diaspora-experience {
+  --dia-primary:#523785;
+  --dia-primary-deep:#382854;
+  --dia-accent:#D36C45;
+  --dia-accent-action:#A7492A;
+  --dia-ink:#302943;
+  --dia-muted:#5B526A;
+  --dia-bg:#F8F3E9;
+  --dia-surface:#FFFFFF;
+  --dia-edge:#DED5E9;
+  --dia-success:#187C70;
+  --dia-focus:#A7492A;
+  background:var(--dia-bg);
+  color:var(--dia-ink);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  line-height:1.5;
+}
+body.diaspora-experience a { color:var(--dia-primary);text-underline-offset:3px; }
+body.diaspora-experience a:hover { color:var(--dia-accent-action); }
+body.diaspora-experience :is(button,input,select,textarea,a):focus-visible {
+  outline:3px solid var(--dia-focus);outline-offset:3px;
+}
+body.diaspora-experience :is(.diaspora-head,.sponsor-head,.g-head,.dc-head) {
+  background:linear-gradient(125deg,var(--dia-primary-deep),var(--dia-primary));
+  border:1px solid #6D539A;
+  box-shadow:0 12px 28px #3828541c;
+  color:#fff;
+}
+body.diaspora-experience :is(.diaspora-head,.sponsor-head,.g-head,.dc-head) :is(p,small,.diaspora-kicker) {
+  color:#F2EAF7;
+}
+body.diaspora-experience :is(.diaspora-section,.sponsor-card,.g-section,.dc-section) {
+  background:var(--dia-surface);
+  border:1px solid var(--dia-edge);
+  border-radius:16px;
+  box-shadow:0 4px 18px #3828540c;
+}
+body.diaspora-experience .diaspora-section {padding:22px;margin-top:25px;}
+body.diaspora-experience :is(.diaspora-card,.g-item,.dc-card,.diaspora-optin-row) {
+  background:#fff;
+  border:1px solid var(--dia-edge);
+  border-radius:12px;
+  box-shadow:none;
+}
+body.diaspora-experience :is(.diaspora-meta,.diaspora-note,.dc-meta,.dc-info,.g-muted,.sponsor-note) {
+  color:var(--dia-muted);
+}
+body.diaspora-experience :is(.diaspora-status,.g-status,.dc-status,.sponsor-status) {
+  background:#F1ECF8;
+  border:1px solid var(--dia-edge);
+  color:var(--dia-ink);
+}
+body.diaspora-experience :is(.diaspora-tag,.diaspora-kicker) {color:var(--dia-primary);}
+body.diaspora-experience :is(.g-actions button,.dc-actions button) {
+  background:var(--dia-primary);color:#fff;font-weight:650;min-height:40px;
+}
+body.diaspora-experience :is(.g-actions button,.dc-actions button):hover:not(:disabled) {
+  background:var(--dia-primary-deep);
+}
+body.diaspora-experience :is(.g-actions button.secondary) {background:#655A75;}
+body.diaspora-experience :is(.dc-actions button.dc-reject) {background:#9D2B44;}
+body.diaspora-experience :is(button,input,select,textarea) {font:inherit;}
+body.diaspora-experience :is(input[type='checkbox'],input[type='radio']) {accent-color:var(--dia-primary);}
+body.diaspora-experience .diaspora-card--sponsor {border-left:5px solid var(--dia-accent-action);background:#FFF9F5;}
+body.diaspora-experience .diaspora-card--sponsor .diaspora-tag {color:var(--dia-accent-action);}
+body.diaspora-experience .diaspora-section > h2,
+body.diaspora-experience .diaspora-section > h3 {color:var(--dia-primary-deep);}
+body.diaspora-experience .sponsor-etat {font-weight:750;border-radius:10px;padding:14px 16px;margin:16px 0 10px;}
+body.diaspora-experience .sponsor-etat--off {background:#F5EAE8;border:1px solid #CE9C9A;color:#742C2B;}
+body.diaspora-experience .sponsor-etat--on {background:#E8F6F2;border:1px solid #9CCFC3;color:#11594F;}
+body.diaspora-experience .sponsor-etat--pending {background:#F1ECF8;border:1px solid var(--dia-edge);color:var(--dia-muted);}
+body.diaspora-experience .diaspora-optin-row {align-items:center;min-height:44px;}
+body.diaspora-experience .diaspora-optin-row:hover {border-color:var(--dia-primary);background:#FCFAFF;}
+body.diaspora-experience .dia-kicker {display:block;color:var(--dia-accent);font-size:.8rem;font-weight:750;letter-spacing:.1em;text-transform:uppercase;}
+body.diaspora-experience .dia-help {background:#F7F3FC;border-left:4px solid var(--dia-accent-action);padding:12px 15px;border-radius:8px;}
+body.diaspora-experience .dia-role-tag {display:inline-block;background:#EEE6F9;color:var(--dia-primary-deep);font-weight:750;padding:5px 11px;border-radius:999px;}
+body.diaspora-experience .dia-pro-status {font-size:.95rem;color:var(--dia-muted);}
+body.diaspora-experience :is(.g-item,.dc-card) > strong {color:var(--dia-primary-deep);}
+body.diaspora-experience [hidden] {display:none!important;}
+@media (max-width:650px) {
+  body.diaspora-experience :is(.diaspora-main,.sponsor-main,.g-main,.dc-main) {padding:17px 12px 64px;margin-left:auto;margin-right:auto;}
+  body.diaspora-experience :is(.diaspora-head,.sponsor-head,.g-head,.dc-head) {padding:22px 17px;border-radius:14px;}
+  body.diaspora-experience :is(.diaspora-section,.sponsor-card,.g-section,.dc-section) {padding:16px;margin-top:15px;}
+  body.diaspora-experience :is(.diaspora-card,.dc-card,.g-item) {padding:14px;}
+  body.diaspora-experience .diaspora-feed {grid-template-columns:minmax(0,1fr);}
+  body.diaspora-experience .g-actions {align-items:stretch;}
+  body.diaspora-experience .g-actions button {flex:1 1 100%;}
+  body.diaspora-experience :is(.g-actions input,.g-section input,.g-section select,.dc-main select) {width:100%;box-sizing:border-box;}
+  body.diaspora-experience .dc-actions button {flex:1 1 100%;}
+}
+@media (prefers-reduced-motion:reduce) {
+  body.diaspora-experience * {scroll-behavior:auto!important;transition-duration:0.01ms!important;}
+}

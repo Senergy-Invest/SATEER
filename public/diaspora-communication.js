@@ -5,7 +5,7 @@
  const param=new URLSearchParams(location.search),tenant=param.get('tenant');
  if(!tenant || !/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant)) {status.textContent='Tenant invalide : ouvrez cette page depuis Diaspora.';return;}
  find('dcDiasporaLink').href='/diaspora.html?'+new URLSearchParams({tenant});
- find('dcGeoLink').href='/diaspora-geographie.html?'+new URLSearchParams({tenant});
+ find('dcGeoLink').href='/diaspora-zones-professionnelles.html?'+new URLSearchParams({tenant});
  const make=(tag,txt,cls)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!=null)x.textContent=String(txt);return x;};
  const call=async(url,options={})=>{const response=await fetch(url,{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json', 'Content-Type':'application/json'},...options});
   const body=await response.json().catch(()=>({}));if(!response.ok)throw Error(body.statut||('HTTP '+response.status));return body;};
@@ -16,16 +16,20 @@
   for(const o of organisations){const opt=make('option',o.nom+' · '+o.type);opt.value=String(o.id);orgSelect.append(opt);}
   if(!organisations.length){status.textContent='Aucune organisation accessible dans ce tenant.';return;}
   const suggested=param.get('organisation');if(organisations.some(o=>String(o.id)===suggested))orgSelect.value=suggested;
-  status.textContent='Choisis une organisation pour vérifier tes droits.';
+  if(!orgSelect.value && organisations.length===1)orgSelect.value=String(organisations[0].id);
+  status.textContent=orgSelect.value?'Chargement du contexte professionnel…':'Choisis une organisation pour vérifier tes droits.';
  }catch(e){status.textContent='Contexte professionnel indisponible : '+e.message;return;}
  async function load(){
   const selected=organisations.find(o=>String(o.id)===orgSelect.value);
   sourceSection.hidden=true;reviewSection.hidden=true;find('dcDirectorySection').hidden=true;
+  find('dcGeoSection').hidden=true;find('dcRoleText').hidden=true;
   if(!selected){status.textContent='Sélectionne une organisation.';return;}
   const base='/api/organisations/'+encodeURIComponent(selected.id)+'/diaspora/';
   const q='?'+new URLSearchParams({tenant});const errors=[];let hasAccess=false;
   try{
    const data=await call(base+'source-publications'+q);hasAccess=true;sourceSection.hidden=false;
+   find('dcGeoSection').hidden=false;
+   find('dcGeoLink').href='/diaspora-zones-professionnelles.html?'+new URLSearchParams({tenant,organisation:String(selected.id)});
    const container=find('dcSourceList');container.replaceChildren();
    if(!data.publications.length)container.append(make('p','Aucune publication disponible.','dc-info'));
    for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p',p.categorie+' · '+p.audienceType+' · '+p.etatDiffusion,'dc-meta'));
@@ -82,6 +86,8 @@
       const acts=make('div',null,'dc-actions');acts.append(btn);card.append(acts);list.append(card);
     }
   }catch(e){errors.push('Répertoire : '+e.message);}
+  const role=find('dcRoleText');role.hidden=!hasAccess;
+  if(hasAccess)role.textContent=selected.type==='SATEER' && !reviewSection.hidden?'Bureau de communication SATEER':'Organisation émettrice';
   status.textContent=hasAccess?'Accès vérifiés pour '+selected.nom+(errors.length?' · '+errors.join(' ; '):''):'Aucune fonction autorisée pour '+selected.nom+'. '+errors.join(' ; ');
  }
  orgSelect.addEventListener('change',load);

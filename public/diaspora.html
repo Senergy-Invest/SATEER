@@ -23,8 +23,9 @@
  .diaspora-note{color:#425461;font-size:.92rem;line-height:1.55}
 .diaspora-optin-controls{display:grid;gap:9px;margin:15px 0 28px}.diaspora-optin-controls h3{margin:15px 0 5px}.diaspora-optin-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #d9e1e5;border-radius:9px;padding:10px 14px;cursor:pointer}.diaspora-optin-row input{width:18px;height:18px;accent-color:#0c5962}
 </style>
+<link rel="stylesheet" href="/diaspora-theme.css?v=ux1">
 </head>
-<body>
+<body class="diaspora-experience">
 <main class="diaspora-main">
  <a class="diaspora-toplink" href="/index.html">← Mon SATEER</a>
  <header class="diaspora-head">
@@ -34,9 +35,12 @@
  </header>
  <section class="diaspora-section" aria-labelledby="feedTitle">
   <h2 id="feedTitle">Informations diffusées</h2>
-  <p class="diaspora-note">Seules les informations autorisées pour une audience générale dans votre périmètre sont affichées dans cette première tranche. Les soumissions en attente, les informations privées et les campagnes ciblées ne sont pas affichées.</p>
+  <p class="diaspora-note">Les publications générales approuvées sont consultables ici. Les communications sponsorisées sont identifiées dans une section distincte. Les contenus en attente et les audiences privées restent exclus.</p>
   <p id="diasporaStatus" class="diaspora-status" role="status" aria-live="polite">Vérification de votre session…</p>
   <div id="diasporaFeed" class="diaspora-feed" aria-live="polite"></div>
+  <h3 id="diasporaSponsoredTitle" hidden>Communications sponsorisées</h3>
+  <p class="diaspora-note" id="diasporaSponsorNotice">Informations accessibles à tous, clairement séparées des annonces non commerciales. Les notifications nécessitent un accord distinct.</p>
+  <div id="diasporaSponsoredFeed" class="diaspora-feed" aria-live="polite"></div>
  </section>
  <section class="diaspora-section" aria-labelledby="subscriptionsTitle">
   <h2 id="subscriptionsTitle">Mes abonnements volontaires</h2>

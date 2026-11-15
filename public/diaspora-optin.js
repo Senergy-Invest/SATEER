@@ -32,7 +32,7 @@
   const associations=Array.isArray(data.associations)?data.associations:[];
   async function checkboxItem(label,endpoint,checked){
     const row=node('label',null,'diaspora-optin-row');
-    const check=document.createElement('input');check.type='checkbox';check.checked=checked;
+    const check=document.createElement('input');check.type='checkbox';check.checked=checked;check.setAttribute('aria-label',label);
     row.append(check,node('span',label));
     check.addEventListener('change',async()=>{
       check.disabled=true;status.textContent='Enregistrement de ton choix…';
@@ -54,7 +54,9 @@
     const active=current.some(x=>Number(x.associationId)===Number(a.id)&&x.actif);
     await checkboxItem(a.nom+(a.statut==='VERIFIEE'?'':' (vérification suspendue)'),'/api/diaspora/subscriptions/association/'+encodeURIComponent(a.id),active);
   }
-  status.textContent='Choisis librement tes thèmes et associations. Désabonnement possible à tout moment.';
+  const themesActifs=current.filter(x=>x.actif && x.themeCode!=null).length;
+  const associationsActives=current.filter(x=>x.actif && x.associationId!=null).length;
+  status.textContent=themesActifs+' thème(s) et '+associationsActives+' association(s) suivis. Désabonnement possible à tout moment.';
   await loadFollowed();
  }
  try{await window.SATEER_CONTEXT_READY;await load();}

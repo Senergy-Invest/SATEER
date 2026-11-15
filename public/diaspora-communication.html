@@ -13,18 +13,20 @@ body{font-family:system-ui,sans-serif;background:#f4f7f8;color:#172a39}
 .dc-card textarea{width:100%;min-height:85px;box-sizing:border-box;padding:9px;border:1px solid #acbbc4;border-radius:6px}
 .dc-status{padding:12px;border-radius:9px;background:#f1f5f7}.dc-main select{max-width:100%;min-height:40px;padding:8px}
 .dc-section[hidden]{display:none!important}a{color:#134e63}
-</style></head>
-<body><main class="dc-main">
+</style><link rel="stylesheet" href="/diaspora-theme.css?v=ux1">
+</head>
+<body class="diaspora-experience"><main class="dc-main">
 <a href="/index.html">← Mon SATEER</a>
 <header class="dc-head"><small>SATEER · COMMUNICATION TRANSVERSALE · RECETTE</small><h1>Diffusion vers Diaspora</h1>
 <p>La source conserve sa publication. Le Bureau SATEER contrôle séparément la diffusion générale. Les autorisations sont vérifiées sur le serveur.</p></header>
 <section class="dc-section"><h2>Contexte professionnel</h2><label for="dcOrg">Organisation de travail</label>
 <select id="dcOrg"><option value="">Chargement des organisations…</option></select>
 <p class="dc-info">Seules les organisations rattachées à ton compte sont proposées. Le rattachement ne suffit pas : les permissions sont contrôlées par le Core.</p>
-<p id="dcStatus" class="dc-status" role="status" aria-live="polite">Vérification des accès…</p></section>
-<section class="dc-section"><h2>Zones des notifications</h2>
+<p id="dcStatus" class="dc-status" role="status" aria-live="polite">Vérification des accès…</p>
+<p id="dcRoleText" class="dia-role-tag" hidden></p></section>
+<section class="dc-section" id="dcGeoSection" hidden><h2>Zones des notifications</h2>
 <p class="dc-info">Avant de soumettre une publication, son auteur habilité peut choisir une zone de diffusion des notifications. Le Bureau voit ce ciblage pendant la revue. Le fil général reste consultable.</p>
-<p><a id="dcGeoLink" href="/index.html">Choisir la zone avant soumission →</a></p></section>
+<p><a id="dcGeoLink" href="/index.html">Configurer la zone des publications →</a></p></section>
 <section id="dcSourceSection" class="dc-section" hidden><h2>Mes publications à soumettre</h2>
 <p class="dc-info">Seules les publications déjà publiées par ton organisation, textuelles, sans médias, d'audience TOUS et jamais soumises sont éligibles. Une publication rejetée nécessite une nouvelle publication corrigée.</p>
 <div id="dcSourceList"></div></section>
