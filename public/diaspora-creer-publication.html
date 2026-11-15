@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SATEER Diaspora — Nouvelle publication associative</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+.d3-main{max-width:860px;margin:22px auto 85px;padding:18px}.d3-head{padding:27px;border-radius:17px;background:linear-gradient(125deg,#382854,#523785);color:#fff;border:1px solid #6D539A;box-shadow:0 12px 28px #3828541c}
+.d3-head p{max-width:650px;line-height:1.6;color:#F2EAF7}.d3-card{background:#fff;margin-top:23px;padding:25px;border-radius:16px}
+.d3-card{border:1px solid #DED5E9}.d3-form{display:grid;gap:17px}.d3-field{display:grid;gap:7px;min-width:0}
+.d3-field :is(input,select,textarea){width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #B9ACC9;border-radius:9px;background:#fff;color:#302943}
+.d3-field textarea{min-height:160px;resize:vertical;line-height:1.5}
+.d3-cta{background:#523785;color:white;border:0;border-radius:9px;padding:13px 20px;font-weight:700;min-height:44px;cursor:pointer}
+.d3-cta:disabled{opacity:.55;cursor:not-allowed}.d3-note{color:#5B526A;line-height:1.6}
+.d3-status{padding:13px;background:#F1ECF8;border:1px solid #DED5E9;border-radius:9px;overflow-wrap:anywhere}
+.d3-links{display:flex;gap:15px;flex-wrap:wrap}.d3-links a{display:inline-flex;align-items:center;min-height:44px}
+@media(max-width:650px){.d3-main{padding:12px;margin:0 auto 60px}.d3-card{padding:16px}.d3-head{padding:20px}}
+</style>
+<link rel="stylesheet" href="/diaspora-theme.css?v=ux1">
+</head><body class="diaspora-experience"><main class="d3-main">
+<p><a id="d3Back" href="/diaspora-communication.html">← Retour à la diffusion Diaspora</a></p>
+<header class="d3-head"><small class="dia-kicker">SATEER · DIASPORA · ASSOCIATION</small>
+<h1>Nouvelle publication associative</h1>
+<p>Rédigez une information pour la diaspora. Elle ne sera diffusée dans le fil Diaspora qu'après une décision favorable du Bureau SATEER.</p></header>
+<section class="d3-card" aria-labelledby="d3Title"><h2 id="d3Title">Préparer l'information</h2>
+<p class="d3-note">La création n'envoie aucune notification. Le ciblage, le marquage commercial éventuel et la soumission sont des étapes distinctes.</p>
+<form id="d3Form" class="d3-form">
+<label class="d3-field" for="d3Organisation">Association émettrice
+<select id="d3Organisation" required><option value="">Chargement des associations autorisées…</option></select></label>
+<label class="d3-field" for="d3Categorie">Thème Diaspora
+<select id="d3Categorie" required>
+<option value="EVENEMENT">Événement</option><option value="FORMATION">Formation</option>
+<option value="EMPLOI">Emploi</option><option value="ENTREPRENEURIAT">Entrepreneuriat</option>
+<option value="CULTURE">Culture</option><option value="COMMUNAUTE">Communauté</option>
+</select></label>
+<label class="d3-field" for="d3Titre">Titre
+<input id="d3Titre" name="titre" maxlength="255" required autocomplete="off" placeholder="Ex. Rencontre associative à Bordeaux"></label>
+<label class="d3-field" for="d3Contenu">Contenu
+<textarea id="d3Contenu" name="contenu" required maxlength="20000" placeholder="Indiquez le message, le lieu, la date et la source si cela est pertinent"></textarea></label>
+<p class="d3-note">Audience de lecture : générale (TOUS). Aucun média, adresse personnelle, ciblage automatique ou publicité payante dans cette tranche. N'utilisez que des données fictives pour la recette.</p>
+<button class="d3-cta" id="d3Submit" type="submit" disabled>Créer la publication</button>
+</form>
+<p id="d3Status" class="d3-status" role="status" aria-live="polite">Vérification des autorisations…</p>
+<div id="d3Links" class="d3-links" hidden><a id="d3Geo" href="#">Définir la zone de notification →</a>
+<a id="d3Diffusion" href="#">Soumettre au Bureau →</a></div>
+</section>
+</main><script src="/auth-client.js"></script><script defer src="/diaspora-creer-publication.js?v=d3"></script>
+</body></html>

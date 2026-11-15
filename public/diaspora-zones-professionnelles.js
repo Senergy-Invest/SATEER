@@ -33,7 +33,10 @@
         if(!eligible){card.append(node('p','Ciblage figé : publication déjà soumise, traitée ou non éligible.'));pubs.append(card);continue;}
         const actions=node('div');actions.className='g-actions';
         for(const [label,remove] of [['Affecter la zone sélectionnée',false],['Retirer le ciblage',true]]){
-          const button=node('button',label);button.type='button';if(remove)button.className='secondary';
+          const same=!remove&&selectedArea&&Number(p.geoTerritoryId)===Number(selectedArea.id);
+          const display=remove?label:(same?'Déjà affectée : '+selectedArea.nom:(selectedArea?'Affecter '+selectedArea.nom:label));
+          const button=node('button',display);button.type='button';if(remove)button.className='secondary';
+          if(same)button.disabled=true;
           button.addEventListener('click',async()=>{
             if(!remove&&!selectedArea){status.textContent='Choisir d’abord une zone dans la recherche.';return;}
             button.disabled=true;
@@ -61,7 +64,7 @@
         const card=node('div');card.className='g-item';card.append(node('strong',area.nom+' · '+area.type+' · '+area.pays));
         const actions=node('div');actions.className='g-actions';
         const button=node('button','Choisir cette zone pour une publication');button.type='button';
-        button.addEventListener('click',()=>{selectedArea=area;status.textContent='Zone sélectionnée : '+area.nom+'. Choisir maintenant une publication ci-dessous.';});
+        button.addEventListener('click',async()=>{selectedArea=area;await list();status.textContent='Zone sélectionnée : '+area.nom+'. Une zone déjà affectée apparaît en lecture seule.';});
         actions.append(button);card.append(actions);results.append(card);
       }
     }catch(e){status.textContent='Recherche indisponible : '+e.message;}

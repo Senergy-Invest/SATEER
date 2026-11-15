@@ -21,13 +21,14 @@
  }catch(e){status.textContent='Contexte professionnel indisponible : '+e.message;return;}
  async function load(){
   const selected=organisations.find(o=>String(o.id)===orgSelect.value);
-  sourceSection.hidden=true;reviewSection.hidden=true;find('dcDirectorySection').hidden=true;
+  sourceSection.hidden=true;reviewSection.hidden=true;find('dcDirectorySection').hidden=true;find('dcCreateSection').hidden=true;
   find('dcGeoSection').hidden=true;find('dcRoleText').hidden=true;
   if(!selected){status.textContent='Sélectionne une organisation.';return;}
   const base='/api/organisations/'+encodeURIComponent(selected.id)+'/diaspora/';
   const q='?'+new URLSearchParams({tenant});const errors=[];let hasAccess=false;
   try{
    const data=await call(base+'source-publications'+q);hasAccess=true;sourceSection.hidden=false;
+   if(selected.type==='ASSOCIATION'){find('dcCreateSection').hidden=false;find('dcCreateLink').href='/diaspora-creer-publication.html?'+new URLSearchParams({tenant,organisation:String(selected.id)});}
    find('dcGeoSection').hidden=false;
    find('dcGeoLink').href='/diaspora-zones-professionnelles.html?'+new URLSearchParams({tenant,organisation:String(selected.id)});
    const container=find('dcSourceList');container.replaceChildren();
@@ -53,7 +54,7 @@
   if(selected.type==='SATEER')try{
    const data=await call(base+'review-queue'+q);hasAccess=true;reviewSection.hidden=false;
    const container=find('dcReviewList');container.replaceChildren();if(!data.publications.length)container.append(make('p','Aucune publication en attente.','dc-info'));
-   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType+' · Zone notification : '+(p.geoTerritoryName||'Générale')+' · '+(p.sponsorisee?'Sponsorisé · Sponsor : '+p.sponsorNom:'Non sponsorisé'),'dc-meta'),make('p',p.contenu));
+   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Catégorie : '+(p.categorie||'Non renseignée')+' · Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType+' · Zone notification : '+(p.geoTerritoryName||'Générale')+' · '+(p.sponsorisee?'Sponsorisé · Sponsor : '+p.sponsorNom:'Non sponsorisé'),'dc-meta'),make('p',p.contenu));
     const acts=make('div',null,'dc-actions');
     if(p.audienceType==='TOUS'){
       const yes=make('button','Approuver la diffusion');yes.type='button';yes.addEventListener('click',async()=>{

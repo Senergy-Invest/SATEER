@@ -115,6 +115,14 @@ app.use('/api/diaspora', exigerSession, creerRouteLectureDiaspora({
     listerPublications: require('./services-database').listerPublicationsDiasporaPourPersonneDatabase,
     listerMarquages: require('./diaspora-sponsored-service').creerServiceSponsorDiaspora(require('./database')).listerMarquages
 }));
+// Diaspora D3 : creation textuelle associative distincte du formulaire consulaire.
+app.use('/api/organisations',exigerSession,
+  require('./diaspora-creation-http').creerRoutesCreationDiaspora({
+    router:express.Router(),
+    verifierPermission:require('./auth-authorization').verifierPermissionPersonneDatabase,
+    trouverOrganisation:trouverOrganisationParIdEtTenantDatabase,
+    creerPublication:creerPublicationDatabase
+  }));
 // Diaspora D2A — soumission et revue editoriale, controlees par le Core.
 const { creerRoutesBureauDiaspora } = require('./diaspora-bureau-http');
 const { creerServiceBureauDiaspora } = require('./diaspora-bureau-service');
