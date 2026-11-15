@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SATEER Diaspora — Mes zones volontaires</title><link rel="stylesheet" href="/styles.css">
+<style>
+body{font-family:system-ui,sans-serif;background:#f5f7f9;color:#17283a}.g-main{max-width:950px;margin:30px auto 90px;padding:0 20px}.g-head{background:#173d48;color:white;padding:26px;border-radius:17px}.g-head p{color:#eaf3f4;line-height:1.5}.g-section{background:white;border:1px solid #d8e1e6;border-radius:14px;margin-top:23px;padding:24px}.g-item{border:1px solid #e1e8ed;border-radius:9px;padding:14px;margin:10px 0}.g-item strong{display:block;margin-bottom:6px}.g-actions{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}.g-actions button{border:0;padding:10px 14px;border-radius:7px;background:#145765;color:white;cursor:pointer}.g-actions button.secondary{background:#56626c}.g-actions button:disabled{opacity:.6}.g-muted{color:#52636c;font-size:.91rem;line-height:1.55}.g-status{padding:13px;background:#f1f4f6;border-radius:9px}input,select{max-width:100%;padding:10px;margin:6px 0}.g-section[hidden]{display:none!important}
+</style></head><body><main class="g-main"><p><a id="geoBack" href="/index.html">← Retour à Diaspora</a></p>
+<header class="g-head"><small>SATEER · DIASPORA · CONSENTEMENT</small><h1>Mes zones d’intérêt</h1>
+<p>Choisis volontairement les villes ou territoires pour lesquels tu veux être alerté. Aucune géolocalisation de ton téléphone, aucune collecte d’adresse. La correspondance est exacte : Bordeaux ne signifie pas automatiquement tout le département.</p></header>
+<section class="g-section"><h2>Rechercher un territoire</h2><label for="geoSearch">Ville, département ou région</label>
+<div class="g-actions"><input id="geoSearch" type="search" maxlength="60" placeholder="Ex. Bordeaux"><button id="geoFind" type="button">Rechercher</button></div>
+<p id="geoStatus" class="g-status" role="status" aria-live="polite">Vérification de la session…</p><div id="geoResults"></div></section>
+<section class="g-section"><h2>Mes zones choisies</h2><p class="g-muted">Ces préférences servent à filtrer les notifications de publications géographiquement ciblées. Les abonnements aux thèmes et associations restent nécessaires pour recevoir une alerte.</p>
+<div id="geoPrefs"></div></section>
+<section class="g-section" id="geoProSection" hidden><h2>Préparer la zone d’une publication</h2><p class="g-muted">Une publication textuelle générale peut préciser une zone de notification avant sa soumission au Bureau SATEER. La zone devient immuable dès la soumission et reste visible lors de la revue.</p>
+<label for="geoOrga">Organisation émettrice</label><select id="geoOrga"><option value="">Choisir une organisation</option></select><p id="geoProStatus" class="g-muted"></p><div id="geoPublications"></div></section>
+</main><script src="/auth-client.js"></script><script src="/diaspora-geographie.js?v=d2bb" defer></script></body></html>

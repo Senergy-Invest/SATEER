@@ -23,8 +23,18 @@ async function notifierAbonnesDiaspora(client,publicationId){
     FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
     JOIN tenants t ON t.id=p.tenant_id AND t.actif=TRUE
     JOIN diaspora_subscriptions s ON s.tenant_id=t.id AND s.actif=TRUE
+    LEFT JOIN diaspora_publication_geo_targets geo_target
+      ON geo_target.publication_id=p.id AND geo_target.tenant_id=p.tenant_id
+         AND geo_target.organisation_id=p.organisation_id
     WHERE p.id=$1 AND p.statut='PUBLIEE' AND p.statut_diffusion_diaspora='DIFFUSEE'
       AND p.audience_type='TOUS'
+      -- Une zone configurée exige un opt-in géographique exact.
+      -- Aucun suivi implicite par localisation réelle ou adresse personnelle.
+      AND (geo_target.publication_id IS NULL OR EXISTS (
+        SELECT 1 FROM diaspora_geo_preferences gp
+        JOIN territories area ON area.id=gp.territory_id AND area.actif=TRUE
+        WHERE gp.tenant_id=p.tenant_id AND gp.personne_id=s.personne_id
+          AND gp.actif=TRUE AND gp.territory_id=geo_target.territory_id))
       AND (o.type<>'ASSOCIATION' OR EXISTS(
         SELECT 1 FROM diaspora_association_directory d
         WHERE d.tenant_id=p.tenant_id AND d.organisation_id=o.id AND d.statut='VERIFIEE'))

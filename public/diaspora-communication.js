@@ -5,6 +5,7 @@
  const param=new URLSearchParams(location.search),tenant=param.get('tenant');
  if(!tenant || !/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant)) {status.textContent='Tenant invalide : ouvrez cette page depuis Diaspora.';return;}
  find('dcDiasporaLink').href='/diaspora.html?'+new URLSearchParams({tenant});
+ find('dcGeoLink').href='/diaspora-geographie.html?'+new URLSearchParams({tenant});
  const make=(tag,txt,cls)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!=null)x.textContent=String(txt);return x;};
  const call=async(url,options={})=>{const response=await fetch(url,{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json', 'Content-Type':'application/json'},...options});
   const body=await response.json().catch(()=>({}));if(!response.ok)throw Error(body.statut||('HTTP '+response.status));return body;};
@@ -39,7 +40,7 @@
   if(selected.type==='SATEER')try{
    const data=await call(base+'review-queue'+q);hasAccess=true;reviewSection.hidden=false;
    const container=find('dcReviewList');container.replaceChildren();if(!data.publications.length)container.append(make('p','Aucune publication en attente.','dc-info'));
-   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType,'dc-meta'),make('p',p.contenu));
+   for(const p of data.publications){const card=make('article',null,'dc-card');card.append(make('strong',p.titre),make('p','Source : '+p.organisation+' · '+p.organisationType+' · Audience : '+p.audienceType+' · Zone notification : '+(p.geoTerritoryName||'Générale'),'dc-meta'),make('p',p.contenu));
     const acts=make('div',null,'dc-actions');
     if(p.audienceType==='TOUS'){
       const yes=make('button','Approuver la diffusion');yes.type='button';yes.addEventListener('click',async()=>{

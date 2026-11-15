@@ -81,9 +81,17 @@ function creerServiceOptinDiaspora({executerRequete,obtenirClientDatabase}) {
       SELECT p.id,p.titre,p.contenu,p.categorie,p.priorite,p.date_diffusion_diaspora,
         o.nom AS organisation,o.type AS organisation_type
       FROM publications p JOIN organisations o ON o.id=p.organisation_id AND o.tenant_id=p.tenant_id
+      LEFT JOIN diaspora_publication_geo_targets geo_target
+        ON geo_target.publication_id=p.id AND geo_target.tenant_id=p.tenant_id
+           AND geo_target.organisation_id=p.organisation_id
       JOIN tenants t ON t.id=p.tenant_id AND t.actif=TRUE
       WHERE t.code=$2 AND p.statut='PUBLIEE' AND p.statut_diffusion_diaspora='DIFFUSEE'
         AND p.audience_type='TOUS'
+        AND (geo_target.publication_id IS NULL OR EXISTS (
+          SELECT 1 FROM diaspora_geo_preferences gp
+          JOIN territories area ON area.id=gp.territory_id AND area.actif=TRUE
+          WHERE gp.tenant_id=p.tenant_id AND gp.personne_id=$1::integer
+            AND gp.actif=TRUE AND gp.territory_id=geo_target.territory_id))
         AND (o.type<>'ASSOCIATION' OR EXISTS(
           SELECT 1 FROM diaspora_association_directory d
           WHERE d.tenant_id=t.id AND d.organisation_id=o.id AND d.statut='VERIFIEE'))

@@ -54,7 +54,9 @@ function creerRoutesBureauDiaspora({router, verifierPermission, trouverOrganisat
     return res.json({statut:'DIASPORA_SOURCE_CHARGEE',publications:p.map(x=>({
       id:Number(x.id),titre:String(x.titre||''),categorie:String(x.categorie||''),
       audienceType:String(x.audience_type||''),etatDiffusion:String(x.statut_diffusion_diaspora||''),
-      datePublication:x.date_publication||null,mediaCount:Number(x.media_count||0)}))});
+      datePublication:x.date_publication||null,mediaCount:Number(x.media_count||0),
+      geoTerritoryId:x.geo_territory_id==null?null:Number(x.geo_territory_id),
+      geoTerritoryName:x.geo_territory_nom||null}))});
   }));
   router.post('/:organisationId/diaspora/submit/:publicationId',envelope(async(req,res)=>{
     const c=await contexte(req,res);if(c.fail)return;
@@ -70,7 +72,9 @@ function creerRoutesBureauDiaspora({router, verifierPermission, trouverOrganisat
       id:Number(x.id),titre:String(x.titre||'').slice(0,255),contenu:String(x.contenu||'').slice(0,20000),
       categorie:String(x.categorie||''),audienceType:String(x.audience_type||''),
       organisation:String(x.organisation||''),organisationType:String(x.organisation_type||''),
-      dateSoumission:x.date_soumission_diaspora||null}))});
+      dateSoumission:x.date_soumission_diaspora||null,
+      geoTerritoryId:x.geo_territory_id==null?null:Number(x.geo_territory_id),
+      geoTerritoryName:x.geo_territory_nom||null}))});
   }));
   for(const [mode,verb] of [['APPROVE','approve'],['REJECT','reject']]){
     router.post('/:organisationId/diaspora/'+verb+'/:publicationId',envelope(async(req,res)=>{

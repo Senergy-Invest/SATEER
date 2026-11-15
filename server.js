@@ -137,6 +137,18 @@ app.use('/api/organisations', exigerSession,
         verifierPermission:require('./auth-authorization').verifierPermissionPersonneDatabase,
         trouverOrganisation:trouverOrganisationParIdEtTenantDatabase
     }));
+// Diaspora D2B-B : zones explicitement choisies, jamais de geolocalisation implicite.
+const {creerServiceGeoDiaspora}=require('./diaspora-geo-service');
+const geoDiaspora=creerServiceGeoDiaspora(require('./database'));
+const {creerRoutesPreferencesGeo,creerRoutesCiblageGeo}=require('./diaspora-geo-http');
+app.use('/api/diaspora',exigerSession,creerRoutesPreferencesGeo({
+  router:express.Router(),service:geoDiaspora,contexteCitoyen:optinDiaspora.contexteCitoyen
+}));
+app.use('/api/organisations',exigerSession,creerRoutesCiblageGeo({
+  router:express.Router(),service:geoDiaspora,
+  verifierPermission:require('./auth-authorization').verifierPermissionPersonneDatabase,
+  trouverOrganisation:trouverOrganisationParIdEtTenantDatabase
+}));
 // A15 — suivi de toutes les demandes propres à la session (Consulat/Ambassade).
 // Aucun ID de citoyen fourni par le navigateur.
 const { creerRouteMesDemandes } = require('./citizen-cases-http');

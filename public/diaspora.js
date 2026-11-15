@@ -12,6 +12,8 @@
   try {
     const bureauLink = document.getElementById('diasporaBureauLink');
     if (bureauLink) bureauLink.href = '/diaspora-communication.html?' + new URLSearchParams({tenant});
+    const geoLink = document.getElementById('diasporaGeoLink');
+    if (geoLink) geoLink.href = '/diaspora-geographie.html?' + new URLSearchParams({tenant});
     const context = await window.SATEER_CONTEXT_READY;
     const organisations = Array.isArray(context?.organisations) ? context.organisations : [];
     if (!organisations.some(o => o && o.tenant_code === tenant)) {
