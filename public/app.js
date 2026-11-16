@@ -344,6 +344,7 @@ function carteExperienceNonRattachee(type) {
 
 async function chargerMonSateer() {
     const experiencesContainer = document.getElementById("experiencesContainer");
+    const communityContainer = document.getElementById("communityExperiencesContainer");
     try {
         const contexte = await window.SATEER_CONTEXT_READY;
         const organisations = Array.isArray(contexte.organisations) ? contexte.organisations : [];
@@ -353,6 +354,7 @@ async function chargerMonSateer() {
         const consulats = organisations.filter(org => org.type === "CONSULAT" && org.id != null);
         const apercus = [];
         experiencesContainer.replaceChildren();
+        communityContainer.replaceChildren();
         for (const org of consulats) {
             const tenant = org.tenant_code || contexte.tenantCode;
             if (!tenant) continue;
@@ -387,7 +389,11 @@ async function chargerMonSateer() {
             const ouvrir = element("a", "sx-open-consulat", "Découvrir Diaspora →");
             ouvrir.href = "/diaspora.html?" + new URLSearchParams({tenant});
             carte.append(ouvrir);
-            experiencesContainer.append(carte);
+            communityContainer.append(carte);
+        }
+        if (!communityContainer.children.length) {
+            communityContainer.append(element("div", "sx-empty-experience",
+                "Aucune expérience communautaire activée pour ce compte pour le moment."));
         }
         // Ministère : expérience indépendante et seulement visible si rattachée.
         // La carte n'attribue aucune permission; l'API A4b demeure seul arbitre.

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/sateer-citizen-home.css">
   <link rel="stylesheet" href="/sateer-identity.css">
   <link rel="stylesheet" href="/mon-sateer-deux-experiences.css">
+  <link rel="stylesheet" href="/mon-sateer-groupes.css?v=p1">
 </head>
 <body class="sateer-experience sateer-home">
   <div class="app">
@@ -35,16 +36,43 @@
         <div class="sx-identity-entry"><a href="/mon-identite.html">Mon identité · Voir et compléter mon profil →</a></div>
       </section>
 
+      <!-- SATEER_PRESENTATION_P1_GROUPES : le regroupement ne confère aucun accès -->
       <section class="sx-experience-section" aria-labelledby="experiencesTitle">
-        <div class="section-header">
-          <div>
-            <p class="eyebrow">MES EXPÉRIENCES</p>
-            <h2 id="experiencesTitle">Vos institutions, au même endroit</h2>
-            <p class="sx-section-intro">Consultez un résumé ici. Ouvrez une expérience pour retrouver toutes ses informations et démarches.</p>
-          </div>
-        </div>
-        <div class="experiences-grid" id="experiencesContainer" aria-live="polite">
-          <div class="empty">Chargement de vos expériences…</div>
+        <div class="section-header"><div>
+          <p class="eyebrow">MES EXPÉRIENCES</p>
+          <h2 id="experiencesTitle">Vos services, organisés par univers</h2>
+          <p class="sx-section-intro">Un seul espace personnel, plusieurs domaines. Chaque expérience reste accessible selon les autorisations de votre compte.</p>
+        </div></div>
+        <div class="sx-group-shell">
+          <section class="sx-group sx-group-institution" aria-labelledby="groupInstitutionsTitle">
+            <div class="sx-group-head"><div class="sx-group-icon" aria-hidden="true">▣</div><div>
+              <h3 id="groupInstitutionsTitle">Institutions &amp; services publics</h3>
+              <p>Votre Consulat, votre Ambassade et les autres institutions auxquelles votre compte est rattaché.</p>
+            </div></div>
+            <div class="experiences-grid" id="experiencesContainer" aria-live="polite">
+              <div class="empty">Chargement des expériences institutionnelles…</div>
+            </div>
+          </section>
+          <section class="sx-group sx-group-community" aria-labelledby="groupCommunityTitle">
+            <div class="sx-group-head"><div class="sx-group-icon" aria-hidden="true">✦</div><div>
+              <h3 id="groupCommunityTitle">Communautés &amp; territoires</h3>
+              <p>Associations, informations Diaspora et futures expériences territoriales activées.</p>
+            </div></div>
+            <div class="experiences-grid" id="communityExperiencesContainer" aria-live="polite">
+              <div class="empty">Chargement des expériences communautaires…</div>
+            </div>
+          </section>
+          <section class="sx-group sx-group-future" aria-labelledby="groupFutureTitle">
+            <div class="sx-group-head"><div class="sx-group-icon" aria-hidden="true">↗</div><div>
+              <h3 id="groupFutureTitle">Services spécialisés · À découvrir</h3>
+              <p>Des capacités qui rejoindront progressivement la plateforme, après validation.</p>
+            </div></div>
+            <article class="sx-coming-card" aria-label="SATEER Energy, en préparation, accès indisponible">
+              <span class="sx-coming-status">En préparation · Sans accès actif</span>
+              <strong>SATEER Energy / Sunu Courant</strong>
+              <p>Un futur parcours énergétique : pré-diagnostic, efficacité, solaire et suivi des consommations. Aucun service ni droit supplémentaire n'est activé ici.</p>
+            </article>
+          </section>
         </div>
       </section>
 

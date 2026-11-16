@@ -1,0 +1,21 @@
+/* SATEER — Mon SATEER P1, uniquement des groupes de presentation.
+ * Les cartes, rattachements et droits métier demeurent générés par app.js et l'API.
+ */
+body.sateer-home .sx-group-shell{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+body.sateer-home .sx-group{border:1px solid #dbe5ec;border-radius:23px;padding:clamp(18px,2.7vw,27px);background:#ffffff;box-shadow:0 8px 27px #183a5510;min-width:0}
+body.sateer-home .sx-group-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+body.sateer-home .sx-group-icon{background:#eaf3f8;color:#244e69;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:24px;flex:none}
+body.sateer-home .sx-group h3{font-size:clamp(18px,2.3vw,24px);line-height:1.25;color:#1d3a50;letter-spacing:-.03em;margin:0 0 5px}
+body.sateer-home .sx-group-head p{font-size:13px;color:#5d7382;margin:0;line-height:1.5}
+body.sateer-home .sx-group .experiences-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+body.sateer-home .sx-group-community{background:#faf8fe;border-color:#e1d4ef}
+body.sateer-home .sx-group-community .sx-group-icon{background:#ece4f9;color:#583c88}
+body.sateer-home .sx-group-community .sx-consulat-card{border-left:5px solid #6b4a99}
+body.sateer-home .sx-group-future{background:#fafaf8;border-color:#e5e6e1}
+body.sateer-home .sx-group-future .sx-group-icon{background:#edf4eb;color:#376f53}
+body.sateer-home .sx-coming-card{padding:19px 22px;border:1px dashed #bacdc5;border-radius:15px;background:#fff;max-width:650px}
+body.sateer-home .sx-coming-card strong{display:block;color:#284a40;font-size:17px;margin-bottom:5px}
+body.sateer-home .sx-coming-card p{color:#5b736b;font-size:13px;margin:0;line-height:1.65}
+body.sateer-home .sx-coming-status{display:inline-block;background:#fff3e6;border:1px solid #e6c9a2;color:#855824;border-radius:30px;padding:3px 9px;margin-bottom:9px;font-size:11px;font-weight:800}
+body.sateer-home .sx-home-main{max-width:1110px}
+@media(max-width:650px){body.sateer-home .sx-group{padding:17px}body.sateer-home .sx-group-head{gap:10px}body.sateer-home .sx-group-icon{width:40px;height:40px}}
