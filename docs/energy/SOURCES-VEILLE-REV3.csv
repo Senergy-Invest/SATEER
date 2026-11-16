@@ -1,0 +1,13 @@
+id;zone;organisme;type;url_officielle;acces_constate;nature;etat_connecteur;usage_cible
+SRC01;SENEGAL;AEME;POLITIQUE_PROGRAMME;https://www.aeme.sn/;PUBLIC_WEB;INSTITUTION;A_VERIFIER_API_RSS;actualites, PIT, efficacité, campagnes
+SRC02;SENEGAL;AEME;ACTUALITES;https://www.aeme.sn/category/actualites/;PUBLIC_WEB;INSTITUTION;A_VERIFIER_API_RSS;publications datées
+SRC10;SENEGAL;ASER;PROGRAMMES_PROJETS;https://aser.sn/;PUBLIC_WEB;INSTITUTION;A_VERIFIER_API_RSS;stratégie et programmes électrification rurale
+SRC11;SENEGAL;ANER;PROGRAMMES_RENOUVELABLES;https://www.aner.sn/;PUBLIC_WEB;INSTITUTION;A_VERIFIER_API_RSS;solaire, installations, actualités, initiatives
+SRC12;SENEGAL;MINISTERE_ENERGIE;POLITIQUE_PUBLIQUE;https://energie-mines.gouv.sn/;PUBLIC_WEB;MINISTERE;A_VERIFIER_API_RSS;politiques et cadre institutionnel
+SRC03;SENEGAL;SENELEC;MARCHES;https://www.senelec.sn/marches/passation/?tab=appels;PUBLIC_WEB;INSTITUTION;A_VERIFIER_API_RSS;appels et reports, dates limites
+SRC04;SENEGAL;ARCOP;COMMANDE_PUBLIQUE;https://www.armp.sn/;PUBLIC_WEB;REGULATEUR;A_VERIFIER_API_RSS;portail APPEL et cadre commande publique
+SRC05;MULTIPAYS;BAD;MARCHES_PROJETS;https://www.afdb.org/en/projects-and-operations/procurement;PUBLIC_WEB;BAILLEUR;A_VERIFIER_API_RSS;passation projets régionaux, avis et RSS annoncé
+SRC06;MULTIPAYS;BAD;MARCHES_CORPORATE;https://www.afdb.org/fr/about-us/corporate-procurement/procurement-notices/current-solicitations;PUBLIC_WEB;BAILLEUR;A_VERIFIER_API_RSS;sollicitations de la Banque, distinctes des marchés de projets
+SRC07;MONDIAL;UNGM;APPELS_OFFRES;https://www.ungm.org/public/Notice;PUBLIC_WEB;NATIONS_UNIES;A_VERIFIER_CONDITIONS;"possibilités de recherche publique ; alertes avancées sous conditions"
+SRC08;MONDIAL;GCF;FINANCEMENT_CLIMAT;https://www.greenclimate.fund/access-funding;PUBLIC_WEB;FONDS_CLIMAT;A_VERIFIER_ELIGIBILITE;cadres, voies d’accès, projets éligibles via filières encadrées
+SRC09;MONDIAL;GCF;FONDS_RFP;https://www.greenclimate.fund/access-funding/other-funding-options;PUBLIC_WEB;FONDS_CLIMAT;A_VERIFIER_ELIGIBILITE;RFP thématiques et programmes, via interlocuteurs admissibles

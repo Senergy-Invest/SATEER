@@ -1,0 +1,39 @@
+ID;Sujet;Statut;Origine;Jalon
+D01;Plateforme Core unique / Energy domaine fondateur;CONFIRME;REV1 + 16/11;Socle, séparer expériences et moteurs
+D02;Dossier énergétique unique, provenance, qualité, versions;CONFIRME;REV1 + historique;EnergyCase à partir MVP01
+D03;SUNU Courant multi-profils / compteurs / sans compteur;CONFIRME;Historique + REV1;MVP01 puis 03
+D04;Inventaire participatif + efficacité avant solaire;CONFIRME;Historique + REV1;MVP02 puis 05
+D05;BEI, validation ingénieur, simulations isolées;CONFIRME;Historique + REV1;MVP07
+D06;Monitoring autonome, baseline et M&V;CONFIRME;Historique + REV1;MVP12 avec contrats prévus tôt
+D07;AEME PIT/campagnes/bâtiments publics prioritaire;CONFIRME;Historique + 16/11;MVP05-06
+D08;ANER ASER SENELEC espaces institutionnels propres;CONFIRME;Historique + REV1;MVP09-10
+D09;Energy technique vs Invest financier, handoff explicite;CONFIRME;REV1;MVP13 et contrats initiaux
+D10;SATEER Communication unique, Workflows partagés;DECISION_ARCHITECTURE;Historique et réponse à question 16/11;Sans deuxième communication Energy
+D11;Data Operations interne + Data Quality moteur distinct;CONFIRME;Historique et demande 16/11;MVP04 avant campagnes AEME
+D12;SATEER Academy et Éducation multi-niveaux;CONFIRME_PRINCIPE;Historique + demande 16/11;"MVP08; modalités âge à définir"
+D13;Réutiliser Engineering/Simulation par Learning sandbox;DECISION_ARCHITECTURE;16/11 demande isolation + recommandation;Sandbox et cas synthétiques
+D14;Projet réalisé vers cas pédagogique après autorisation;CONFIRME_PRINCIPE;Historique + demande 16/11;Droits/licence/anonymisation à préciser
+D15;Institutions autonomes dans décisions, SATEER prépare;CONFIRME;Historique;Confidentialité/rôles
+D16;Local+GitHub SHA vérifiés, rapport Finder, reprise Codex;CONFIRME;16/11;À chaque MVP
+A01;Contrat précis Data Operations/Institution;DETAIL_A_SPECIFIER;Conception;MVP04/06
+A02;Conventions et intégrations externes institutions;DETAIL_A_SPECIFIER;Conception;Jamais supposer partenariat
+A03;Politique mineurs, licences des projets pédagogiques;DETAIL_A_SPECIFIER;Conception;Avant MVP08
+A04;Handoff et conformité Invest;DETAIL_A_SPECIFIER;Conception;Avant MVP13
+A05;Catalogues tarifs, normes, sources scientifiques;DETAIL_A_SPECIFIER;Conception;Dès le moteur concerné
+D17;Passeport universel des équipements, historique durable et transferts;CONFIRME_PRINCIPE;Utilisateur 16/11 + historique maintenance;MVP02A puis 11
+D18;Maintenance industrielle préventive/corrective et GMAO modulaire;CONFIRME_PRINCIPE;Utilisateur 16/11 + historique;MVP11A
+D19;Diagnostic automobile et flotte comme spécialisation Equipment;CONFIRME_PRINCIPE;Utilisateur 16/11 + historique;MVP11B
+D20;Veille continue politiques publiques énergie et programmes institutionnels;CONFIRME_PRINCIPE;Utilisateur 16/11;MVP04B puis 12B
+D21;Page quotidienne et synthèse hebdomadaire aides/AO/projets/fonds;CONFIRME_PRINCIPE;Utilisateur 16/11;MVP04B et 12B
+D22;Agent opportunités compare fonctions attestées et projets réalisés autorisés;CONFIRME_PRINCIPE;Utilisateur 16/11;MVP06B
+D23;Agent propose aussi fonctionnalités manquantes / opportunités invisibles;CONFIRME_PRINCIPE;Utilisateur 16/11;MVP07B
+D24;Veille transverse, réutilise Communication et Workflows uniques;DECISION_ARCHITECTURE;REV2 + besoin utilisateur 16/11;MVP04B
+D25;Registre des capacités livrées comme preuve de correspondance;DECISION_ARCHITECTURE;Proposition REV3 de fiabilité;MVP06B
+D26;Séparation Energy (technique) et Invest (finance) y compris fonds verts;CONFIRME;REV1-REV2 + utilisateur 16/11;MVP13B
+D27;Réutilisation de projets réalisés pour cas Academy/Éducation après autorisation;CONFIRME_PRINCIPE;REV2 confirmé;MVP08-08B
+A06;Durées de conservation légalement autorisées et backup/restauration;DETAIL_A_SPECIFIER;Protection métier et conformité;Avant MVP02A production
+A07;Interfaces OBD et accès constructeur, sécurité, consentement véhicules;DETAIL_A_SPECIFIER;Conformité et sûreté;Avant MVP11B
+A08;Périmètre des sources et fréquence par fournisseur, conditions d’accès;DETAIL_A_SPECIFIER;Dépendances des sources;Avant MVP04B
+A09;Score matching et critères d’admissibilité fonds/marchés;DETAIL_A_SPECIFIER;Revue stratégique humaine;Avant MVP06B
+A10;Gouvernance Portfolio/Capabilities et autorisations d’analyse des projets;DETAIL_A_SPECIFIER;Isolation Core;Avant MVP06B
+A11;Ordonnanceur persistant, gestion des erreurs, fraîcheur, alertes;DETAIL_A_SPECIFIER;Disponibilité exploitation;Avant MVP12B
