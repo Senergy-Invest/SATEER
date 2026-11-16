@@ -342,6 +342,49 @@ function carteExperienceNonRattachee(type) {
     return carte;
 }
 
+// ENERGY_MVP01_F : Mon SATEER présente uniquement un accès Energy réellement autorisé
+// par la route existante /api/energy/cases, protégée par la session, le tenant
+// épinglé et l'appartenance Core. Aucun nouveau droit n'est créé côté navigateur.
+async function chargerTenantsEnergyAutorises(organisations, contexte) {
+    const candidats = [...new Set((organisations || []).map(org =>
+        org && org.id != null ? (org.tenant_code || contexte.tenantCode) : null
+    ).filter(tenant => typeof tenant === "string" && /^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant)))];
+    const autorises = new Set();
+    for (const tenant of candidats) {
+        try {
+            const response = await fetch("/api/energy/cases?tenant=" + encodeURIComponent(tenant), {
+                credentials: "same-origin", cache: "no-store",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.status !== 200) continue;
+            const data = await response.json();
+            if (data && data.statut === "ENERGY_CASES_PERSONNELS") autorises.add(tenant);
+        } catch (erreur) {
+            // Indisponibilité d'Energy : ne jamais fabriquer de carte active.
+            console.warn("Vérification d'accès Energy indisponible :", erreur);
+        }
+    }
+    return autorises;
+}
+
+function afficherExperienceEnergyActive(tenant) {
+    const carte = document.getElementById("energyExperienceCard");
+    const statut = document.getElementById("energyExperienceStatus");
+    const description = document.getElementById("energyExperienceDescription");
+    if (!carte || !statut || !description) return;
+    statut.textContent = "Accessible · recette locale";
+    description.textContent = "Exprimer un besoin énergétique et retrouver ses dossiers privés. Le diagnostic, le solaire et le monitoring seront ajoutés progressivement.";
+    carte.setAttribute("aria-label", "SUNU Courant disponible pour cette session de recette");
+    const groupe = document.getElementById("groupFutureTitle");
+    if (groupe) groupe.textContent = "Services spécialisés";
+    if (!document.getElementById("energyExperienceLink")) {
+        const lien = element("a", "sx-open-consulat", "Ouvrir SUNU Courant →");
+        lien.id = "energyExperienceLink";
+        lien.href = "/sunu-courant.html?" + new URLSearchParams({ tenant });
+        carte.append(lien);
+    }
+}
+
 async function chargerMonSateer() {
     const experiencesContainer = document.getElementById("experiencesContainer");
     const communityContainer = document.getElementById("communityExperiencesContainer");
@@ -375,11 +418,17 @@ async function chargerMonSateer() {
         // seul rattachement. Un bloc informatif n'est jamais un lien navigable.
         if (!consulats.length) experiencesContainer.append(carteExperienceNonRattachee("CONSULAT"));
         if (!ambassades.length) experiencesContainer.append(carteExperienceNonRattachee("AMBASSADE"));
+        // Activation Energy : validation réelle par l'API Energy, sans droit implicite.
+        const energyTenantsAutorises = await chargerTenantsEnergyAutorises(organisations, contexte);
+        if (energyTenantsAutorises.size) {
+            afficherExperienceEnergyActive(energyTenantsAutorises.values().next().value);
+        }
         // Diaspora D1 : accès personnel pour les tenants où la session possède
         // un rattachement réel. Pas de droit implicite ni de regroupement Univers.
         const diasporaTenants = [...new Set(organisations.map(org =>
             org && org.id != null ? (org.tenant_code || contexte.tenantCode) : null
-        ).filter(code => typeof code === "string" && /^[A-Z][A-Z0-9_-]{0,49}$/.test(code)))];
+        ).filter(code => typeof code === "string" && /^[A-Z][A-Z0-9_-]{0,49}$/.test(code)
+            && !energyTenantsAutorises.has(code)))];
         for (const tenant of diasporaTenants) {
             const carte = element("article", "sx-consulat-card");
             carte.append(element("p", "sx-card-kicker", "EXPÉRIENCE DIASPORA"));
