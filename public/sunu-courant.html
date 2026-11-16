@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SUNU Courant · Mon besoin énergétique · Recette SATEER</title>
+<link rel="stylesheet" href="/sunu-courant.css"></head>
+<body class="energy-app">
+<header><a href="/index.html">← Mon SATEER</a><strong>SATEER · SUNU COURANT</strong><span>RECETTE LOCALE</span></header>
+<main><h1>Exprimer mon besoin énergétique</h1><p class="lead">Un premier dossier privé, sans calcul, diagnostic ou promesse d'économie. Votre dossier n'est pas transmis à une institution ni à un investisseur.</p>
+<section class="panel"><h2>Contexte autorisé</h2><p id="contexte" role="status">Vérification de votre session…</p></section>
+<form id="energyCaseForm" class="panel" hidden>
+<h2>Mon site et mes besoins</h2>
+<label>Profil
+<select name="profil" required><option value="PARTICULIER">Particulier</option><option value="PRO">Professionnel / PME</option><option value="ORGANISATION">Organisation (déclaration personnelle non mandatée)</option></select></label>
+<label>Type de site
+<select name="typeSite" required><option value="LOGEMENT">Logement</option><option value="COMMERCE">Commerce</option><option value="PME">PME / entreprise</option><option value="BATIMENT_PUBLIC">Bâtiment public (besoin personnel à qualifier)</option><option value="INDUSTRIE">Installation industrielle</option><option value="EXPLOITATION_AGRICOLE">Exploitation agricole</option><option value="AUTRE">Autre</option></select></label>
+<label>Nom indicatif du site <input name="nomSite" maxlength="120" placeholder="Ex. Mon logement" required></label>
+<label>Pays (code ISO à 2 lettres) <input name="pays" maxlength="2" pattern="[A-Z]{2}" value="SN" required></label>
+<label>Alimentation actuelle <select name="alimentation"><option value="RESEAU_PREPAIEMENT">Réseau prépayé (ex. Woyofal)</option><option value="RESEAU_POSTPAIEMENT">Réseau postpayé</option><option value="SOLAIRE_AUTONOME">Solaire autonome</option><option value="GROUPE">Groupe électrogène</option><option value="MINIRESEAU">Mini-réseau</option><option value="HYBRIDE">Hybride</option><option value="SANS_ALIMENTATION">Sans alimentation</option><option value="INCONNUE">Je ne sais pas</option></select></label>
+<label>Présence d'un compteur <select name="compteur"><option value="INCONNU">Je ne sais pas</option><option value="OUI">Oui</option><option value="NON">Non</option></select></label>
+<fieldset><legend>Qu'aimeriez-vous améliorer ? (1 à 6 choix)</legend>
+<label><input type="checkbox" name="besoins" value="FACTURE"> Facture / coût</label><label><input type="checkbox" name="besoins" value="COUPURES"> Coupures</label><label><input type="checkbox" name="besoins" value="CONFORT"> Confort thermique</label><label><input type="checkbox" name="besoins" value="FROID"> Froid / climatisation</label><label><input type="checkbox" name="besoins" value="POMPAGE"> Pompage</label><label><input type="checkbox" name="besoins" value="EFFICACITE"> Réduction de consommation</label><label><input type="checkbox" name="besoins" value="NOUVELLE_INSTALLATION"> Nouvelle installation</label><label><input type="checkbox" name="besoins" value="SOLAIRE"> Solaire</label><label><input type="checkbox" name="besoins" value="AUTRE"> Autre</label>
+</fieldset>
+<label>Quelques précisions (facultatif, sans nom, adresse ni numéro de compteur)<textarea name="description" maxlength="1200" rows="4" placeholder="Ex. Coupures fréquentes en soirée"></textarea></label>
+<label class="consent"><input type="checkbox" name="consentement" required> Je confirme l'enregistrement de ces informations dans la base locale de recette. Aucun partage externe n'est autorisé.</label>
+<button id="sendCase" type="submit">Enregistrer mon dossier privé</button><p id="message" role="status"></p>
+</form>
+<section class="panel" id="liste"><h2>Mes dossiers</h2><p id="listeStatut">Aucun chargement lancé.</p><ul id="cases"></ul></section>
+</main>
+<script src="/auth-client.js" defer></script><script src="/sunu-courant.js" defer></script>
+</body></html>

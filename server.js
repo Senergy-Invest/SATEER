@@ -179,6 +179,21 @@ app.use('/api/citizen', exigerSession, creerRouteMesDemandes({
     trouverOrganisation: trouverOrganisationParIdEtTenantDatabase,
     listerDemandes: listerDemandesPersonneDatabase
 }));
+// SUNU Courant MVP01 — API privée de recette, désactivée par défaut.
+// Aucune relation institutionnelle ou privilège ne provient d'un profil déclaré.
+if (process.env.PGDATABASE === 'sateer_test' && process.env.SATEER_ENABLE_ENERGY_MVP01 === '1') {
+    const {creerEnergyCaseRouter} = require('./energy/energy-case-http');
+    const {creerEnergyCaseStore} = require('./energy/energy-case-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy', exigerSession, creerEnergyCaseRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyCaseStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
 // A2 : publications Ambassade via le service Communication commun, en lecture seule.
