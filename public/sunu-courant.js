@@ -20,7 +20,9 @@
   try{
    const resp=await fetch('/api/energy/cases?tenant='+encodeURIComponent(tenant),{credentials:'same-origin',cache:'no-store'});
    const data=await resp.json();if(!resp.ok)throw new Error(data.statut||'HTTP '+resp.status);
-   for(const item of data.cases||[]){const li=document.createElement('li');li.textContent=item.nomSite+' — '+item.typeSite+' — '+item.statut+' · '+new Date(item.dateCreation).toLocaleString('fr-FR');liste.append(li);}
+   for(const item of data.cases||[]){const li=document.createElement('li');li.textContent=item.nomSite+' — '+item.typeSite+' — '+item.statut+' · '+new Date(item.dateCreation).toLocaleString('fr-FR');// MVP02-A : lien vers inventaire privé du dossier EnergyCase.
+   const lien=document.createElement('a');lien.href='/inventaire-energie.html?'+new URLSearchParams({tenant,case:item.id});
+   lien.textContent='Inventorier ce site →';li.append(document.createTextNode(' · '),lien);liste.append(li);}
    listeStatut.textContent=(data.cases||[]).length+' dossier(s) personnels'+(data.autresDisponibles?' (liste limitée aux 50 plus récents)':'');
   }catch(e){listeStatut.textContent='Chargement impossible : '+e.message;}
  }

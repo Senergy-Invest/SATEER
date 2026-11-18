@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#11493f">
+ <title>Mes appareils · SUNU Courant</title>
+ <link rel="stylesheet" href="/inventaire-energie.css?v=ux1">
+</head>
+<body class="energy-inventory">
+ <a href="#contenu" class="skip-link">Aller au contenu</a>
+ <header class="topbar">
+  <a id="retourSunu" href="/index.html" class="back-link">← Retour à SUNU Courant</a>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">✺</span> SATEER <span>ENERGY</span></div>
+  <span class="env-label">RECETTE LOCALE</span>
+ </header>
+ <main id="contenu">
+  <section class="hero" aria-labelledby="titre">
+   <div class="hero-content"><p class="eyebrow"><span class="dot" aria-hidden="true"></span> SUNU COURANT · MES ÉQUIPEMENTS</p>
+    <h1 id="titre">Mon énergie, <em>simplement.</em></h1>
+    <p>Ajoutez les appareils qui comptent pour vous, à votre rythme. Vous pouvez commencer sans connaître leur puissance ni créer de plan de bâtiment.</p>
+    <div class="hero-points"><span>✓ Quelques gestes</span><span>✓ Pas de calcul imposé</span><span>✓ Reprise à tout moment</span></div>
+   </div>
+   <div class="hero-visual" aria-hidden="true"><span class="sun-disc">☀</span><span class="house-icon">⌂</span><span class="energy-bubble bubble-one">⚡</span><span class="energy-bubble bubble-two">✦</span></div>
+  </section>
+
+  <section class="context-strip" aria-labelledby="context-title">
+   <div><p class="eyebrow">MON DOSSIER</p><h2 id="context-title">Votre espace personnel</h2><p id="contexte" role="status" aria-live="polite">Vérification de votre session…</p></div>
+   <button type="button" id="creerSite" class="primary-action" hidden>Commencer mon inventaire <span aria-hidden="true">→</span></button>
+  </section>
+
+  <section id="inventaire" hidden>
+   <div class="overview" aria-labelledby="overview-title">
+    <div><p class="eyebrow">MON INVENTAIRE</p><h2 id="overview-title">Mes appareils</h2><p id="nomSite" class="subtle"></p></div>
+    <div class="count-pill"><strong id="compteurAppareils">0</strong><span>appareils déclarés</span></div>
+   </div>
+   <p id="resume" class="sr-status" role="status" aria-live="polite">Chargement de l'inventaire…</p>
+
+   <section class="add-panel" aria-labelledby="ajoutTitre">
+    <div class="section-heading"><div><p class="eyebrow">ÉTAPE 1 · CHOISIR</p><h2 id="ajoutTitre">Quel appareil souhaitez-vous ajouter ?</h2><p>Choisissez une image. Nous vous demanderons uniquement l'essentiel.</p></div><span class="quiet-pill">À votre rythme</span></div>
+    <div id="categories" class="category-grid" role="group" aria-label="Choix d'un appareil"></div>
+
+    <form id="formEquipement" class="quick-form" hidden novalidate>
+     <div class="quick-form-head"><div><p class="eyebrow">ÉTAPE 2 · CONFIRMER</p><h3 id="titreAppareil">Mon appareil</h3></div><button id="changerCategorie" type="button" class="text-button">Changer</button></div>
+     <div class="field-grid">
+      <label for="nomEquipement">Comment l'appelez-vous ? <input id="nomEquipement" name="nom" type="text" maxlength="120" required autocomplete="off" placeholder="Ex. Mon frigo" /></label>
+      <label for="quantiteEquipement">Combien en avez-vous ? <input id="quantiteEquipement" name="quantite" type="number" min="1" max="10000" step="1" value="1" required inputmode="numeric" /></label>
+     </div>
+     <div class="optional-section"><label for="zoneEquipement">Où se trouve-t-il ? <span class="optional">(facultatif)</span></label><select id="zoneEquipement" name="zoneId"><option value="">Peu importe pour le moment</option></select><p>Si vous ne choisissez rien, SUNU Courant le rangera dans votre espace principal.</p></div>
+     <details id="optionsAvancees" class="details-panel"><summary>Détails techniques facultatifs <span aria-hidden="true">＋</span></summary>
+       <label for="puissanceEquipement">Puissance indiquée sur l'appareil, en watts <span class="optional">(si vous la connaissez)</span><input id="puissanceEquipement" name="puissance" type="number" min="1" max="100000000" step="1" inputmode="numeric" placeholder="Ex. 120" /></label>
+       <p>Vous pouvez laisser vide. Ces informations restent <strong>déclarées</strong>, pas vérifiées.</p>
+     </details>
+     <div class="save-actions"><button type="submit" class="primary-action" id="saveEquipement">Enregistrer mon appareil <span aria-hidden="true">→</span></button><span class="save-note">Aucune photo nécessaire à cette étape.</span></div>
+     <p id="messageEquipement" role="status" aria-live="polite" class="feedback"></p>
+    </form>
+    <p id="messageCategorie" role="status" aria-live="polite" class="feedback"></p>
+   </section>
+
+   <section class="collection" aria-labelledby="collectionTitre">
+    <div class="section-heading"><div><p class="eyebrow">ÉTAPE 3 · RETROUVER</p><h2 id="collectionTitre">Mes équipements enregistrés</h2><p>Vous pouvez revenir compléter votre inventaire plus tard.</p></div></div>
+    <ul id="listeEquipements" class="equipment-grid" aria-live="polite"></ul>
+    <p id="emptyEquipements" class="empty-state">Vous n'avez pas encore ajouté d'appareil. Commencez par une catégorie ci-dessus.</p>
+   </section>
+
+   <details class="spaces-panel" id="espacesAvances"><summary><span aria-hidden="true">▦</span> Organiser par pièces, bâtiments ou ateliers <span class="optional">(facultatif)</span></summary>
+    <p>Pour un logement, cette étape n'est pas nécessaire. Les sites professionnels peuvent organiser leur inventaire plus précisément.</p>
+    <form id="formZone" class="zone-form">
+      <label for="typeZone">Type d'espace<select id="typeZone" name="typeZone" required><option value="BATIMENT">Bâtiment</option><option value="EXTERIEUR">Extérieur</option><option value="ETAGE">Étage</option><option value="PIECE">Pièce</option><option value="ZONE">Zone / atelier</option></select></label>
+      <label for="nomZone">Nom<input id="nomZone" name="nom" maxlength="120" required placeholder="Ex. Salon, Atelier A" /></label>
+      <label for="parentZone">À l'intérieur de<select id="parentZone" name="parentId"><option value="">Racine du site</option></select></label>
+      <button type="submit" class="secondary-action" id="saveZone">Ajouter cet espace</button>
+      <p id="messageZone" role="status" aria-live="polite" class="feedback"></p>
+    </form>
+    <h3>Espaces déjà créés</h3><ul id="listeZones" class="zone-list"></ul>
+   </details>
+
+   <aside class="next-step" aria-label="Fonctions prévues plus tard"><div class="next-icon" aria-hidden="true">▧</div><div><p class="eyebrow">PROCHAINEMENT · PAS ENCORE DISPONIBLE</p><h2>Une photo, un passeport, un QR code</h2><p>Au prochain lot, vous pourrez associer des photos à chaque équipement, retrouver sa fiche avec un QR SATEER et confirmer les informations de son étiquette. Rien n'est scanné ni envoyé aujourd'hui.</p></div></aside>
+  </section>
+  <p class="privacy-note">🔒 Données <strong>déclarées</strong> et privées. Aucun calcul de consommation, aucune étude automatique, aucun partage institutionnel ou financier.</p>
+ </main>
+ <script src="/auth-client.js" defer></script>
+ <script src="/sunu-inventory-ux-model.js?v=ux1" defer></script>
+ <script src="/inventaire-energie.js?v=ux1" defer></script>
+</body>
+</html>

@@ -194,6 +194,22 @@ if (process.env.PGDATABASE === 'sateer_test' && process.env.SATEER_ENABLE_ENERGY
     }));
 }
 
+// MVP02-A : inventaire privé, activation distincte et limitée à la recette.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1') {
+    const {creerEnergyInventoryRouter} = require('./energy/energy-inventory-http');
+    const {creerEnergyInventoryStore} = require('./energy/energy-inventory-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/inventory', exigerSession, creerEnergyInventoryRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyInventoryStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
 // A2 : publications Ambassade via le service Communication commun, en lecture seule.

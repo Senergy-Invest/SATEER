@@ -1,29 +1,42 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SUNU Courant · Mon besoin énergétique · Recette SATEER</title>
-<link rel="stylesheet" href="/sunu-courant.css"></head>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#11493f">
+<title>SUNU Courant · Mon besoin énergétique</title><link rel="stylesheet" href="/sunu-courant.css?v=ux1"></head>
 <body class="energy-app">
-<header><a href="/index.html">← Mon SATEER</a><strong>SATEER · SUNU COURANT</strong><span>RECETTE LOCALE</span></header>
-<main><h1>Exprimer mon besoin énergétique</h1><p class="lead">Un premier dossier privé, sans calcul, diagnostic ou promesse d'économie. Votre dossier n'est pas transmis à une institution ni à un investisseur.</p>
-<section class="panel"><h2>Contexte autorisé</h2><p id="contexte" role="status">Vérification de votre session…</p></section>
-<form id="energyCaseForm" class="panel" hidden>
-<h2>Mon site et mes besoins</h2>
-<label>Profil
-<select name="profil" required><option value="PARTICULIER">Particulier</option><option value="PRO">Professionnel / PME</option><option value="ORGANISATION">Organisation (déclaration personnelle non mandatée)</option></select></label>
-<label>Type de site
-<select name="typeSite" required><option value="LOGEMENT">Logement</option><option value="COMMERCE">Commerce</option><option value="PME">PME / entreprise</option><option value="BATIMENT_PUBLIC">Bâtiment public (besoin personnel à qualifier)</option><option value="INDUSTRIE">Installation industrielle</option><option value="EXPLOITATION_AGRICOLE">Exploitation agricole</option><option value="AUTRE">Autre</option></select></label>
-<label>Nom indicatif du site <input name="nomSite" maxlength="120" placeholder="Ex. Mon logement" required></label>
-<label>Pays (code ISO à 2 lettres) <input name="pays" maxlength="2" pattern="[A-Z]{2}" value="SN" required></label>
-<label>Alimentation actuelle <select name="alimentation"><option value="RESEAU_PREPAIEMENT">Réseau prépayé (ex. Woyofal)</option><option value="RESEAU_POSTPAIEMENT">Réseau postpayé</option><option value="SOLAIRE_AUTONOME">Solaire autonome</option><option value="GROUPE">Groupe électrogène</option><option value="MINIRESEAU">Mini-réseau</option><option value="HYBRIDE">Hybride</option><option value="SANS_ALIMENTATION">Sans alimentation</option><option value="INCONNUE">Je ne sais pas</option></select></label>
-<label>Présence d'un compteur <select name="compteur"><option value="INCONNU">Je ne sais pas</option><option value="OUI">Oui</option><option value="NON">Non</option></select></label>
-<fieldset><legend>Qu'aimeriez-vous améliorer ? (1 à 6 choix)</legend>
-<label><input type="checkbox" name="besoins" value="FACTURE"> Facture / coût</label><label><input type="checkbox" name="besoins" value="COUPURES"> Coupures</label><label><input type="checkbox" name="besoins" value="CONFORT"> Confort thermique</label><label><input type="checkbox" name="besoins" value="FROID"> Froid / climatisation</label><label><input type="checkbox" name="besoins" value="POMPAGE"> Pompage</label><label><input type="checkbox" name="besoins" value="EFFICACITE"> Réduction de consommation</label><label><input type="checkbox" name="besoins" value="NOUVELLE_INSTALLATION"> Nouvelle installation</label><label><input type="checkbox" name="besoins" value="SOLAIRE"> Solaire</label><label><input type="checkbox" name="besoins" value="AUTRE"> Autre</label>
-</fieldset>
-<label>Quelques précisions (facultatif, sans nom, adresse ni numéro de compteur)<textarea name="description" maxlength="1200" rows="4" placeholder="Ex. Coupures fréquentes en soirée"></textarea></label>
-<label class="consent"><input type="checkbox" name="consentement" required> Je confirme l'enregistrement de ces informations dans la base locale de recette. Aucun partage externe n'est autorisé.</label>
-<button id="sendCase" type="submit">Enregistrer mon dossier privé</button><p id="message" role="status"></p>
-</form>
-<section class="panel" id="liste"><h2>Mes dossiers</h2><p id="listeStatut">Aucun chargement lancé.</p><ul id="cases"></ul></section>
-</main>
-<script src="/auth-client.js" defer></script><script src="/sunu-courant.js" defer></script>
-</body></html>
+<a href="#contenu" class="skip-link">Aller au contenu</a>
+<header class="topbar"><a href="/index.html">← Mon SATEER</a><div class="brand"><span class="brand-mark">✺</span> SATEER <span>ENERGY</span></div><span class="environment">RECETTE LOCALE</span></header>
+<main id="contenu">
+<section class="hero" aria-labelledby="hero-title"><div class="hero-copy"><p class="eyebrow">SUNU COURANT · MON ENERGIE</p><h1 id="hero-title">Parlons de votre <em>énergie.</em></h1><p>Une facture trop élevée ? Des coupures ? Envie de solaire ? Dites-nous simplement ce que vous souhaitez améliorer.</p><div class="hero-tags"><span>✓ Des mots simples</span><span>✓ Aucune facture obligatoire</span><span>✓ Un dossier privé</span></div></div><div class="hero-art" aria-hidden="true"><span class="sun">☀</span><span class="spark">⚡</span></div></section>
+<section class="context-strip" aria-labelledby="contextTitle"><div><p class="eyebrow">VOTRE ESPACE PERSONNEL</p><h2 id="contextTitle">Un dossier qui vous appartient</h2><p id="contexte" role="status" aria-live="polite">Vérification de votre session…</p></div><span class="safe-note">🔒 Accès privé</span></section>
+<form id="energyCaseForm" class="energy-form" hidden>
+<section class="panel" aria-labelledby="besoinsTitre"><p class="eyebrow">1 · VOTRE PRIORITÉ</p><h2 id="besoinsTitre">Qu'aimeriez-vous améliorer ?</h2><p class="section-subtitle">Sélectionnez un ou plusieurs objectifs, jusqu'à six. Pas besoin de termes techniques.</p>
+<fieldset class="need-grid"><legend class="sr-only">Vos besoins énergétiques</legend>
+<label class="need-card"><input type="checkbox" name="besoins" value="FACTURE"><span class="need-icon">💶</span><span>Réduire ma facture</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="COUPURES"><span class="need-icon">⚡</span><span>Moins de coupures</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="CONFORT"><span class="need-icon">🌡️</span><span>Plus de confort</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="FROID"><span class="need-icon">❄️</span><span>Froid / climatisation</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="POMPAGE"><span class="need-icon">💧</span><span>Pompage de l'eau</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="EFFICACITE"><span class="need-icon">💡</span><span>Consommer moins</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="NOUVELLE_INSTALLATION"><span class="need-icon">🏠</span><span>Nouvelle installation</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="SOLAIRE"><span class="need-icon">☀️</span><span>Passer au solaire</span></label>
+<label class="need-card"><input type="checkbox" name="besoins" value="AUTRE"><span class="need-icon">➕</span><span>Autre besoin</span></label>
+</fieldset></section>
+<section class="panel" aria-labelledby="siteTitre"><p class="eyebrow">2 · VOTRE LIEU</p><h2 id="siteTitre">Où souhaitez-vous agir ?</h2><p class="section-subtitle">Un nom simple suffit. Les bâtiments, étages et pièces peuvent être renseignés plus tard.</p>
+<div class="field-grid">
+<label>Je réponds en tant que<select name="profil" required><option value="PARTICULIER">Particulier / ménage</option><option value="PRO">Professionnel / PME</option><option value="ORGANISATION">Organisation (déclaration personnelle, sans mandat)</option></select></label>
+<label>Mon type de lieu<select name="typeSite" required><option value="LOGEMENT">Mon logement</option><option value="COMMERCE">Mon commerce</option><option value="PME">Mon entreprise / PME</option><option value="BATIMENT_PUBLIC">Un bâtiment public (déclaration non mandatée)</option><option value="INDUSTRIE">Une installation industrielle</option><option value="EXPLOITATION_AGRICOLE">Une exploitation agricole</option><option value="AUTRE">Autre lieu</option></select></label>
+</div>
+<label class="site-name">Un nom pour retrouver ce dossier<input name="nomSite" maxlength="120" required placeholder="Ex. Maison familiale, Boutique de quartier" autocomplete="off"></label>
+<label class="notes">Quelques précisions <span class="optional">(facultatif)</span><textarea name="description" maxlength="1200" rows="3" placeholder="Ex. Le réfrigérateur est ancien, les coupures sont fréquentes…"></textarea></label>
+<details class="advanced"><summary>Mon alimentation électrique et mon pays <span class="optional">(facultatif)</span></summary>
+<div class="field-grid"><label>Alimentation actuelle<select name="alimentation"><option value="INCONNUE" selected>Je ne sais pas</option><option value="RESEAU_PREPAIEMENT">Réseau prépayé (ex. Woyofal)</option><option value="RESEAU_POSTPAIEMENT">Réseau postpayé</option><option value="SOLAIRE_AUTONOME">Solaire autonome</option><option value="GROUPE">Groupe électrogène</option><option value="MINIRESEAU">Mini-réseau</option><option value="HYBRIDE">Plusieurs sources / hybride</option><option value="SANS_ALIMENTATION">Pas d'alimentation actuellement</option></select></label>
+<label>Présence d'un compteur<select name="compteur"><option value="INCONNU" selected>Je ne sais pas</option><option value="OUI">Oui</option><option value="NON">Non</option></select></label></div>
+<label>Code pays (2 lettres)<input name="pays" maxlength="2" pattern="[A-Z]{2}" value="SN" required aria-describedby="paysAide"></label><p id="paysAide" class="help">« SN » signifie Sénégal. Modifiez-le si votre site est dans un autre pays.</p>
+</details></section>
+<section class="panel save-panel"><p class="eyebrow">3 · ENREGISTRER</p><h2>Votre dossier, sans engagement</h2><p class="section-subtitle">Un premier dossier privé, sans calcul, diagnostic ou promesse d'économie. Votre dossier n'est transmis ni à une institution ni à un investisseur.</p>
+<label class="consent"><input type="checkbox" name="consentement" required><span>Je confirme l'enregistrement de ces informations dans la base locale de recette. Aucun partage externe n'est autorisé.</span></label>
+<div class="submit-row"><button id="sendCase" type="submit">Enregistrer mon dossier <span aria-hidden="true">→</span></button><span>Vous pourrez ensuite ajouter vos appareils progressivement.</span></div><p id="message" role="status" aria-live="polite"></p>
+</section></form>
+<section class="panel cases-panel" id="liste"><div class="cases-heading"><div><p class="eyebrow">MES DOSSIERS</p><h2>Reprendre où j'en étais</h2><p class="section-subtitle">Retrouvez vos dossiers et accédez à leur inventaire.</p></div><span class="document-icon" aria-hidden="true">▤</span></div><p id="listeStatut" role="status">Chargement…</p><ul id="cases"></ul></section>
+<aside class="upcoming"><span aria-hidden="true">▧</span><div><strong>Photos et QR au prochain lot</strong><p>Le passeport numérique permettra de retrouver les caractéristiques de chaque appareil, après validation des photos et de leurs accès. Ce service n'est pas encore actif.</p></div></aside>
+<p class="privacy">🔒 Informations déclarées, privées, non vérifiées. Aucun partage institutionnel ni estimation garantie.</p>
+</main><script src="/auth-client.js" defer></script><script src="/sunu-courant.js" defer></script></body></html>
