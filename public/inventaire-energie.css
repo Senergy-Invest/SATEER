@@ -3,3 +3,11 @@
 @media(max-width:880px){.category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{grid-template-columns:1fr minmax(140px,.45fr)}.hero-visual .sun-disc{right:0}.zone-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.topbar{padding:14px 16px}.brand{order:-1;width:100%;text-align:center}.env-label{font-size:9px}main{padding:8px 14px 45px}.hero{grid-template-columns:1fr;min-height:0;border-radius:20px;padding:27px 22px 32px}.hero-visual{display:none}.hero-points{font-size:11px}.context-strip{padding:19px;align-items:flex-start;flex-direction:column}.overview{align-items:flex-start;flex-wrap:wrap}.overview h2{font-size:25px}.count-pill{padding:9px;gap:6px}.count-pill strong{font-size:24px}.category-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.category-card{min-height:118px}.field-grid{grid-template-columns:1fr}.section-heading{display:block}.quiet-pill{display:inline-flex;margin-top:13px}.zone-form{grid-template-columns:1fr}.next-step{align-items:flex-start;padding:20px;gap:13px}.next-step .next-icon{width:42px;height:42px;font-size:21px}.topbar .back-link{font-size:12px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.category-card{transition:none}.category-card:hover{transform:none}}
+
+/* MVP02A1 : cartes passeport sans surcharge du formulaire de collecte. */
+body.energy-inventory .passport-link{display:block;margin-top:10px;text-decoration:none;color:#175e49;font-weight:750;font-size:12px;line-height:1.6}
+body.energy-inventory .passport-link:hover{text-decoration:underline}
+body.energy-inventory .passport-create{display:block;margin-top:11px;min-height:38px;padding:7px 11px;border-radius:10px;background:#e4f2e7;color:#1c5a41;font-weight:750;font-size:12px;text-align:left;box-shadow:none}
+body.energy-inventory .passport-create:hover{background:#d5e9dc}
+body.energy-inventory .passport-feedback{display:block;color:#a14538;font-size:11px;margin-top:4px}
+body.energy-inventory .passport-note{font-size:11px;margin-top:5px;color:#627f72}

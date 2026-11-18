@@ -211,6 +211,25 @@ if (process.env.PGDATABASE === 'sateer_test' &&
 }
 
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
+// MVP02A-1 : passeport d'equipement individuel, photos chiffrees et QR prive.
+// Recette isolée, aucune permission institutionnelle implicite, aucun fichier public.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02A1 === '1') {
+    const {creerEquipmentPassportRouter} = require('./energy/equipment-passport-http');
+    const {creerEquipmentPassportStore} = require('./energy/equipment-passport-store');
+    const {creerPhotoVault} = require('./energy/equipment-photo-vault');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/passports', exigerSession, creerEquipmentPassportRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEquipmentPassportStore({obtenirClient:obtenirClientDatabase,photoVault:creerPhotoVault()}),
+        origineAutorisee:process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise:process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
 // A2 : publications Ambassade via le service Communication commun, en lecture seule.
 // La session et l'appartenance tenant/organisation/type sont revalidées par le routeur.

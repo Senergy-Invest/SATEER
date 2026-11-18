@@ -97,6 +97,25 @@
   }
   $('typeZone').addEventListener('change',updateParents);
 
+  let passportEnabled=false;
+  let passports=[];
+  async function passportApi(method,route,body){
+    const response=await fetch('/api/energy/passports'+route+'?tenant='+encodeURIComponent(tenant),{
+      method,credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json',...(body?{'Content-Type':'application/json'}:{})},
+      body:body?JSON.stringify(body):undefined
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.statut||'HTTP '+response.status);
+    return data;
+  }
+  async function createPassport(item,index,button,info){
+    button.disabled=true;info.textContent='Création de la fiche privée…';
+    try{
+      const result=await passportApi('POST','/sites/'+encodeURIComponent(siteId)+'/equipements/'+encodeURIComponent(item.id),{numeroIndividuel:index});
+      if(!result.id)throw Error('PASSEPORT_NON_CONFIRME');
+      await reload();
+    }catch(e){info.textContent='Fiche non créée : '+e.message;button.disabled=false;}
+  }
   function renderEquipments(equipements) {
     const list=$('listeEquipements');list.replaceChildren();
     $('compteurAppareils').textContent=String(equipements.reduce((sum,e)=>sum+Number(e.quantite||0),0));
@@ -110,7 +129,25 @@
       const name=document.createElement('h3');name.textContent=e.nom;
       const qty=document.createElement('p');qty.textContent=Number(e.quantite)>1?e.quantite+' appareils de ce type':'1 appareil';
       const state=document.createElement('p');state.className='declared';state.textContent='✓ Enregistré · donnée déclarée';
-      body.append(name,qty,state);li.append(icon,body);list.append(li);
+      body.append(name,qty,state);
+      if(passportEnabled){
+        const existing=passports.filter(p=>p.inventoryId===e.id).sort((a,b)=>a.numeroIndividuel-b.numeroIndividuel);
+        const used=new Set(existing.map(p=>p.numeroIndividuel));
+        for(const p of existing){
+          const a=document.createElement('a');a.className='passport-link';a.href='/fiche-equipement.html?tenant='+encodeURIComponent(tenant)+'&id='+encodeURIComponent(p.id);
+          a.textContent='📷 Fiche et QR · appareil '+p.numeroIndividuel+(e.quantite>1?'/'+e.quantite:'')+' →';body.append(a);
+        }
+        let next=1;while(used.has(next))next++;
+        if(next<=Number(e.quantite)){
+          const button=document.createElement('button');button.type='button';button.className='passport-create';
+          button.textContent=existing.length?'Identifier un autre appareil':'Créer sa fiche photo et QR';
+          const info=document.createElement('span');info.className='passport-feedback';
+          button.addEventListener('click',()=>createPassport(e,next,button,info));
+          body.append(button,info);
+        }
+        if(e.quantite>1){const note=document.createElement('p');note.className='passport-note';note.textContent='Chaque appareil reçoit sa fiche séparément. Aucun QR créé automatiquement pour le lot.';body.append(note);}
+      }
+      li.append(icon,body);list.append(li);
     }
   }
 
@@ -125,6 +162,10 @@
     $('contexte').textContent='Dossier privé actif · '+data.site.nom+' · '+data.site.pays;
     $('nomSite').textContent=ui.nomProfil(siteType)+' · '+data.site.nom;
     $('resume').textContent=equipements.length+' ligne(s) enregistrée(s)'+(data.listePartielle?' · affichage partiel (limite technique)':'');
+    passports=[];passportEnabled=false;
+    try{const cards=await passportApi('GET','/sites/'+encodeURIComponent(siteId));
+      if(cards.statut==='PASSEPORTS_PRIVES'){passports=cards.passeports||[];passportEnabled=true;}
+    }catch(_){/* le mode inventaire doit rester accessible si le module photo est fermé */}
     renderPlaces();renderEquipments(equipements);
     const list=$('listeZones');list.replaceChildren();
     for (const z of zones){const li=document.createElement('li');li.textContent=z.nom+' · '+z.typeZone.toLowerCase();list.append(li);}

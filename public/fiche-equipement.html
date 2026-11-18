@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#11493f"><meta name="referrer" content="no-referrer">
+<title>Fiche de mon appareil · SUNU Courant</title>
+<link rel="stylesheet" href="/fiche-equipement.css?v=02a1">
+</head><body>
+<a href="#contenu" class="skip">Aller au contenu</a>
+<header class="top"><a href="/sunu-courant.html" id="retour">← Mes appareils</a><strong><span class="sun">✺</span> SATEER <span class="small-brand">ENERGY</span></strong><span class="recette">RECETTE LOCALE</span></header>
+<main id="contenu">
+<section class="hero"><span class="kicker">MON PASSEPORT ÉQUIPEMENT</span><h1>Mon appareil,<br><em>toujours retrouvé.</em></h1>
+<p>Une fiche privée à compléter à votre rythme. Les photos restent dans votre espace personnel.</p></section>
+<p id="status" role="status" aria-live="polite">Vérification de votre session…</p>
+<div id="content" hidden>
+<section class="summary card"><div class="device-icon" aria-hidden="true">⚡</div><div><span class="kicker">IDENTITÉ DE L'APPAREIL</span><h2 id="nom">Mon appareil</h2><p id="info"></p><span class="tag">Déclaré · Non vérifié</span></div></section>
+<section class="photos card"><div class="section-head"><div><span class="kicker">MES PHOTOS</span><h2>Ajouter une photo</h2><p>Une photo suffit pour commencer. La plaque est utile si vous souhaitez retrouver des données techniques plus tard.</p></div></div>
+<div class="photo-actions"><label class="photo-action">📷 Photo de l'appareil<input id="photoAppareil" type="file" accept="image/*" capture="environment" /></label>
+<label class="photo-action secondary">▤ Photo de l'étiquette<input id="photoEtiquette" type="file" accept="image/*" capture="environment" /></label></div>
+<p class="hint">La photo est redimensionnée sur votre appareil avant envoi. Formats de stockage PNG/WebP, 3 Mo maximum. Évitez les personnes, adresses et documents personnels dans le cadre.</p>
+<p id="photoMessage" role="status" aria-live="polite"></p><div id="photoGrid" class="photo-grid"></div></section>
+<section class="qr-section card"><div><span class="kicker">MON CODE SATEER</span><h2>Retrouver cet appareil</h2><p>Ce code ouvre la fiche uniquement pour une personne connectée et autorisée. Il ne révèle pas vos informations.</p>
+<div class="qr-actions"><button type="button" id="copyQr">Copier le lien</button><button type="button" id="printQr" class="outline">Imprimer le QR</button></div>
+<p class="hint">En recette, le lien utilise localhost : le scan fonctionne uniquement si le téléphone peut accéder à cette instance. Pas de partage ni de certification automatique.</p>
+<p id="qrMessage" role="status"></p></div><div id="qrCanvas" class="qr"></div></section>
+<section class="next card"><strong>Prochaine étape : lecture assistée de l'étiquette</strong><p>Marque, modèle et puissance seront proposés à confirmer lors du MVP02A-2. Aucune valeur n'est extraite automatiquement aujourd'hui.</p></section>
+</div></main>
+<script defer src="/auth-client.js"></script><script defer src="/sateer-qr-local.js?v=02a1"></script><script defer src="/fiche-equipement.js?v=02a1"></script>
+</body></html>
