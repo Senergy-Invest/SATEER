@@ -67,8 +67,11 @@ test('page: session Core, modèle UX, emplacement facultatif et détails avancé
   'id="formZone"','id="formEquipement"','id="optionsAvancees"','Peu importe pour le moment','Données <strong>déclarées</strong>'])assert.ok(html.includes(t),t);
  assert.match(html,/Aucun calcul/);
 });
-test('page: photo/QR non présentés comme actifs et sans formulaire de téléchargement',()=>{
- assert.match(html,/PROCHAINEMENT · PAS ENCORE DISPONIBLE/);
+test('page: la fiche individuelle porte les photos et QR, sans téléchargement direct depuis l’inventaire',()=>{
+ assert.match(html,/À RETROUVER DANS LA FICHE INDIVIDUELLE/);
+ assert.match(html,/Mes photos, mon passeport, mon QR/);
+ assert.match(html,/Les valeurs proposées doivent être confirmées/);
+ assert.doesNotMatch(html,/PROCHAINEMENT · PAS ENCORE DISPONIBLE/);
  assert.doesNotMatch(html,/<input[^>]+type="file"/i);
  assert.doesNotMatch(js,/getUserMedia|BarcodeDetector|FileReader/);
 });

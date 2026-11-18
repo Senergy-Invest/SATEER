@@ -2,7 +2,7 @@
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#11493f"><meta name="referrer" content="no-referrer">
 <title>Fiche de mon appareil · SUNU Courant</title>
-<link rel="stylesheet" href="/fiche-equipement.css?v=02a1">
+<link rel="stylesheet" href="/fiche-equipement.css?v=02a2">
 </head><body>
 <a href="#contenu" class="skip">Aller au contenu</a>
 <header class="top"><a href="/sunu-courant.html" id="retour">← Mes appareils</a><strong><span class="sun">✺</span> SATEER <span class="small-brand">ENERGY</span></strong><span class="recette">RECETTE LOCALE</span></header>
@@ -21,7 +21,22 @@
 <div class="qr-actions"><button type="button" id="copyQr">Copier le lien</button><button type="button" id="printQr" class="outline">Imprimer le QR</button></div>
 <p class="hint">En recette, le lien utilise localhost : le scan fonctionne uniquement si le téléphone peut accéder à cette instance. Pas de partage ni de certification automatique.</p>
 <p id="qrMessage" role="status"></p></div><div id="qrCanvas" class="qr"></div></section>
-<section class="next card"><strong>Prochaine étape : lecture assistée de l'étiquette</strong><p>Marque, modèle et puissance seront proposés à confirmer lors du MVP02A-2. Aucune valeur n'est extraite automatiquement aujourd'hui.</p></section>
+<section id="etiquetteAssistance" class="labels-section card" hidden aria-labelledby="label-title">
+ <div class="section-head"><div><span class="kicker">MA PLAQUE SIGNALÉTIQUE</span><h2 id="label-title">Retrouver les informations utiles</h2>
+ <p>Choisissez une photo de l’étiquette. SUNU Courant propose ce qu’il peut lire, puis <strong>vous décidez</strong> de ce qui est enregistré. Vous pouvez aussi saisir une information sans photo.</p></div></div>
+ <div class="labels-actions"><label for="photoPourLecture">Photo à analyser<select id="photoPourLecture" aria-label="Choisir une photo de l’étiquette"></select></label>
+ <button type="button" id="analyserEtiquette">Lire cette photo</button><button type="button" id="ouvrirSaisieManuelle" class="outline">Compléter moi-même</button></div>
+ <p id="pasDePhotoEtiquette" class="hint">Ajoutez d’abord une photo « Photo de l’étiquette » ci-dessus, ou renseignez une valeur manuellement.</p>
+ <p id="etiquetteMessage" class="feedback" role="status" aria-live="polite"></p>
+ <form id="formEtiquette" hidden><div class="labels-fields">
+ <label for="MARQUE">Marque <input id="MARQUE" autocomplete="off" maxlength="60" placeholder="Si vous la connaissez"></label>
+ <label for="MODELE">Modèle ou référence <input id="MODELE" autocomplete="off" maxlength="60" placeholder="Ex. ABC 123"></label>
+ <label for="PUISSANCE_W">Puissance inscrite (W) <input id="PUISSANCE_W" inputmode="decimal" maxlength="16" placeholder="Ex. 150"></label>
+ <label for="TENSION_V">Tension inscrite (V) <input id="TENSION_V" inputmode="decimal" maxlength="16" placeholder="Ex. 230"></label></div>
+ <p class="hint">Ces valeurs sont indicatives. Une puissance nominale ne représente pas nécessairement une consommation réelle. Vérifiez la plaque avant de confirmer.</p>
+ <button id="confirmerEtiquette" type="submit">Confirmer et enregistrer</button></form>
+ <h3>Ce que j’ai confirmé</h3><ul id="valeursConfirmees" class="labels-confirmed"></ul><p id="valeursVides" class="hint">Aucune caractéristique confirmée pour le moment.</p>
+ </section><p id="etiquetteStatus" class="hint" role="status"></p>
 </div></main>
-<script defer src="/auth-client.js"></script><script defer src="/sateer-qr-local.js?v=02a1"></script><script defer src="/fiche-equipement.js?v=02a1"></script>
+<script defer src="/auth-client.js"></script><script defer src="/sateer-qr-local.js?v=02a1"></script><script defer src="/fiche-equipement.js?v=02a2"></script><script defer src="/fiche-etiquette.js?v=02a2"></script>
 </body></html>

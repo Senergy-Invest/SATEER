@@ -230,6 +230,27 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02A-2 : OCR local macOS de plaque, valeurs proposees puis confirmees.
+// Recette uniquement; aucun reseau externe, aucun nouveau privilege Core.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02A1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02A2 === '1') {
+    const {creerEquipmentLabelRouter} = require('./energy/equipment-label-http');
+    const {creerEquipmentLabelStore} = require('./energy/equipment-label-store');
+    const {createMacVisionOCR} = require('./energy/equipment-label-vision');
+    const {creerPhotoVault} = require('./energy/equipment-photo-vault');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/labels', exigerSession, creerEquipmentLabelRouter({
+        router:express.Router(),listerOrganisations:listerOrganisationsPersonneDatabase,
+        store:creerEquipmentLabelStore({obtenirClient:obtenirClientDatabase,photoVault:creerPhotoVault()}),
+        ocr:createMacVisionOCR(),
+        origineAutorisee:process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise:process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 pilotModuleRegistry.installEmailDemo(app, exigerSession);
 // A2 : publications Ambassade via le service Communication commun, en lecture seule.
 // La session et l'appartenance tenant/organisation/type sont revalidées par le routeur.

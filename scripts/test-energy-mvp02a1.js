@@ -23,7 +23,16 @@ test('Historique passeport et photos append-only',()=>{const s=file('energy/equi
 test('Une quantité groupée ne créé pas automatiquement des passeports',()=>{const s=file('energy/equipment-passport-store.js');assert.match(s,/numeroIndividuel>Number\(eq.quantite\)/);assert.match(s,/ON CONFLICT \(inventaire_equipement_id,numero_individuel\) DO NOTHING/);});
 test('Aucun portail public pour photos ni espace institutionnel',()=>{const s=file('energy/equipment-passport-http.js');assert.match(s,/router\.get\('\/:passportId\/photos\/:photoId'/);assert.doesNotMatch(s,/static\(|SHARE_WITH_ORGANISATION/);});
 test('UX : photo facultative et plaque séparée',()=>{const html=file('public/fiche-equipement.html');assert.match(html,/photoAppareil/);assert.match(html,/photoEtiquette/);assert.match(html,/Non vérifié/);});
-test('UX : aucun traitement OCR ou éligibilité déclaré acquis',()=>{const s=file('public/fiche-equipement.html');assert.match(s,/aucune valeur n.est extraite automatiquement/i);});
+test('UX : lecture sur demande et confirmation distincte, sans certification automatique',()=>{
+ const html=file('public/fiche-equipement.html');
+ const ui=file('public/fiche-etiquette.js');
+ assert.match(html,/id="analyserEtiquette"/);
+ assert.match(html,/id="confirmerEtiquette"/);
+ assert.match(html,/Non vérifié/);
+ assert.match(ui,/\$\('analyserEtiquette'\)\.addEventListener\('click'/);
+ assert.match(ui,/\$\('formEtiquette'\)\.addEventListener\('submit'/);
+ assert.match(ui,/non certifié/);
+});
 test('UX : les photos sont converties avant upload',()=>{const s=file('public/fiche-equipement.js');assert.match(s,/canvas\.toBlob/);assert.match(s,/1400/);});
 test('Scan QR : échec fermé lorsque non autorisé',()=>{assert.match(file('public/equipement-qr.js'),/AUCUN_PASSEPORT_AUTORISE/);});
 test('La page photo n est pas indexée en publicité',()=>{const html=file('public/fiche-equipement.html');assert.match(html,/referrer.*no-referrer/);});

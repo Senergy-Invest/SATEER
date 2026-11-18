@@ -39,27 +39,28 @@
    });
    tile.append(img,label,del);grid.append(tile);
   }
+  window.dispatchEvent(new CustomEvent('sateer:equipment-photos',{detail:{photos:data.photos||[]}}));
   $('content').hidden=false;$('status').textContent='Fiche privée chargée. Photos et caractéristiques non vérifiées.';
  }
- async function convertImage(file){
+ async function convertImage(file,preferPng=false){
   if(!file||file.size>12*1024*1024)throw Error('PHOTO_SOURCE_TROP_GRANDE');
   const url=URL.createObjectURL(file);let img;
   try{img=new Image();img.decoding='async';img.src=url;await img.decode();}
   finally{URL.revokeObjectURL(url);}
   if(!img.naturalWidth||!img.naturalHeight||img.naturalWidth*img.naturalHeight>20000000)throw Error('PHOTO_DIMENSIONS_EXCESSIVES');
-  const scale=Math.min(1,1400/Math.max(img.naturalWidth,img.naturalHeight));
+  const scale=Math.min(1,(preferPng?1100:1400)/Math.max(img.naturalWidth,img.naturalHeight));
   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
   const ctx=canvas.getContext('2d');if(!ctx)throw Error('PHOTO_INCOMPATIBLE');ctx.drawImage(img,0,0,canvas.width,canvas.height);
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',0.82));
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,preferPng?'image/png':'image/webp',0.82));
   if(!blob)throw Error('PHOTO_CONVERSION_IMPOSSIBLE');
-  const out=(blob.type==='image/webp')?blob:await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+  const out=(blob.type==='image/webp'||blob.type==='image/png')?blob:await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
   if(!out||out.size>3*1024*1024)throw Error('PHOTO_APRES_REDUCTION_TROP_GRANDE');
   return out;
  }
  async function upload(input,type){
   if(!input.files?.[0])return;input.disabled=true;message('Préparation et enregistrement privé de la photo…');
   try{
-   const blob=await convertImage(input.files[0]);await api('POST',path('/photos/'+type),blob,'application/octet-stream');
+   const blob=await convertImage(input.files[0],type==='ETIQUETTE');await api('POST',path('/photos/'+type),blob,'application/octet-stream');
    input.value='';message('Photo enregistrée dans votre fiche privée.');await load();
   }catch(e){message('Photo non enregistrée : '+e.message+'. Vous pouvez réessayer.');}
   finally{input.disabled=false;}
