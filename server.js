@@ -228,6 +228,26 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-C2 : collecte localisée et revue par chaîne C1.
+// Aucun accès aux photos, QR, données privées B1 ou calcul d'économies.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02B === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1') {
+    const {creerEnergyCollectionRouter} = require('./energy/energy-collection-http');
+    const {creerEnergyCollectionStore} = require('./energy/energy-collection-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/collecte/v1', exigerSession, creerEnergyCollectionRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyCollectionStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C1 : responsabilites recursives par perimetre.
 // Extension du meme domaine Energy Collaboration, sans partage de donnees privees B1.
 if (process.env.PGDATABASE === 'sateer_test' &&

@@ -1,0 +1,26 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#123f38">
+<title>Mon inventaire partagé · SUNU Courant</title>
+<link rel="stylesheet" href="/energie-responsabilites.css?v=c1"><link rel="stylesheet" href="/energie-collecte.css?v=c2"></head>
+<body><a class="skip" href="#contenu">Aller au contenu</a><header><a id="retour" href="/energie-responsabilites.html">← Mes responsabilités</a><b>✺ SATEER <em>ENERGY</em></b><small>RECETTE LOCALE</small></header>
+<main id="contenu"><section class="hero"><span class="eyebrow">SUNU COURANT · INVENTAIRE PAR BUREAU</span>
+<h1>Ma petite contribution.<br><em>Notre inventaire commun.</em></h1>
+<p>Déclarez les équipements de votre espace. Votre responsable vérifie, puis la contribution remonte progressivement. Aucun calcul d'économie n'est effectué ici.</p>
+<div class="pills"><span>✓ Quelques informations</span><span>✓ Correction possible</span><span>✓ Validation en cascade</span></div></section>
+<section class="card"><span class="eyebrow">MON COMPTE PRIVÉ</span><h2>Mes missions et mon suivi</h2><p id="contexte" role="status">Vérification de votre session…</p><label for="responsabilite">Ma responsabilité</label>
+<select id="responsabilite" aria-describedby="aideResponsabilite"></select><p id="aideResponsabilite" class="muted">L'accès dépend du compte et de l'invitation nominative.</p></section>
+<div class="two">
+<section class="card"><span class="eyebrow">1 · CONSTATER</span><h2>Ajouter un appareil</h2><p>Une photo n'est pas obligatoire. Si vous ignorez la puissance, laissez-la vide. Les valeurs ne seront pas considérées comme mesurées.</p>
+<form id="formProposer"><label for="lieu">Mon bureau, service ou espace</label><select id="lieu" name="scopeNodeId" required></select>
+<label for="categorie">Type d'appareil</label><select id="categorie" name="famille"><option value="ECLAIRAGE">Lampe / éclairage</option><option value="FROID">Réfrigérateur / congélateur</option><option value="CLIMATISATION">Climatiseur</option><option value="POMPAGE">Pompe</option><option value="MOTEUR">Moteur / machine / compresseur</option><option value="INFORMATIQUE">Informatique</option><option value="SOLAIRE">Solaire</option><option value="STOCKAGE">Batterie / stockage</option><option value="AUTRE">Autre appareil / ventilateur / télévision</option></select>
+<label for="nomAppareil">Nom de l'appareil</label><input id="nomAppareil" name="nom" maxlength="120" placeholder="Ex. 2 ventilateurs du bureau" required>
+<div class="two"><label for="quantite">Combien ?<input id="quantite" name="quantite" type="number" min="1" max="10000" value="1" required></label>
+<label for="puissance">Puissance en W (facultative)<input id="puissance" name="puissance" type="number" min="1" max="100000000" placeholder="Je ne sais pas"></label></div>
+<button type="submit" class="primary" id="envoyer">Soumettre au responsable</button></form><p id="messageProposition" role="status"></p></section>
+<section class="card"><span class="eyebrow">2 · SUIVRE</span><h2>Mes contributions</h2><p>En revue, à corriger, refusée ou intégrée : vous voyez toujours le statut de votre déclaration.</p>
+<ul id="mesPropositions" class="items"></ul><p id="messageCorrection" role="status"></p></section>
+</div>
+<section class="card" id="blocRevue"><span class="eyebrow">3 · VÉRIFIER</span><h2>Demandes de mon équipe</h2>
+<p>Accepter une étape transmet au niveau supérieur ; seul le coordinateur termine l'intégration dans l'inventaire officiel.</p><ul id="fileRevue" class="items"></ul><p id="messageRevue" role="status"></p></section>
+<p class="privacy">🔒 Les propositions restent privées. Aucune lecture de passeport, photo ou QR d'un collègue ; aucune donnée technique certifiée ou économie garantie. Anciennes invitations B1 conservées séparément, sans permission supplémentaire.</p></main>
+<script src="/auth-client.js" defer></script><script src="/energie-collecte.js?v=c2" defer></script></body></html>

@@ -1,0 +1,10 @@
+/* SUNU Courant C2 : extension visuelle responsive du thème C1. */
+.card{min-width:0}.card h2{margin:8px 0}.items>li{margin:10px 0;padding:13px;border:1px solid #cbdcd8;border-radius:12px;list-style:none;overflow-wrap:anywhere}
+.items{padding:0}.items li p{margin:.35rem 0}.items li small{color:#3f625e;display:block}.items .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.items button{padding:9px 12px;border:1px solid #0c5850;border-radius:8px;cursor:pointer;background:white;color:#123f38;font-weight:600}
+.items button:hover{background:#ebf5f2}.items button.danger{border-color:#a94b45;color:#982b2b}.items button.primary{background:#15584d;color:white}
+.items button:focus-visible,.card :focus-visible{outline:3px solid #d89e43;outline-offset:3px}
+label{display:block;margin:14px 0 7px;font-weight:600}input,select{width:100%;max-width:100%;padding:12px;border:1px solid #b3c5c2;border-radius:9px;font:inherit}
+form>button{margin-top:15px}p[role="status"]{min-height:1.2em}p[role="status"][data-error="true"]{color:#a22b2b}
+@media(max-width:650px){.two{display:block}.two>.card{margin-block:14px}h1{font-size:clamp(1.65rem,6vw,2.4rem)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
