@@ -228,6 +228,25 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-C1 : responsabilites recursives par perimetre.
+// Extension du meme domaine Energy Collaboration, sans partage de donnees privees B1.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02B === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1') {
+    const {creerEnergyScopeRouter} = require('./energy/energy-scope-http');
+    const {creerEnergyScopeStore} = require('./energy/energy-scope-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/collab/v2', exigerSession, creerEnergyScopeRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyScopeStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 // MVP02A-1 : passeport d'equipement individuel, photos chiffrees et QR prive.
 // Recette isolée, aucune permission institutionnelle implicite, aucun fichier public.
