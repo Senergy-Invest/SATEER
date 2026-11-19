@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="referrer" content="no-referrer"><meta name="theme-color" content="#104b3a">
+ <title>Inventaire à plusieurs · SUNU Courant</title>
+ <link rel="stylesheet" href="/inventaire-participatif.css?v=b1">
+</head>
+<body>
+ <a href="#contenu" class="skip">Aller au contenu</a>
+ <header class="top"><a id="retour" href="/index.html">← Mes appareils</a><div class="brand">✺ <strong>SATEER</strong> <span>ENERGY</span></div><span class="env">RECETTE LOCALE</span></header>
+ <main id="contenu">
+  <section class="hero">
+   <p class="eyebrow">SUNU COURANT · ENSEMBLE, SANS COMPLEXITÉ</p>
+   <h1>À plusieurs, <em>c'est plus simple.</em></h1>
+   <p>Un proche ou un collègue peut vous aider à recenser vos appareils. Vous gardez la main sur chaque ajout.</p>
+   <div class="hero-pills"><span>✓ Invitation temporaire</span><span>✓ Aucune publication directe</span><span>✓ Validation par le responsable</span></div>
+  </section>
+  <p class="status-bar" id="contexte" role="status" aria-live="polite">Vérification de la session SATEER…</p>
+  <section id="responsable" class="layout" hidden aria-labelledby="owner-title">
+   <div class="section-title"><p class="eyebrow">MON INVENTAIRE</p><h2 id="owner-title">Je garde le contrôle</h2><p id="siteResponsable" class="subtle"></p></div>
+   <div class="columns">
+    <section class="panel" aria-labelledby="invite-title">
+     <div class="panel-header"><span class="symbol">✉</span><div><h3 id="invite-title">Inviter une personne</h3><p>Créez un code à lui communiquer vous-même. Elle devra se connecter à SATEER pour contribuer.</p></div></div>
+     <button type="button" class="primary" id="creerInvitation">Créer une invitation de 48 h</button>
+     <div class="secret" id="codeBloc" hidden><p class="eyebrow">À COMMUNIQUER UNE SEULE FOIS</p><code id="codeInvitation"></code><button type="button" class="secondary" id="copierCode">Copier le code</button> <button type="button" class="secondary" id="copierLien">Copier le lien d’accès</button>
+       <p>Ne publiez pas ce code : la première personne autorisée qui l'accepte devient contributrice. L'invitation peut être révoquée.</p></div>
+     <p class="feedback" id="messageInvitation" role="status"></p>
+     <h4>Mes invitations</h4><ul id="listeInvitations" class="stack"></ul>
+    </section>
+    <section class="panel" aria-labelledby="review-title">
+     <div class="panel-header"><span class="symbol">✓</span><div><h3 id="review-title">Propositions à vérifier</h3><p>Accepter ajoute un équipement <strong>déclaré, non mesuré</strong>. Refuser ne change pas votre inventaire.</p></div></div>
+     <ul id="listePropositions" class="stack"></ul>
+     <p class="feedback" id="messageDecision" role="status" aria-live="polite"></p>
+    </section>
+   </div>
+  </section>
+  <section class="participant" aria-labelledby="contributeur-title">
+   <div class="section-title"><p class="eyebrow">JE DONNE UN COUP DE MAIN</p><h2 id="contributeur-title">J'ai reçu un code</h2><p>Proposez un appareil sans remplir un formulaire technique. Le responsable décidera de l'ajouter ou non.</p></div>
+   <div class="panel max-panel">
+    <form id="formCode" class="code-form"><label for="saisieCode">Code d'invitation<input id="saisieCode" name="codeInvitation" type="text" autocomplete="off" spellcheck="false" maxlength="36" placeholder="scb_…" required/></label>
+      <button type="submit" class="primary">Rejoindre l'inventaire</button></form>
+    <p class="feedback" id="messageCode" role="status"></p>
+    <div id="participations" hidden>
+     <label for="selectParticipation">Inventaire auquel je participe
+      <select id="selectParticipation"></select></label>
+     <p class="subtle">Vous n'accédez pas aux photos, QR, dossiers privés ni à l'inventaire complet du propriétaire.</p>
+     <form id="formProposition" class="proposal-form" novalidate>
+      <div class="device-choices" id="categories" role="group" aria-label="Type d'appareil"></div>
+      <label for="nom">Comment s'appelle l'appareil ?<input id="nom" name="nom" type="text" maxlength="120" placeholder="Ex. Le frigo de la cuisine" required/></label>
+      <div class="two"><label for="quantite">Combien ?<input id="quantite" name="quantite" type="number" min="1" max="10000" value="1" inputmode="numeric" required/></label>
+       <label for="puissance">Puissance en W <span class="optional">(facultatif)</span><input id="puissance" name="puissance" type="number" min="1" max="100000000" inputmode="numeric" placeholder="Je ne sais pas"/></label></div>
+      <button type="submit" class="primary" id="envoyerProposition">Envoyer ma proposition</button>
+      <p class="feedback" id="messageProposition" role="status"></p>
+     </form>
+     <h4>Mes propositions</h4><ul id="mesPropositions" class="stack"></ul>
+    </div>
+   </div>
+  </section>
+  <aside class="note"><strong>Recette privée et déclarative.</strong> Aucun envoi vers une institution, aucun diagnostic, aucune éligibilité Ecofridges ni étude solaire. Photos et QR restent privés et ne font pas partie des propositions de cette tranche.</aside>
+ </main>
+ <script defer src="/auth-client.js"></script><script defer src="/sunu-inventory-ux-model.js"></script><script defer src="/inventaire-participatif.js?v=b1"></script>
+</body>
+</html>

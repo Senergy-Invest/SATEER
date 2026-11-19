@@ -210,6 +210,24 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-B1 : collaboration privee, contributions arbitrees par le responsable.
+// Aucune API Core ou photo preexistante n'est ouverte aux personnes invitees.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02B === '1') {
+    const {creerEnergyCollaborationRouter} = require('./energy/energy-collaboration-http');
+    const {creerEnergyCollaborationStore} = require('./energy/energy-collaboration-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/collab', exigerSession, creerEnergyCollaborationRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyCollaborationStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // Boîte e-mail synthétique : point d'intégration explicite, comportement inchangé.
 // MVP02A-1 : passeport d'equipement individuel, photos chiffrees et QR prive.
 // Recette isolée, aucune permission institutionnelle implicite, aucun fichier public.

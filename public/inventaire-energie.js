@@ -159,6 +159,7 @@
     siteType=data.site.typeSite||'AUTRE';zones=data.zones||[];
     const equipements=data.equipements||[];
     $('inventaire').hidden=false;
+    if ($('lienCollaboration')) { $('lienCollaboration').href='/inventaire-participatif.html'+query+'&case='+encodeURIComponent(caseId);$('lienCollaboration').hidden=false; }
     $('contexte').textContent='Dossier privé actif · '+data.site.nom+' · '+data.site.pays;
     $('nomSite').textContent=ui.nomProfil(siteType)+' · '+data.site.nom;
     $('resume').textContent=equipements.length+' ligne(s) enregistrée(s)'+(data.listePartielle?' · affichage partiel (limite technique)':'');
