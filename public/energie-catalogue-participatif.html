@@ -1,0 +1,28 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#123f38">
+<title>Qualifier mes appareils · SUNU Courant</title><link rel="stylesheet" href="/energie-responsabilites.css?v=c1"><link rel="stylesheet" href="/energie-collecte.css?v=c2"><link rel="stylesheet" href="/energie-catalogue-participatif.css?v=c3b"></head>
+<body><a class="skip" href="#contenu">Aller au contenu</a><header><a id="retour" href="/energie-collecte.html">← Mon inventaire partagé</a><b>✺ SATEER <em>ENERGY</em></b><small>RECETTE LOCALE</small></header>
+<main id="contenu"><section class="hero"><span class="eyebrow">SUNU COURANT · QUALIFICATION PARTICIPATIVE</span>
+<h1>Reconnaître les machines.<br><em>Sans être expert.</em></h1>
+<p>Après validation d'un appareil dans l'inventaire partagé, proposez son type et son modèle. Votre responsable vérifie progressivement : rien n'entre directement au catalogue.</p>
+<div class="pills"><span>✓ Proposition depuis C2</span><span>✓ Responsable identifié</span><span>✓ Aucune photo partagée</span></div></section>
+<section class="card"><span class="eyebrow">COMPTE SATEER</span><h2>Mon espace autorisé</h2><p id="contexte" role="status">Lecture de votre session…</p></section>
+<div class="two">
+<section class="card"><span class="eyebrow">1 · IDENTIFIER</span><h2>Proposer une fiche technique</h2>
+<p>Choisissez un appareil que vous avez déclaré et qui a déjà été intégré par le coordinateur. Vous pouvez laisser fabricant, modèle, puissance et tension vides.</p>
+<form id="formProposition"><label for="equipement">Mon équipement validé dans C2</label><select id="equipement" required></select>
+<label for="famille">Famille de l'équipement</label><input id="famille" readonly>
+<label for="sousFamille">Sous-famille, en mots simples</label><input id="sousFamille" maxlength="80" placeholder="Ex. Compresseur frigorifique" required>
+<label for="designation">Désignation de la machine</label><input id="designation" maxlength="120" placeholder="Ex. Compresseur chambre froide" required>
+<div class="two"><label for="marque">Marque (facultatif)<input id="marque" maxlength="80" placeholder="Je ne sais pas"></label>
+<label for="modele">Modèle (facultatif)<input id="modele" maxlength="80" placeholder="Je ne sais pas"></label></div>
+<div class="two"><label for="watts">Puissance W (facultative)<input id="watts" type="number" min="1" max="100000000"></label>
+<label for="volts">Tension V (facultative)<input id="volts" type="number" min="1" max="1000000"></label></div>
+<button class="primary" type="submit" id="envoyer">Soumettre la fiche au responsable</button>
+<button type="button" id="annulerCorrection" hidden>Annuler la correction</button></form><p id="messageForm" role="status"></p></section>
+<section class="card"><span class="eyebrow">2 · SUIVRE</span><h2>Mes fiches proposées</h2><p>Une correction conserve son historique. La création d'une candidate au catalogue ne signifie pas certification.</p>
+<ul id="mesFiches" class="items"></ul><p id="messageMesFiches" role="status"></p></section></div>
+<section class="card"><span class="eyebrow">3 · VERIFIER</span><h2>Les demandes de mon équipe</h2><p>Une approbation intermédiaire transmet au supérieur. Seul le coordinateur prépare une référence candidate dans le catalogue C3A.</p>
+<ul id="fileRevue" class="items"></ul><p id="messageRevue" role="status"></p></section>
+<p class="privacy">🔒 Aucune photo ni plaque privée consultée par les collaborateurs. Aucun passeport attribué automatiquement. Les références techniques restent déclaratives, non certifiées et propres au site.</p>
+</main><script defer src="/auth-client.js"></script><script defer src="/energie-catalogue-participatif.js?v=c3b"></script></body></html>

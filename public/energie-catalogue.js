@@ -84,7 +84,7 @@
    message('messageLier','Passeport associé à sa référence technique, sans copier les photos.');await reloadRefs();}
   catch(x){message('messageLier','Association refusée : '+x.message,true);}
  });
- if(tenant)$('retour').href='/inventaire-energie.html'+q+(caseId?'&case='+encodeURIComponent(caseId):'');
+ if(tenant){$('retour').href=caseId?'/inventaire-energie.html'+q+'&case='+encodeURIComponent(caseId):'/sunu-courant.html'+q;$('retour').textContent=caseId?'← Mes appareils':'← Mon énergie';}
  try{const ctx=await window.SATEER_CONTEXT_READY;if(!tenant||!((ctx.organisations||[]).some(o=>o.tenant_code===tenant)))throw Error('SESSION_OU_TENANT_NON_AUTORISE');
   const r=await request('GET','/api/energy/inventory/sites');
   const sites=r.sites||[];if(!sites.length){message('contexte','Créez d’abord un inventaire privé depuis SUNU Courant.');return;}

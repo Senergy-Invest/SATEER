@@ -228,6 +228,28 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-C3B : qualification technique contributive, chaine C1/C2.
+// Aucune permission sur les passeports / photos / QR et aucune certification automatique.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02B === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C3 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C3B === '1') {
+    const {creerEnergyCatalogueCollabRouter} = require('./energy/energy-catalogue-collab-http');
+    const {creerEnergyCatalogueCollabStore} = require('./energy/energy-catalogue-collab-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/catalogue-collab/v1', exigerSession, creerEnergyCatalogueCollabRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyCatalogueCollabStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C3A : références de modèles privées, jamais une certification.
 // Aucune API photo ou QR nouvelle, aucun partage inter-client ni usage IA automatique.
 if (process.env.PGDATABASE === 'sateer_test' &&
