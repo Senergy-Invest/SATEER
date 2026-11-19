@@ -1,0 +1,28 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#133b34"><title>Références techniques privées · SUNU Courant</title>
+<link rel="stylesheet" href="/energie-catalogue.css?v=c3a"></head><body>
+<a class="skip" href="#contenu">Aller au contenu</a><header><a id="retour" href="/sunu-courant.html">← Mes appareils</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="contenu"><section class="hero"><span class="kicker">SUNU COURANT · CATALOGUE TECHNIQUE PRIVÉ</span>
+<h1>Une machine, une fiche.<br><em>Une référence réutilisable.</em></h1><p>Décrivez votre compresseur, réfrigérateur ou autre appareil. Un modèle peut être associé à plusieurs appareils physiques, sans fusionner leurs passeports ni leurs photos.</p>
+<div class="pills"><span>✓ Nom libre</span><span>✓ Plaques confirmées</span><span>✓ Vérification humaine</span></div></section>
+<section class="card"><span class="kicker">MON SITE</span><h2>Mon catalogue privé</h2><p id="contexte" role="status">Ouverture de la session…</p><label for="site">Choisir mon site</label><select id="site"></select><p class="note">Aucune référence n'est diffusée à d'autres clients, à une institution ou à une IA. Les droits restent ceux du propriétaire.</p></section>
+<div class="columns"><section class="card"><span class="kicker">1 · PROPOSER</span><h2>Identifier un type d'appareil</h2><p>Pour un appareil courant, choisissez une famille ; pour une machine spécialisée, écrivez librement sa sous-famille et son nom.</p>
+<form id="formReference"><label for="source">Passeport existant (facultatif)</label><select id="source" name="sourcePassportId"><option value="">Pas de passeport pour le moment</option></select>
+<p id="preuve" class="note" role="status">Une photo ou une plaque confirmée peut aider ; aucune photo n'est recopiée ici.</p>
+<label for="famille">Famille</label><select id="famille" name="famille" required>
+<option value="FROID">Froid et réfrigération</option><option value="MOTEUR">Moteur et machines</option><option value="CLIMATISATION">Climatisation</option><option value="ECLAIRAGE">Éclairage</option><option value="POMPAGE">Pompage</option><option value="INFORMATIQUE">Informatique</option><option value="SOLAIRE">Solaire</option><option value="STOCKAGE">Stockage</option><option value="AUTRE">Autre</option></select>
+<label for="sousFamille">Sous-famille</label><input id="sousFamille" maxlength="80" name="sousFamille" placeholder="Ex. Compresseur frigorifique" required>
+<label for="designation">Nom du type d'appareil</label><input id="designation" maxlength="120" name="designation" placeholder="Ex. Compresseur du groupe froid" required>
+<div class="columns small"><label for="marque">Fabricant (si connu)<input name="marque" id="marque" maxlength="80" placeholder="Ex. Fabricant indiqué sur plaque"></label>
+<label for="modele">Référence du modèle (si connue)<input name="modele" id="modele" maxlength="80" placeholder="Ex. référence constructeur"></label></div>
+<div class="columns small"><label for="watts">Puissance nominale (W, facultative)<input name="puissanceNominaleW" id="watts" inputmode="numeric" type="number" min="1" max="100000000" placeholder="Je ne sais pas"></label>
+<label for="volts">Tension (V, facultative)<input name="tensionV" id="volts" inputmode="numeric" type="number" min="1" max="1000000" placeholder="Je ne sais pas"></label></div>
+<button class="primary" type="submit" id="soumettre">Enregistrer comme candidate</button></form><p id="messageForm" role="status"></p></section>
+<section class="card"><span class="kicker">2 · VÉRIFIER</span><h2>Références de mon site</h2><p>Une fiche candidate doit être examinée. La validation signifie seulement « référencée en interne », jamais « certifiée ».</p>
+<ul id="references" class="refs"></ul><p id="messageListe" role="status"></p></section></div>
+<section class="card"><span class="kicker">3 · RELIER</span><h2>Associer un appareil physique</h2><p>Après validation interne, choisissez la référence et le passeport individuel correspondant. Si la plaque confirmée contredit le modèle, SATEER refuse l'association.</p>
+<form id="formLier"><label for="referenceLier">Référence validée</label><select id="referenceLier" required></select>
+<label for="passeportLier">Passeport de l'appareil</label><select id="passeportLier" required></select>
+<button class="primary" type="submit">Associer sans copier les photos</button></form><p id="messageLier" role="status"></p></section>
+<p class="privacy">🔒 Catalogue privé par site, données déclarées et traçables. Aucune mesure, garantie de performance, certification, réutilisation inter-client ni entraînement IA n'est déclenché.</p>
+</main><script defer src="/auth-client.js"></script><script defer src="/energie-catalogue.js?v=c3a"></script></body></html>
