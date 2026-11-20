@@ -1,0 +1,8 @@
+.selection{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1rem}
+.selection select{width:100%}
+.state{min-height:1.5em}.code-status{font-weight:700;font-size:.82rem;white-space:nowrap}
+.code-status.review{color:#8b570d}.code-status.correction{color:#a34237}
+.age{font-variant-numeric:tabular-nums;white-space:nowrap}
+.actions-empty{text-align:left;color:#4f6659}
+.pagination button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a9875;outline-offset:2px}
+@media(max-width:560px){.selection{grid-template-columns:1fr}.pagination{justify-content:space-between;gap:.35rem}table{min-width:770px}}

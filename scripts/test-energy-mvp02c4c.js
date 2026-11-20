@@ -19,7 +19,7 @@ test('C4C domaine compteurs et invariants',()=>{
 function fakeRouter(){const routes=new Map();return {routes,use(){},get(path,fn){routes.set('GET '+path,fn);}};}
 function fakeResponse(){return {code:200,headers:{},set(k,v){this.headers[k]=v;return this;},status(n){this.code=n;return this;},json(data){this.body=data;return this;}};}
 function fixtures({session=true,member=true,activeTenant=true,owner=true,grant=false}={}){
- const router=fakeRouter(), store={async sites(){return {sites:[{id:siteId,nom:'Bâtiment de recette'}],suivant:false};},async synthese(){return owner?{site:{id:siteId}}:null;}};
+ const router=fakeRouter(), store={async sites(){return {sites:[{id:siteId,nom:'Bâtiment de recette'}],suivant:false};},async synthese(){return owner?{site:{id:siteId}}:null;},async actions(){return owner?{actions:[]}:null;}};
  creerEnergyDashboardRouter({router,listerOrganisations:async()=>member?[{tenant_code:tenant}]:[],store,tenantAutorise:activeTenant?tenant:'OTHER'});
  const req={auth:session?{personneId:123}:null,query:{tenant,offset:'0',...(grant?{grantId}:null)},params:{siteId},method:'GET'};
  return {router,req};
@@ -39,7 +39,7 @@ test('C4C API rejette ID site et grant malformés',async()=>{
  await router.routes.get('GET /sites/:siteId/synthese')(req,res);assert.equal(res.code,400);
 });
 test('C4C API rejette pagination malformée',async()=>{const {router,req}=fixtures();req.query.offset='NaN';const res=fakeResponse();await router.routes.get('GET /sites')(req,res);assert.equal(res.code,400);});
-test('C4C API sans endpoint écriture',()=>{const {router}=fixtures();assert.deepEqual([...router.routes.keys()].sort(),['GET /sites','GET /sites/:siteId/synthese']);});
+test('C4C API sans endpoint écriture',()=>{const {router}=fixtures();assert.deepEqual([...router.routes.keys()].sort(),['GET /sites','GET /sites/:siteId/actions','GET /sites/:siteId/synthese']);});
 function db({authorised=true,root=true,owner=true,siteExists=true}={}){
  const queries=[];
  const mock={async query(sql,args){queries.push({sql,args});

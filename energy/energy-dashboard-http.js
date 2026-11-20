@@ -2,9 +2,10 @@
 /** C4C : API strictement GET, aucune autorisation ni appartenance inventée. */
 const {UUID,TENANT} = require('./energy-case-domain');
 const {offsetValide} = require('./energy-dashboard-domain');
+const {filtreValide}=require('./energy-dashboard-actions-domain');
 function creerEnergyDashboardRouter({router,listerOrganisations,store,tenantAutorise}) {
   if (!router?.use || !router?.get || typeof listerOrganisations !== 'function' ||
-      !store || typeof store.sites !== 'function' || typeof store.synthese !== 'function') {
+      !store || typeof store.sites !== 'function' || typeof store.synthese !== 'function' || typeof store.actions !== 'function') {
     throw TypeError('DEPENDANCES_C4C');
   }
   const refuse = (res,status,code) => res.status(status).json({statut:code});
@@ -41,6 +42,19 @@ function creerEnergyDashboardRouter({router,listerOrganisations,store,tenantAuto
     if (grantId !== undefined && !UUID.test(grantId || '')) return refuse(res,400,'AFFECTATION_INVALIDE');
     const data = await store.synthese({...s,siteId:req.params.siteId,grantId:grantId || null,offset});
     return data ? res.json({statut:'PILOTAGE_C4C_PRIVE',...data}) : refuse(res,404,'PERIMETRE_NON_AUTORISE');
+  }));
+  // C4C tranche 2 : liste des propositions C2 dans le seul périmètre autorisé.
+  // Aucune mutation de statut, aucune autorisation de revue implicite.
+  router.get('/sites/:siteId/actions',guard(async (req,res,s) => {
+    if(!UUID.test(req.params?.siteId || ''))return refuse(res,400,'SITE_INVALIDE');
+    const offset=offsetValide(req.query?.offset);
+    if(offset===null)return refuse(res,400,'PAGINATION_INVALIDE');
+    const grantId=req.query?.grantId;
+    if(grantId!==undefined&&!UUID.test(grantId || ''))return refuse(res,400,'AFFECTATION_INVALIDE');
+    const statut=filtreValide(req.query?.statut);
+    if(statut===null)return refuse(res,400,'FILTRE_INVALIDE');
+    const data=await store.actions({...s,siteId:req.params.siteId,grantId:grantId||null,offset,statut});
+    return data?res.json({statut:'ACTIONS_C4C_PRIVEES',...data}):refuse(res,404,'PERIMETRE_NON_AUTORISE');
   }));
   return router;
 }
