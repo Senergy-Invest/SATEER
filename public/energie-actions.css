@@ -10,3 +10,7 @@
 .relecture-attention{font-weight:700;color:#99411e}
 #suiviBox[hidden]{display:none}
 @media(max-width:560px){table{min-width:1050px}}
+
+/* C4C clôture : deux entrées explicites, adaptées aux écrans étroits. */
+.actions-navigation{display:flex;flex-wrap:wrap;column-gap:1.3rem;row-gap:.65rem}
+.actions-navigation a[hidden]{display:none}

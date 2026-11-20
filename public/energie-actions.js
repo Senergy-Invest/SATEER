@@ -10,7 +10,7 @@
  const state=(s,err=false)=>{el('etat').textContent=s;el('etat').classList.toggle('error',err);};
  const opt=(text,value)=>{const o=document.createElement('option');o.textContent=text;o.value=String(value);return o;};
  const cell=(tr,text)=>{const td=document.createElement('td');td.textContent=String(text);tr.append(td);return td;};
- const clear=()=>{el('actions').replaceChildren();el('precedent').disabled=true;el('suivant').disabled=true;};
+ const clear=()=>{el('actions').replaceChildren();el('precedent').disabled=true;el('suivant').disabled=true;el('versResponsabilites').hidden=true;};
  const url=(path,params={})=>api+path+'?'+new URLSearchParams({tenant,...params}).toString();
  async function get(path,params={}){
   const r=await fetch(url(path,params),{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
@@ -38,6 +38,11 @@
   }
   if(!data.actions.length){const tr=document.createElement('tr');const td=cell(tr,'Aucune proposition correspondant au filtre dans cette page.');td.colSpan=8;td.className='actions-empty';body.append(tr);}
   el('versCollecte').href=nav.vers('/energie-collecte.html',tenant,sites[selected],el('filtre').value,el('suivi').value,offset);
+  // Lien C1 de navigation uniquement si le serveur confirme la vue propriétaire.
+  // Il ne crée ni affectation ni permission ; C1 revérifie les droits.
+  const lienC1=el('versResponsabilites');
+  lienC1.hidden=!data.acces.complet;
+  if(data.acces.complet)lienC1.href=nav.vers('/energie-responsabilites.html',tenant,sites[selected],el('filtre').value,el('suivi').value,offset);
   suivant=Boolean(data.suivant);el('precedent').disabled=offset===0;el('suivant').disabled=!suivant;
   el('pageLabel').textContent='Page '+(Math.floor(offset/50)+1);
   el('perimetre').textContent='Accès : '+data.acces.role+' · Périmètre : '+data.acces.perimetre+(data.acces.complet?' · site intégral':' · périmètre limité');
