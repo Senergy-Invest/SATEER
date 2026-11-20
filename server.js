@@ -228,6 +228,27 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-C4C — synthese participative READ ONLY.
+// Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C4A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C4B === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C4C === '1') {
+    const {creerEnergyDashboardRouter} = require('./energy/energy-dashboard-http');
+    const {creerEnergyDashboardStore} = require('./energy/energy-dashboard-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/pilotage/v1', exigerSession, creerEnergyDashboardRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyDashboardStore({obtenirClient: obtenirClientDatabase}),
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4B : esquisses 2D privees, coordination avec C1 et C4A.
 // Les positions SVG ne modifient PAS les raccordements, les droits, les photos ou les consommations.
 if (process.env.PGDATABASE === 'sateer_test' &&
