@@ -14,7 +14,7 @@ function fixture({permitted=true,orgType='ASSOCIATION'}={}){
  creerRoutesCreationDiaspora({router,verifierPermission:perm,trouverOrganisation:org,creerPublication:create});
  async function invoke(body={tenantCode:tenant,titre:'Rencontre associative fictive',contenu:'Message de recette',categorie:'EVENEMENT'},options={}){
   const req={auth:{personneId:704},params:{organisationId:'374'},query:{tenant},body,
-    get:(h)=>h==='Origin'?(options.origin||'http://localhost:3450'):null};
+    get:(h)=>h==='Origin'?(options.origin||(process.env.SATEER_PUBLIC_ORIGIN||'http://localhost:3000')):null};
   if(options.auth===false)req.auth=null;
   if(options.tenant)req.query.tenant=options.tenant;
   const res={code:200,headers:{},set(k,v){this.headers[k]=v;return this;},status(c){this.code=c;return this;},json(x){this.data=x;return this;}};

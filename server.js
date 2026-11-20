@@ -228,6 +228,29 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-C4B : esquisses 2D privees, coordination avec C1 et C4A.
+// Les positions SVG ne modifient PAS les raccordements, les droits, les photos ou les consommations.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C3 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C3B === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C4A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C4B === '1') {
+    const {creerEnergySketchRouter} = require('./energy/energy-sketch-http');
+    const {creerEnergySketchStore} = require('./energy/energy-sketch-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/esquisse/v1', exigerSession, creerEnergySketchRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergySketchStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4A : carte physique C1, graphe electrique declare, usages machines 051.
 // Recette uniquement ; activation contractuelle de production NON implementee ici.
 // Jamais d'inference de raccordement, pas de passeport/photo/QR ou de mesure automatique.

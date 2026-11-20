@@ -12,6 +12,7 @@
 <p class="warning">Ne réalisez aucune manipulation de tableau électrique pour remplir cet écran. En cas d'incertitude, laissez la relation non déclarée.</p></section>
 <section class="card"><span class="kicker">MON DOSSIER</span><h2>Site et chargement des cartes</h2><p id="contexte" role="status">Vérification de la session…</p>
 <label for="site">Mon site privé</label><select id="site"></select><p id="pagination" class="muted"></p><button type="button" id="suite" class="secondary" hidden>Charger la suite</button></section>
+<section class="card" aria-labelledby="esquisseTitre"><span class="kicker">DESSINER LE SITE · C4B</span><h2 id="esquisseTitre">Mon esquisse interactive</h2><p>Positionnez les bâtiments, compteurs et machines sans créer un deuxième inventaire ni déduire de câblage.</p><a id="ouvrirEsquisse" href="/energie-esquisse.html" hidden>Ouvrir l'éditeur d'esquisses →</a></section>
 <div class="cards">
 <section class="card"><span class="kicker">1 · PHYSIQUE</span><h2>Bâtiments, services et bureaux</h2><p>Les espaces sont issus de l'organigramme C1 : ils ne sont pas recréés ici. Un espace organisationnel n'est pas nécessairement un local physique.</p><ul id="lieux" class="items"></ul><a id="organisation" href="/energie-responsabilites.html">Gérer les lieux et les responsabilités →</a></section>
 <section class="card"><span class="kicker">2 · ÉLECTRIQUE</span><h2>Sources, compteurs, tableaux et circuits</h2><form id="formAppareillage">
@@ -35,4 +36,4 @@
 <label for="commentaire">Précision facultative</label><input id="commentaire" maxlength="200" placeholder="Ex. chaîne du froid pour les vaccins">
 <button type="submit" class="primary">Associer cet usage</button></form><p id="messageUsage" role="status"></p><ul id="usages" class="items"></ul></section>
 <p class="foot">🔒 Déclarations privées sur le site, non vérifiées. Ni estimation de consommation, ni preuve de raccordement, ni certification, ni diffusion des photos ou QR. L'éditeur d'esquisses visuelles suivra en C4B.</p>
-</main><script defer src="/auth-client.js"></script><script defer src="/energie-cartographie.js?v=c4a"></script></body></html>
+</main><script defer src="/auth-client.js"></script><script defer src="/energie-cartographie.js?v=c4a"></script><script src="/energie-esquisse-entry.js?v=c4b" defer></script></body></html>
