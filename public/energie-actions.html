@@ -3,7 +3,7 @@
 <meta name="referrer" content="no-referrer"><meta name="theme-color" content="#153f3b">
 <title>Suivi des contributions · SUNU Courant</title>
 <link rel="stylesheet" href="/energie-pilotage.css?v=c4c1">
-<link rel="stylesheet" href="/energie-actions.css?v=c4c2"></head>
+<link rel="stylesheet" href="/energie-actions.css?v=c4c3"></head>
 <body><a class="skip" href="#main">Aller au contenu</a>
 <header><a id="retour" href="/energie-pilotage.html">← Tableau de bord C4C</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
 <main id="main">
@@ -13,14 +13,15 @@
 <section class="panel"><p class="eyebrow">1 · ACCÈS AUTORISÉ</p><h2>Site et périmètre</h2>
 <p role="status" id="etat" class="state">Vérification de la session Core…</p>
 <div class="selection"><label for="site">Site / responsabilité<select id="site" disabled><option>Chargement…</option></select></label>
-<label for="filtre">État des propositions<select id="filtre"><option value="TOUTES">Toutes les propositions à suivre</option><option value="EN_REVUE">En revue</option><option value="A_CORRIGER">À corriger</option></select></label></div>
+<label for="filtre">État des propositions<select id="filtre"><option value="TOUTES">Toutes les propositions à suivre</option><option value="EN_REVUE">En revue</option><option value="A_CORRIGER">À corriger</option></select></label>
+<label for="suivi" id="suiviBox" hidden>Diagnostic propriétaire<select id="suivi"><option value="TOUS">Tous les suivis</option><option value="SANS_RELECTEUR_ACTIF">En revue sans relecteur actif</option></select></label></div>
 <p id="perimetre" class="note"></p><button type="button" id="rafraichir">Actualiser</button></section>
 <section class="panel"><div class="heading"><div><p class="eyebrow">2 · FILE DE COLLECTE C2</p><h2>Propositions du registre</h2></div><span class="tag">Déclaratif · lecture seule</span></div>
-<p class="note">Tri par date de dernière modification, de la plus ancienne à la plus récente. « Pour moi » décrit une affectation C1 active ou une proposition que vous avez rédigée ; ce n'est pas une autorisation supplémentaire.</p>
-<div class="table-wrap"><table><thead><tr><th scope="col">Élément proposé</th><th scope="col">Unité C1</th><th scope="col">État C2</th><th scope="col">Dernière modification</th><th scope="col">Jours écoulés</th><th scope="col">Suivi</th></tr></thead>
-<tbody id="actions"><tr><td colspan="6">Aucune donnée chargée.</td></tr></tbody></table></div>
+<p class="note">Tri par date de dernière modification, de la plus ancienne à la plus récente. « Pour moi » décrit uniquement le rôle déjà reconnu par C1/C2. « Sans relecteur actif » est un diagnostic pour le propriétaire, pas une attribution automatique.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Élément proposé</th><th scope="col">Unité C1</th><th scope="col">État C2</th><th scope="col">Dernière modification</th><th scope="col">Ancienneté</th><th scope="col">Relecture</th><th scope="col">Suivi</th><th scope="col">Accès existant</th></tr></thead>
+<tbody id="actions"><tr><td colspan="8">Aucune donnée chargée.</td></tr></tbody></table></div>
 <div class="pagination"><button type="button" id="precedent" disabled>← Précédent</button><span id="pageLabel">Page 1</span><button type="button" id="suivant" disabled>Suivant →</button></div>
-<p class="note">L'ancienneté n'est pas une date limite et ne prouve aucun retard. Les validations ou corrections doivent passer par les parcours C2 autorisés ; cet écran n'enregistre aucune modification.</p>
+<p class="note">L'ancienneté est exprimée par tranches complètes de 24 h, depuis la dernière modification ; l'heure locale est affichée pour éviter toute confusion. Aucun délai ni retard contractuel n'est déduit. Les boutons n'ouvrent que les parcours C1/C2 existants, dont les permissions restent vérifiées côté serveur.</p>
 <p><a id="versCollecte" href="/energie-collecte.html">Ouvrir la collecte C2 dans mon périmètre →</a></p></section>
 <p class="privacy">🔒 Accès Core + tenant + responsabilité C1 active. Aucune identité de contributeur, photo, donnée patient, consommation, kWh, promesse d'économie ou donnée d'un site non autorisé n'est affichée.</p>
-</main><script src="/auth-client.js" defer></script><script src="/energie-actions.js?v=c4c2" defer></script></body></html>
+</main><script src="/auth-client.js" defer></script><script src="/energie-retour-c4c3.js?v=r2" defer></script><script src="/energie-actions.js?v=c4c3" defer></script></body></html>

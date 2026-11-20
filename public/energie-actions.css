@@ -6,3 +6,7 @@
 .actions-empty{text-align:left;color:#4f6659}
 .pagination button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #1a9875;outline-offset:2px}
 @media(max-width:560px){.selection{grid-template-columns:1fr}.pagination{justify-content:space-between;gap:.35rem}table{min-width:770px}}
+
+.relecture-attention{font-weight:700;color:#99411e}
+#suiviBox[hidden]{display:none}
+@media(max-width:560px){table{min-width:1050px}}

@@ -122,12 +122,14 @@ function creerEnergyDashboardStore({obtenirClient}) {
    * File C2 en lecture seule. L'affectation C1 est vérifiée AVANT tout accès
    * aux propositions. Une proposition d'un autre site n'est jamais exposée.
    */
-  async function actions({tenant,actor,siteId,grantId=null,offset=0,statut='TOUTES'}) {return lecture(async c => {
+  async function actions({tenant,actor,siteId,grantId=null,offset=0,statut='TOUTES',suivi='TOUS'}) {return lecture(async c => {
     const site=await obtenirSite(c,tenant,siteId);
     if(!site)return null;
     const scope=await autoriser(c,site,actor,grantId);
     if(!scope)return null;
     const owner=Number(site.owner_personne_id)===actor && !grantId;
+    // Le diagnostic d'affectation est un outil de supervision propriétaire seulement.
+    if(suivi==='SANS_RELECTEUR_ACTIF' && !owner)return null;
     const contexte={site:{id:String(site.public_id),nom:site.nom},
       acces:{role:scope.role_scope,perimetre:scope.nom,complet:owner},
       filtre:statut,offset,limite:LIMIT,fiabilite:'DECLARATIONS_A_VERIFIER'};
@@ -135,6 +137,11 @@ function creerEnergyDashboardStore({obtenirClient}) {
     const sql=arbre+` SELECT p.id,p.nom,p.famille,p.statut,p.date_modification,
       n.id AS scope_node_id,n.nom AS scope_nom,
       p.auteur_personne_id=$5 AS est_auteur,
+      EXISTS(SELECT 1 FROM energy_scope_grants active_reviewer
+        WHERE active_reviewer.id=p.reviewer_grant_id
+          AND active_reviewer.site_id=$1 AND active_reviewer.tenant_id=$2
+          AND active_reviewer.owner_personne_id=$3
+          AND active_reviewer.statut='ACTIF' AND active_reviewer.role_scope<>'OCCUPANT') AS relecteur_actif,
       EXISTS(SELECT 1 FROM energy_scope_grants g
         WHERE g.id=p.reviewer_grant_id AND g.site_id=$1 AND g.tenant_id=$2
           AND g.owner_personne_id=$3 AND g.personne_id=$5 AND g.statut='ACTIF'
@@ -143,6 +150,13 @@ function creerEnergyDashboardStore({obtenirClient}) {
       WHERE p.site_id=$1 AND p.tenant_id=$2 AND p.owner_personne_id=$3
         AND p.statut IN ('EN_REVUE','A_CORRIGER')
         AND ($7::text='TOUTES' OR p.statut=$7::text)
+        AND ($9::text='TOUS' OR (p.statut='EN_REVUE' AND NOT EXISTS(
+          SELECT 1 FROM energy_scope_grants review_grant
+          WHERE review_grant.id=p.reviewer_grant_id
+            AND review_grant.site_id=$1 AND review_grant.tenant_id=$2
+            AND review_grant.owner_personne_id=$3
+            AND review_grant.statut='ACTIF' AND review_grant.role_scope<>'OCCUPANT'
+        )))
         AND ($6::boolean OR
           (p.statut='A_CORRIGER' AND p.auteur_personne_id=$5) OR
           (p.statut='EN_REVUE' AND EXISTS(
@@ -151,7 +165,7 @@ function creerEnergyDashboardStore({obtenirClient}) {
                AND g.owner_personne_id=$3 AND g.personne_id=$5 AND g.statut='ACTIF'
                AND g.role_scope<>'OCCUPANT')))
       ORDER BY p.date_modification ASC,p.id ASC LIMIT 51 OFFSET $8`;
-    const query=await c.query(sql,[site.id,site.tenant_id,site.owner_personne_id,scope.node_id,actor,owner,statut,offset]);
+    const query=await c.query(sql,[site.id,site.tenant_id,site.owner_personne_id,scope.node_id,actor,owner,statut,offset,suivi]);
     return {...contexte,statutStructure:'DISPONIBLE',actions:query.rows.slice(0,LIMIT).map(r=>presenterAction(r)),suivant:query.rows.length>LIMIT};
   });}
   return {sites,synthese,actions};

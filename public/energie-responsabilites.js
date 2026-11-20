@@ -88,6 +88,9 @@
     if(owned){siteId=owned.id;$('initialiser').hidden=false;$('retour').href='/inventaire-energie.html'+q+'&case='+caseId;}}
   }
   await refresh();if(mine.some(m=>m.siteId===siteId))$('initialiser').hidden=true;
+  // La navigation d'origine est préservée pour toutes les autres entrées.
+  const retourC4C3=window.SATEER_C4C3_NAV?.retourDepuis(location.search,tenant);
+  if(retourC4C3){$('retour').href=retourC4C3;$('retour').textContent='← Suivi des contributions C4C';}
   status('contexte','Session active · invitation nominative · accès limité à vos responsabilités.');
  }catch(e){status('contexte','Impossible d’ouvrir cet espace : '+e.message,true);}
 })();

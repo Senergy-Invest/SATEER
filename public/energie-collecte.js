@@ -73,7 +73,10 @@
  });
  try{const ctx=await window.SATEER_CONTEXT_READY;
   if(!tenant||!(ctx.organisations||[]).some(x=>x.tenant_code===tenant))throw Error('Session Energy non autorisée.');
-  if(caseId)$('retour').href='/energie-responsabilites.html?tenant='+encodeURIComponent(tenant)+'&case='+encodeURIComponent(caseId);
+  // Lien explicite et strict vers C4C3 uniquement si cette page en provient.
+  const retourC4C3=window.SATEER_C4C3_NAV?.retourDepuis(location.search,tenant);
+  if(retourC4C3){$('retour').href=retourC4C3;$('retour').textContent='← Suivi des contributions C4C';}
+  else if(caseId)$('retour').href='/energie-responsabilites.html?tenant='+encodeURIComponent(tenant)+'&case='+encodeURIComponent(caseId);
   else $('retour').href='/energie-responsabilites.html?tenant='+encodeURIComponent(tenant);
   const r=await scope('GET','/mes-responsabilites');grants=r.responsabilites||[];
   if(!grants.length){$('contexte').textContent='Aucune responsabilité active. Acceptez une invitation dans Mon espace de participation.';return;}

@@ -2,7 +2,7 @@
 /** C4C : API strictement GET, aucune autorisation ni appartenance inventée. */
 const {UUID,TENANT} = require('./energy-case-domain');
 const {offsetValide} = require('./energy-dashboard-domain');
-const {filtreValide}=require('./energy-dashboard-actions-domain');
+const {filtreValide,suiviValide}=require('./energy-dashboard-actions-domain');
 function creerEnergyDashboardRouter({router,listerOrganisations,store,tenantAutorise}) {
   if (!router?.use || !router?.get || typeof listerOrganisations !== 'function' ||
       !store || typeof store.sites !== 'function' || typeof store.synthese !== 'function' || typeof store.actions !== 'function') {
@@ -53,7 +53,9 @@ function creerEnergyDashboardRouter({router,listerOrganisations,store,tenantAuto
     if(grantId!==undefined&&!UUID.test(grantId || ''))return refuse(res,400,'AFFECTATION_INVALIDE');
     const statut=filtreValide(req.query?.statut);
     if(statut===null)return refuse(res,400,'FILTRE_INVALIDE');
-    const data=await store.actions({...s,siteId:req.params.siteId,grantId:grantId||null,offset,statut});
+    const suivi=suiviValide(req.query?.suivi);
+    if(suivi===null)return refuse(res,400,'SUIVI_INVALIDE');
+    const data=await store.actions({...s,siteId:req.params.siteId,grantId:grantId||null,offset,statut,suivi});
     return data?res.json({statut:'ACTIONS_C4C_PRIVEES',...data}):refuse(res,404,'PERIMETRE_NON_AUTORISE');
   }));
   return router;
