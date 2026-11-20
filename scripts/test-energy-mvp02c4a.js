@@ -1,0 +1,58 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const {asset,link,usage,TYPES,LINKS,USES}=require('../energy/energy-topology-domain');
+const {creerEnergyTopologyRouter}=require('../energy/energy-topology-http');
+const id=()=>crypto.randomUUID(),A=id(),B=id(),C=id();
+const DA={typeNoeud:'COMPTEUR',nom:'Compteur secondaire M2',repere:'M2',scopeNodeId:null};
+const DL={sourceAssetId:A,typeLien:'MESURE',targetAssetId:null,targetScopeNodeId:B,targetEquipmentId:null};
+const DU={equipmentId:C,usage:'FROID',commentaire:null};
+function router({orgs=async()=>[{tenant_code:'ENERGY_MVP01D_RECETTE'}],store={}}={}){
+ const routes=[],middlewares=[];const r={use:cb=>middlewares.push(cb),get:(p,cb)=>routes.push({method:'GET',path:p,cb}),post:(p,cb)=>routes.push({method:'POST',path:p,cb})};
+ const full=Object.fromEntries(['sites','carte','newAsset','newLink','newUsage','withdraw'].map(x=>[x,async()=>({code:'OK',sites:[],lieux:[],suivant:false})]));
+ creerEnergyTopologyRouter({router:r,store:{...full,...store},listerOrganisations:orgs,origineAutorisee:'http://localhost:3482',tenantAutorise:'ENERGY_MVP01D_RECETTE'});
+ async function call(method,path,{auth={personneId:708},tenant='ENERGY_MVP01D_RECETTE',origin='http://localhost:3482',body={},offset,key=A}={}){
+  const item=routes.find(x=>x.path===path&&x.method===method);assert.ok(item);
+  const params=Object.fromEntries([...path.matchAll(/:(\w+)/g)].map(x=>[x[1],B]));
+  const headers={Origin:origin,'Idempotency-Key':key};const req={method,params,body,query:{tenant,...(offset===undefined?{}:{offset})},auth,get:x=>headers[x]};
+  const res={code:200,headers:{},set(k,v){this.headers[k]=v;return this;},status(n){this.code=n;return this;},json(v){this.jsonData=v;return this;}};
+  for(const middleware of middlewares)middleware(req,res,()=>{});await item.cb(req,res);return res;
+ }
+ return {routes,call};
+}
+test('Les familles physiques du réseau sont définies et limitées',()=>{assert.deepEqual(TYPES,['SOURCE','COMPTEUR','TABLEAU','CIRCUIT','DEPART']);assert.equal(TYPES.includes('PASSEPORT'),false);});
+test('Trois relations distinctes ; aucune confusion bâtiment et tableau',()=>{assert.deepEqual(LINKS,['ALIMENTE','MESURE','DESSERT']);});
+test('Usages fonctionnels incluent froid, pompage, secours, sans calculer énergie',()=>{assert.ok(USES.includes('FROID'));assert.ok(USES.includes('SECURITE'));assert.equal(USES.includes('KWH'),false);});
+test('Compteur secondaire avec repère et localisation facultative',()=>{assert.deepEqual(asset(DA),DA);assert.equal(asset({...DA,scopeNodeId:A}).scopeNodeId,A);});
+test('Le nom et le type sont contrôlés',()=>{assert.equal(asset({...DA,nom:' '}),null);assert.equal(asset({...DA,typeNoeud:'POMPE'}),null);});
+test('Identifiants et caractères HTML risqués refusés',()=>{assert.equal(asset({...DA,scopeNodeId:'nimporte quoi'}),null);assert.equal(asset({...DA,nom:'<script>'}),null);});
+test('Pas de privilège issu du formulaire',()=>{assert.equal(asset({...DA,owner_personne_id:708}),null);assert.equal(asset({...DA,statut:'CERTIFIE'}),null);});
+test('Repère plafonné et nullable uniquement par null',()=>{assert.equal(asset({...DA,repere:'x'.repeat(61)}),null);assert.equal(asset({...DA,repere:''}),null);assert.ok(asset({...DA,repere:null}));});
+test('Mesure explicite compteur → bâtiment',()=>{assert.deepEqual(link(DL),DL);});
+test('Un même compteur peut mesurer deux bâtiments sans unicité de cible',()=>{assert.ok(link({...DL,targetScopeNodeId:A}));assert.ok(link({...DL,targetScopeNodeId:B}));});
+test('Une alimentation peut relier tableau et circuit',()=>{assert.ok(link({...DL,typeLien:'ALIMENTE',targetAssetId:C,targetScopeNodeId:null}));});
+test('Lien vers un équipement exige son UUID public',()=>{assert.ok(link({...DL,typeLien:'ALIMENTE',targetScopeNodeId:null,targetEquipmentId:C}));assert.equal(link({...DL,targetEquipmentId:'fake'}),null);});
+test('Un seul type de destination, aucun lien ambigu',()=>{assert.equal(link({...DL,targetAssetId:C}),null);assert.equal(link({...DL,targetScopeNodeId:null}),null);});
+test('DESSERT obligatoirement une unité C1',()=>{assert.ok(link({...DL,typeLien:'DESSERT'}));assert.equal(link({...DL,typeLien:'DESSERT',targetScopeNodeId:null,targetAssetId:C}),null);});
+test('ALIMENTE ne peut désigner un bâtiment sans circuit identifié',()=>{assert.equal(link({...DL,typeLien:'ALIMENTE'}),null);});
+test('Auto-alimentation interdite',()=>{assert.equal(link({...DL,typeLien:'ALIMENTE',targetAssetId:A,targetScopeNodeId:null}),null);});
+test('Usages ne copient ni les photos ni les passeports',()=>{assert.deepEqual(usage(DU),DU);assert.equal(usage({...DU,photos:[]}),null);});
+test('Commentaire usage facultatif mais borné',()=>{assert.ok(usage({...DU,commentaire:'Chaîne du froid'}));assert.equal(usage({...DU,commentaire:'a'.repeat(201)}),null);});
+test('Un équipement de provenance incorrecte rejeté',()=>{assert.equal(usage({...DU,equipmentId:123}),null);assert.equal(usage({...DU,usage:'CERTIFIE'}),null);});
+test('Le routeur n’expose jamais photos, QR ni contrat fictif',()=>{const list=router().routes.map(x=>x.path);assert.equal(list.length,6);assert.ok(list.every(x=>!/(photos|passports|qr|contrat)/i.test(x)));});
+test('L’API exige Core Auth',async()=>{const r=await router().call('GET','/sites',{auth:null});assert.equal(r.code,401);});
+test('Un tenant différent est interdit',async()=>{const r=await router().call('GET','/sites',{tenant:'AUTRE'});assert.equal(r.code,403);});
+test('Un tenant non membre est interdit',async()=>{const r=await router({orgs:async()=>[]}).call('GET','/sites');assert.equal(r.code,403);});
+test('POST d’origine externe refusé',async()=>{const r=await router().call('POST','/sites/:siteId/appareillages',{origin:'https://example.invalid',body:DA});assert.equal(r.code,403);});
+test('Les nouvelles données ne passent que par le domaine strict',async()=>{const r=await router().call('POST','/sites/:siteId/appareillages',{body:{...DA,role:'ADMIN'}});assert.equal(r.code,400);});
+test('Clé idempotente obligatoire',async()=>{const r=await router().call('POST','/sites/:siteId/appareillages',{body:DA,key:'no'});assert.equal(r.code,400);});
+test('Un actif valablement déclaré obtient Created',async()=>{const r=await router().call('POST','/sites/:siteId/appareillages',{body:DA});assert.equal(r.code,201);});
+test('Un lien MESURE peut être créé',async()=>{const r=await router().call('POST','/sites/:siteId/liens',{body:DL});assert.equal(r.code,201);});
+test('Un usage peut être déclaré',async()=>{const r=await router().call('POST','/sites/:siteId/usages',{body:DU});assert.equal(r.code,201);});
+test('Une carte non autorisée n’est pas exposée',async()=>{const r=await router({store:{carte:async()=>null}}).call('GET','/sites/:siteId/carte');assert.equal(r.code,404);});
+test('Pagination incorrecte refusée',async()=>{assert.equal((await router().call('GET','/sites/:siteId/carte',{offset:-1})).code,400);assert.equal((await router().call('GET','/sites/:siteId/carte',{offset:'Infinity'})).code,400);});
+test('Retrait exige un corps vide',async()=>{assert.equal((await router().call('POST','/sites/:siteId/liens/:linkId/retirer',{body:{delete:true}})).code,400);});
+test('Retrait possible avec corps vide',async()=>{assert.equal((await router().call('POST','/sites/:siteId/liens/:linkId/retirer',{body:{}})).code,200);});
+test('Les refus site inconnu se traduisent en 404',async()=>{const r=await router({store:{newAsset:async()=>({code:'SITE_NON_AUTORISE'})}}).call('POST','/sites/:siteId/appareillages',{body:DA});assert.equal(r.code,404);});
+test('Les cycles sont refusés et non présentés comme succès',async()=>{const r=await router({store:{newLink:async()=>({code:'BOUCLE_ALIMENTATION_REFUSEE'})}}).call('POST','/sites/:siteId/liens',{body:DL});assert.equal(r.code,409);});
+test('Les erreurs serveur ne révèlent aucun secret',async()=>{const orig=console.error;console.error=()=>{};try{const r=await router({store:{sites:async()=>{throw Error('SECRET_CODE');}}}).call('GET','/sites');assert.equal(r.code,503);assert.equal(JSON.stringify(r.jsonData).includes('SECRET_CODE'),false);}finally{console.error=orig;}});
+test('Header HTTP privé sur chaque route',async()=>{const r=await router().call('GET','/sites');assert.equal(r.headers['Cache-Control'],'private, no-store');});

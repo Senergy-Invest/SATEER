@@ -228,6 +228,29 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant MVP02-C4A : carte physique C1, graphe electrique declare, usages machines 051.
+// Recette uniquement ; activation contractuelle de production NON implementee ici.
+// Jamais d'inference de raccordement, pas de passeport/photo/QR ou de mesure automatique.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C3 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C3B === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C4A === '1') {
+    const {creerEnergyTopologyRouter} = require('./energy/energy-topology-http');
+    const {creerEnergyTopologyStore} = require('./energy/energy-topology-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/topologie/v1', exigerSession, creerEnergyTopologyRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyTopologyStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C3B : qualification technique contributive, chaine C1/C2.
 // Aucune permission sur les passeports / photos / QR et aucune certification automatique.
 if (process.env.PGDATABASE === 'sateer_test' &&

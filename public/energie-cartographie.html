@@ -1,0 +1,38 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#143d49"><title>Cartographie du site · SUNU Courant</title>
+<link rel="stylesheet" href="/energie-cartographie.css?v=c4a"></head><body>
+<a class="skip" href="#contenu">Aller au contenu</a><header><a id="retour" href="/sunu-courant.html">← SUNU Courant</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="contenu">
+<section class="hero"><div class="kicker">SUNU COURANT · CARTOGRAPHIE TECHNIQUE C4A</div>
+<h1>Comprendre le site.<br><em>Sans inventer les raccordements.</em></h1>
+<p>Reconstituez progressivement les lieux, les éléments électriques et les usages des machines. Un compteur peut mesurer plusieurs bâtiments ; un bâtiment peut dépendre de plusieurs circuits. Chaque relation doit être explicitement renseignée.</p>
+<div class="pills"><span>✓ Lieux existants C1</span><span>✓ Compteurs et tableaux</span><span>✓ Équipements uniques</span><span>✓ Liens à vérifier</span></div></section>
+<section class="card notice"><span class="kicker">PÉRIMÈTRE DE RECETTE</span><h2>Préparation technique privée, non contractuelle</h2>
+<p>Cette fonctionnalité n'est activée que sur l'instance de recette, pour le propriétaire du site. Elle ne constitue ni une étude électrique ni un accès professionnel autorisé. L'activation auprès d'un client réel devra être conditionnée à un contrat vérifié et aux droits de sa mission.</p>
+<p class="warning">Ne réalisez aucune manipulation de tableau électrique pour remplir cet écran. En cas d'incertitude, laissez la relation non déclarée.</p></section>
+<section class="card"><span class="kicker">MON DOSSIER</span><h2>Site et chargement des cartes</h2><p id="contexte" role="status">Vérification de la session…</p>
+<label for="site">Mon site privé</label><select id="site"></select><p id="pagination" class="muted"></p><button type="button" id="suite" class="secondary" hidden>Charger la suite</button></section>
+<div class="cards">
+<section class="card"><span class="kicker">1 · PHYSIQUE</span><h2>Bâtiments, services et bureaux</h2><p>Les espaces sont issus de l'organigramme C1 : ils ne sont pas recréés ici. Un espace organisationnel n'est pas nécessairement un local physique.</p><ul id="lieux" class="items"></ul><a id="organisation" href="/energie-responsabilites.html">Gérer les lieux et les responsabilités →</a></section>
+<section class="card"><span class="kicker">2 · ÉLECTRIQUE</span><h2>Sources, compteurs, tableaux et circuits</h2><form id="formAppareillage">
+<label for="typeAppareillage">Nature de l'élément</label><select id="typeAppareillage" required><option value="SOURCE">Source / arrivée électrique</option><option value="COMPTEUR">Compteur (principal ou secondaire)</option><option value="TABLEAU">Tableau électrique</option><option value="CIRCUIT">Circuit</option><option value="DEPART">Départ électrique</option></select>
+<label for="nomAppareillage">Nom simple</label><input id="nomAppareillage" maxlength="120" placeholder="Ex. Tableau général de l'hôpital" required>
+<label for="repere">Repère existant (facultatif)</label><input id="repere" maxlength="60" placeholder="Ex. TGBT-01, M-S2">
+<label for="localisation">Emplacement connu (facultatif)</label><select id="localisation"><option value="">Je ne sais pas</option></select>
+<button class="primary" type="submit">Ajouter à la carte technique</button></form><p id="messageAppareillage" role="status"></p><ul id="appareillages" class="items"></ul></section>
+</div>
+<section class="card"><span class="kicker">3 · RELATIONS</span><h2>Qui alimente ou mesure quoi ?</h2>
+<p>Exemples : « Compteur secondaire M2 mesure bâtiment B et bâtiment C », « TGBT alimente tableau T2 », « T2 dessert le laboratoire ». Ces relations ne sont jamais déduites par le système.</p>
+<form id="formLien"><div class="two"><div><label for="sourceLien">Élément électrique de départ</label><select id="sourceLien" required></select></div>
+<div><label for="typeLien">Relation déclarée</label><select id="typeLien"><option value="ALIMENTE">Alimente</option><option value="MESURE">Mesure la consommation de</option><option value="DESSERT">Dessert un espace</option></select></div></div>
+<div class="two"><div><label for="categorieCible">Type de cible</label><select id="categorieCible"><option value="ASSET">Autre élément électrique</option><option value="SCOPE">Bâtiment / espace C1</option><option value="EQUIPMENT">Machine / équipement C2</option></select></div>
+<div><label for="cibleLien">Cible</label><select id="cibleLien" required></select></div></div>
+<button type="submit" class="primary">Déclarer cette relation</button></form><p id="messageLien" role="status"></p>
+<h3>Relations déclarées</h3><ul id="liens" class="items"></ul></section>
+<section class="card"><span class="kicker">4 · FONCTIONNEL</span><h2>À quoi servent les machines ?</h2><p>La même machine peut avoir plusieurs usages. Aucun nouvel appareil n'est créé : la carte réutilise l'inventaire canonique C2 / 051.</p>
+<form id="formUsage"><div class="two"><div><label for="equipement">Équipement du site</label><select id="equipement" required></select></div><div>
+<label for="usage">Usage déclaré</label><select id="usage"><option value="FROID">Froid</option><option value="ECLAIRAGE">Éclairage</option><option value="VENTILATION">Ventilation</option><option value="CHAUFFAGE">Chauffage</option><option value="POMPAGE">Pompage</option><option value="INFORMATIQUE">Informatique</option><option value="PRODUCTION">Production industrielle</option><option value="SECURITE">Sécurité / secours</option><option value="AUTRE">Autre</option></select></div></div>
+<label for="commentaire">Précision facultative</label><input id="commentaire" maxlength="200" placeholder="Ex. chaîne du froid pour les vaccins">
+<button type="submit" class="primary">Associer cet usage</button></form><p id="messageUsage" role="status"></p><ul id="usages" class="items"></ul></section>
+<p class="foot">🔒 Déclarations privées sur le site, non vérifiées. Ni estimation de consommation, ni preuve de raccordement, ni certification, ni diffusion des photos ou QR. L'éditeur d'esquisses visuelles suivra en C4B.</p>
+</main><script defer src="/auth-client.js"></script><script defer src="/energie-cartographie.js?v=c4a"></script></body></html>
