@@ -1,0 +1,35 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>E-METER-1A · Compteurs et index · SUNU COURANT</title>
+<link rel="stylesheet" href="/energie-releves.css?v=1a"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a><header><a id="retour" href="/energie-pilotage.html">← Tableau de bord</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal"><div class="intro"><p class="eyebrow">E-METER-1A · COLLECTE MANUELLE</p><h1>Mes compteurs<br><em>et mes relevés.</em></h1>
+<p>Renseignez un point de comptage, son compteur et les index affichés. Les données restent déclaratives et privées. Aucun capteur ni photographie requis.</p>
+<p class="notice">Sécurité : ne jamais ouvrir un tableau électrique, retirer un capot ou s'approcher d'une partie sous tension pour effectuer un relevé. Si l'affichage n'est pas accessible en sécurité, ne relevez rien.</p></div>
+<section class="panel"><h2>1. Choisir un site</h2><label>Site autorisé <select id="site" disabled><option>Chargement…</option></select></label>
+<p class="message" id="etat" role="status">Vérification de la session Core…</p><button id="rafraichir" type="button">Actualiser le registre</button></section>
+<section class="panel"><h2>2. Déclarer un point de comptage</h2><p class="hint">Un point représente un emplacement ou un périmètre de mesure. Il n'implique aucune répartition de consommation entre bâtiments.</p>
+<form id="form-point"><label>Nom du point <input id="point-nom" required maxlength="120" placeholder="Ex. Compteur principal bâtiment A"></label>
+<div class="grid"><label>Énergie <select id="point-energie"><option value="ELECTRICITE">Électricité</option><option value="EAU">Eau</option><option value="GAZ">Gaz</option><option value="CHALEUR">Chaleur</option><option value="AUTRE">Autre</option></select></label>
+<label>Type de point <select id="point-type"><option value="GENERAL">Général</option><option value="SECONDAIRE">Secondaire</option><option value="AUTRE">Autre</option></select></label></div><button type="submit">Déclarer le point</button></form></section>
+<section class="panel"><h2>3. Déclarer un compteur et son premier registre</h2><form id="form-compteur"><label>Point de comptage <select id="compteur-point" required></select></label>
+<label>Nom du compteur <input id="compteur-nom" required maxlength="120" placeholder="Ex. Compteur du tableau général"></label><div class="grid">
+<label>Technologie <select id="compteur-tech"><option value="INCONNUE">Inconnue</option><option value="MECANIQUE">Mécanique</option><option value="ELECTRONIQUE">Électronique</option><option value="COMMUNICANT">Communicant</option></select></label>
+<label>Mode commercial <select id="compteur-mode"><option value="INCONNU">Inconnu</option><option value="PREPAYE">Prépayé</option><option value="POSTPAYE">Postpayé</option><option value="SANS_CONTRAT">Sans contrat</option></select></label></div>
+<label>Numéro de série (facultatif) <input id="compteur-numero" maxlength="80" autocomplete="off"></label><div class="grid">
+<label>Code du registre <input id="compteur-code" required maxlength="32" pattern="[A-Z0-9][A-Z0-9_-]*" value="INDEX_TOTAL"></label>
+<label>Unité <select id="compteur-unite"><option value="KWH">kWh</option><option value="KVARH">kvarh</option><option value="KVAH">kVAh</option><option value="M3">m³</option><option value="L">litre</option><option value="KG">kg</option><option value="H">heure</option><option value="UNITE">unité</option></select></label></div>
+<button type="submit">Déclarer le compteur</button></form><p class="hint">Le type de compteur, son mode commercial et son registre sont indépendants. Aucun tarif n'est supposé.</p></section>
+<section class="panel"><h2>4. Ajouter un registre supplémentaire</h2><form id="form-registre"><label>Compteur <select id="registre-compteur" required></select></label><div class="grid">
+<label>Code du registre <input id="registre-code" required maxlength="32" pattern="[A-Z0-9][A-Z0-9_-]*" placeholder="Ex. HEURES_PLEINES"></label>
+<label>Unité <select id="registre-unite"><option value="KWH">kWh</option><option value="KVARH">kvarh</option><option value="KVAH">kVAh</option><option value="M3">m³</option><option value="L">litre</option><option value="KG">kg</option><option value="H">heure</option><option value="UNITE">unité</option></select></label></div>
+<button type="submit">Ajouter le registre</button></form></section>
+<section class="panel"><h2>5. Saisir un index</h2><form id="form-releve"><label>Registre du compteur <select id="releve-registre" required></select></label><div class="grid">
+<label>Index affiché (sans unité) <input id="releve-valeur" required inputmode="decimal" pattern="[0-9]+(\.[0-9]{1,6})?" placeholder="Ex. 12345.67"></label>
+<label>Date et heure de lecture <input id="releve-date" type="datetime-local" required step="1"></label></div>
+<label>Observation facultative <input id="releve-note" maxlength="240" placeholder="Ex. affichage lisible, à confirmer"></label>
+<button type="submit">Enregistrer l'index déclaré</button></form><p class="hint">L'index n'est pas une consommation. Aucune différence de kWh, facture ou économie n'est calculée ici.</p></section>
+<section class="panel"><h2>6. Historique des index déclarés</h2><label>Registre <select id="historique-registre"></select></label><button id="voir-historique" type="button">Afficher les relevés</button>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Index déclaré</th><th>Unité</th><th>Statut</th><th>Observation</th></tr></thead><tbody id="historique"><tr><td colspan="5">Sélectionnez un registre.</td></tr></tbody></table></div>
+<button id="historique-suite" type="button" hidden>Page suivante</button></section>
+<p class="footer">Les index, leur provenance et leur auteur sont conservés dans l'historique privé. Les factures, les pièces importées, les responsabilités des releveurs, l'OCR et les calculs relèvent des lots prévus après cette première tranche.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-releves.js?v=1a" defer></script></body></html>

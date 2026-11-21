@@ -228,6 +228,24 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU COURANT E-METER-1A : mesures déclarées, accès propriétaire Core et tenant uniquement.
+// Ne calcule aucune consommation ; n'invente aucun compteur ou tarif.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1') {
+    const {creerEnergyMeterRouter} = require('./energy/energy-meter-http');
+    const {creerEnergyMeterStore} = require('./energy/energy-meter-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/mesures/v1', exigerSession, creerEnergyMeterRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyMeterStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&
