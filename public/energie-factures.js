@@ -2,7 +2,9 @@
 /** Présentation seule : aucune somme, kWh ou tarif déduit. Toutes les valeurs serveur sont du texte. */
 (async()=>{
  const el=id=>document.getElementById(id),tenant=new URLSearchParams(location.search).get('tenant');
- const api='/api/energy/facturation/v1';let sites=[],siteIndex=0,offset=0,suivant=false,sequence=0,points=[];
+ const api='/api/energy/facturation/v1';
+ const goRevision=document.getElementById('versRectifications');
+ if(goRevision&&tenant)goRevision.href='/energie-rectifications.html?tenant='+encodeURIComponent(tenant);let sites=[],siteIndex=0,offset=0,suivant=false,sequence=0,points=[];
  let lastSubmission={fingerprint:null,key:null};
  let uploadRetry={fingerprint:null,key:null};let declarationList=[];let evidenceRequest=0;
  const text=(id,v)=>{el(id).textContent=v;};

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#153f3b">
+<title>Rectifications tracées · SUNU Courant</title>
+<link rel="stylesheet" href="/energie-factures.css?v=1b2"><link rel="stylesheet" href="/energie-rectifications.css?v=1c1"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a>
+<header><a id="retour" href="/energie-factures.html">← Mes factures</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal">
+<section class="hero"><span class="eyebrow">E-METER-1C1 · RECTIFICATIONS TRACÉES</span>
+<h1>Corriger une déclaration.<br><em>Conserver l'original.</em></h1>
+<p>Une correction crée une nouvelle version avec un motif obligatoire. L'original et les révisions ne sont pas effacés. Aucune facture, aucun montant, aucun tarif ou relevé n'est certifié ni calculé.</p></section>
+<section class="panel"><h2>1. Site et document accessibles</h2>
+<label for="site">Site autorisé</label><select id="site" disabled><option value="">Vérification de la session Core…</option></select>
+<p id="etat" role="status">Chargement…</p>
+<div class="table-wrap"><table><thead><tr><th>Date de la version courante</th><th>Nature / énergie actuelle</th><th>Montant déclaré actuel</th><th>Révision</th><th>Sélection</th></tr></thead>
+<tbody id="documents"><tr><td colspan="5">Chargement des documents…</td></tr></tbody></table></div>
+<div class="pagination"><button type="button" id="precedent" disabled>← Précédent</button><span id="page">Page 1</span><button type="button" id="suivant" disabled>Suivant →</button></div>
+</section>
+<section class="panel"><h2>2. Historique du document choisi</h2>
+<p id="historiqueEtat" role="status">Sélectionnez un document.</p>
+<div class="table-wrap"><table><thead><tr><th>Version</th><th>Date</th><th>Nature / énergie</th><th>Montant</th><th>Motif</th></tr></thead>
+<tbody id="historique"><tr><td colspan="5">Aucune déclaration sélectionnée.</td></tr></tbody></table></div>
+<p class="note"><strong>Justificatifs :</strong> les pièces jointes de la version précédente restent attachées à cette version. Aucune pièce n'est copiée automatiquement sur la version rectifiée. Vérifiez les preuves séparément.</p>
+</section>
+<section class="panel"><h2>3. Déclarer une rectification</h2>
+<p class="note">Le formulaire reprend la dernière version et exige un changement réel. Les informations initiales restent conservées dans le registre. Aucun règlement ou nouvelle facture fournisseur n'est créé.</p>
+<form id="formulaire">
+<div class="grid"><label>Nature<select id="nature" required><option value="FACTURE">Facture</option><option value="RECHARGE">Recharge</option></select></label>
+<label>Énergie<select id="energie" required><option value="ELECTRICITE">Électricité</option><option value="EAU">Eau</option><option value="GAZ">Gaz</option><option value="CHALEUR">Chaleur</option><option value="AUTRE">Autre</option></select></label>
+<label>Date du document<input id="dateDocument" type="date" required></label>
+<label>Devise (3 lettres)<input id="devise" maxlength="3" pattern="[A-Z]{3}" required></label>
+<label>Montant total déclaré<input id="montant" inputmode="decimal" required placeholder="Ex. 1200.00"></label>
+<label>Référence du document (facultative)<input id="referenceDocument" maxlength="80"></label></div>
+<fieldset id="periode"><legend>Période facturée</legend><div class="grid"><label>Du<input id="periodeDebut" type="date"></label><label>Au<input id="periodeFin" type="date"></label></div></fieldset>
+<div class="grid"><label>Point de comptage (facultatif)<select id="pointId"><option value="">Aucun — site seul</option></select></label>
+<label>Compteur (facultatif)<select id="meterId"><option value="">Aucun — lien non établi</option></select></label></div>
+<label>Référence du justificatif (texte seul, facultative)<input id="referenceJustificatif" maxlength="120"></label>
+<label>Motif obligatoire de la correction (12 à 400 caractères)<textarea id="motif" minlength="12" maxlength="400" rows="3" required placeholder="Expliquer précisément la donnée erronée et sa nouvelle valeur."></textarea></label>
+<button id="enregistrer" type="submit" disabled>Enregistrer une nouvelle version</button></form>
+<p id="retourForm" role="status"></p></section>
+<p class="note">Privé, déclaratif, non certifié. Une révision ne réécrit pas les données historiques, ne transfère pas de justificatif et ne calcule ni consommation ni économie. Limite de 20 révisions par document.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-rectifications.js?v=1c1" defer></script></body></html>

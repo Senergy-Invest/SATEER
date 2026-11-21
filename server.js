@@ -286,6 +286,27 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU COURANT E-METER-1C1 : rectifications append-only, sans suppression des factures.
+// La valeur originale, les revisions et les justificatifs conservent leurs identites distinctes.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1B1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1B2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1C1 === '1') {
+    const {creerEnergyBillingRevisionRouter} = require('./energy/energy-billing-revision-http');
+    const {creerEnergyBillingRevisionStore} = require('./energy/energy-billing-revision-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/rectifications/v1', exigerSession, creerEnergyBillingRevisionRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyBillingRevisionStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&
