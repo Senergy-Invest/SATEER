@@ -7,6 +7,7 @@
 <p class="notice">Sécurité : ne jamais ouvrir un tableau électrique, retirer un capot ou s'approcher d'une partie sous tension pour effectuer un relevé. Si l'affichage n'est pas accessible en sécurité, ne relevez rien.</p></div>
 <section class="panel"><h2>1. Choisir un site</h2><label>Site autorisé <select id="site" disabled><option>Chargement…</option></select></label>
 <p class="message" id="etat" role="status">Vérification de la session Core…</p><button id="rafraichir" type="button">Actualiser le registre</button></section>
+<p><a id="versFactures" href="/energie-factures.html" hidden>→ Ouvrir mes factures et recharges déclarées (E-METER-1B1)</a></p>
 <section class="panel"><h2>2. Déclarer un point de comptage</h2><p class="hint">Un point représente un emplacement ou un périmètre de mesure. Il n'implique aucune répartition de consommation entre bâtiments.</p>
 <form id="form-point"><label>Nom du point <input id="point-nom" required maxlength="120" placeholder="Ex. Compteur principal bâtiment A"></label>
 <div class="grid"><label>Énergie <select id="point-energie"><option value="ELECTRICITE">Électricité</option><option value="EAU">Eau</option><option value="GAZ">Gaz</option><option value="CHALEUR">Chaleur</option><option value="AUTRE">Autre</option></select></label>
@@ -31,5 +32,5 @@
 <section class="panel"><h2>6. Historique des index déclarés</h2><label>Registre <select id="historique-registre"></select></label><button id="voir-historique" type="button">Afficher les relevés</button>
 <div class="table-wrap"><table><thead><tr><th>Date</th><th>Index déclaré</th><th>Unité</th><th>Statut</th><th>Observation</th></tr></thead><tbody id="historique"><tr><td colspan="5">Sélectionnez un registre.</td></tr></tbody></table></div>
 <button id="historique-suite" type="button" hidden>Page suivante</button></section>
-<p class="footer">Les index, leur provenance et leur auteur sont conservés dans l'historique privé. Les factures, les pièces importées, les responsabilités des releveurs, l'OCR et les calculs relèvent des lots prévus après cette première tranche.</p>
+<p class="footer">Les index, leur provenance et leur auteur sont conservés dans l'historique privé. Les pièces jointes et imports, les responsabilités des releveurs, l'OCR et les calculs relèvent des lots prévus après cette première tranche.</p>
 </main><script src="/auth-client.js" defer></script><script src="/energie-releves.js?v=1a" defer></script></body></html>

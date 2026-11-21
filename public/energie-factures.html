@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#153f3b">
+<title>Factures et recharges déclarées · SUNU Courant</title>
+<link rel="stylesheet" href="/energie-factures.css?v=1b1"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a>
+<header><a id="retour" href="/energie-releves.html">← Mes compteurs</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal">
+<section class="hero"><span class="eyebrow">E-METER-1B1 · DOCUMENTS DÉCLARATIFS</span><h1>Mes factures <em>et recharges.</em></h1>
+<p>Conservez les informations d'une facture ou d'une recharge, même pour un site sans compteur. Les sommes sont saisies, non calculées. Aucune consommation ni économie n'est déduite.</p></section>
+<section class="panel"><h2>1. Site autorisé</h2><label for="site">Site</label><select id="site" disabled><option value="">Chargement…</option></select>
+<p id="etat" role="status">Vérification de la session Core…</p><button id="actualiser" type="button">Actualiser</button></section>
+<section class="panel"><h2>2. Déclarer un document</h2>
+<form id="formulaire">
+<div class="grid"><label>Nature<select id="nature" required><option value="FACTURE">Facture</option><option value="RECHARGE">Recharge</option></select></label>
+<label>Énergie<select id="energie" required><option value="ELECTRICITE">Électricité</option><option value="EAU">Eau</option><option value="GAZ">Gaz</option><option value="CHALEUR">Chaleur</option><option value="AUTRE">Autre</option></select></label>
+<label>Date de la facture / recharge<input id="dateDocument" type="date" required></label>
+<label>Devise (code de 3 lettres)<input id="devise" maxlength="3" value="XOF" pattern="[A-Z]{3}" required></label>
+<label>Montant total déclaré<input id="montant" inputmode="decimal" placeholder="Ex. 12500.00" required></label>
+<label>Référence du document (facultative)<input id="referenceDocument" maxlength="80" placeholder="Ex. N° facture"></label></div>
+<fieldset id="periode"><legend>Période facturée</legend><div class="grid"><label>Du <input id="periodeDebut" type="date"></label><label>Au <input id="periodeFin" type="date"></label></div></fieldset>
+<div class="grid"><label>Point de comptage (facultatif)<select id="pointId"><option value="">Aucun — site seul</option></select></label>
+<label>Compteur du point (facultatif)<select id="meterId"><option value="">Aucun — lien non établi</option></select></label></div>
+<label>Référence du justificatif (facultative, sans fichier)<input id="referenceJustificatif" maxlength="120" placeholder="Référence papier ou interne"></label>
+<p class="note">Cette référence n'est <strong>pas une pièce jointe</strong> ni une preuve vérifiée. Ne saisissez pas de code secret Woyofal, mot de passe ou données bancaires.</p>
+<button type="submit" id="enregistrer">Enregistrer la déclaration</button></form>
+<p id="retourForm" role="status"></p></section>
+<section class="panel"><h2>3. Historique des déclarations</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Date</th><th scope="col">Nature / énergie</th><th scope="col">Période</th><th scope="col">Montant déclaré</th><th scope="col">Statut</th><th scope="col">Référence</th></tr></thead><tbody id="historique"><tr><td colspan="6">Choisissez un site.</td></tr></tbody></table></div>
+<div class="pagination"><button id="precedent" type="button" disabled>← Précédent</button><span id="page">Page 1</span><button id="suivant" type="button" disabled>Suivant →</button></div></section>
+<p class="note">Toutes les informations sont déclaratives et privées. Ni tarif officiel, ni kWh calculés, ni rapprochement automatique avec les index. Les pièces téléchargées, imports et analyses viendront dans leurs lots prévus.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-factures.js?v=1b1" defer></script></body></html>

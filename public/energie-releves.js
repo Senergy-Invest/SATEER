@@ -52,6 +52,11 @@
   el('retour').href='/energie-pilotage.html?tenant='+encodeURIComponent(tenant);
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;if(!ctx.organisations?.some(x=>x.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
+  // Navigation vers 1B1 uniquement si sa propre API est activée pour cette session.
+  fetch('/api/energy/facturation/v1/sites?tenant='+encodeURIComponent(tenant),
+    {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}})
+    .then(r=>{if(r.ok){el('versFactures').href='/energie-factures.html?tenant='+encodeURIComponent(tenant);el('versFactures').hidden=false;}})
+    .catch(()=>{});
   const data=await request('GET','/sites');sites=data.sites;
   const select=clearSelect('site');for(const s of sites)select.append(option(s.nom+' · '+s.pays,s.id));select.disabled=false;
   if(sites.length){selectedSite=sites[0];select.value=sites[0].id;el('releve-date').value=today();await load();}

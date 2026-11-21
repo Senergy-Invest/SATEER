@@ -246,6 +246,24 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-METER-1B1 — documents déclaratifs, recette locale exclusive et Core existant.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1B1 === '1') {
+    const {creerEnergyBillingRouter} = require('./energy/energy-billing-http');
+    const {creerEnergyBillingStore} = require('./energy/energy-billing-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/facturation/v1', exigerSession, creerEnergyBillingRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyBillingStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN || 'http://localhost:3000',
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&
