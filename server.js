@@ -307,6 +307,27 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// SUNU Courant E-METER-1C2 — contrôles de cohérence STRICTEMENT READ ONLY.
+// Aucune migration, aucune correction automatique, aucune donnée certifiée.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1B1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1B2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1C2 === '1') {
+    const {creerEnergyMeterQualityRouter} = require('./energy/energy-meter-quality-http');
+    const {creerEnergyMeterQualityStore} = require('./energy/energy-meter-quality-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/qualite/v1', exigerSession, creerEnergyMeterQualityRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyMeterQualityStore({obtenirClient: obtenirClientDatabase}),
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&

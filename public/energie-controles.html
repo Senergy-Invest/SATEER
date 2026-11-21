@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#153f3b">
+<title>Contrôles de cohérence · SUNU Courant</title>
+<link rel="stylesheet" href="/energie-factures.css?v=1b2"><link rel="stylesheet" href="/energie-controles.css?v=1c2"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a>
+<header><a id="retour" href="/energie-rectifications.html">← Rectifications</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal">
+<section class="hero"><span class="eyebrow">E-METER-1C2 · CONTRÔLE DE QUALITÉ DÉCLARATIVE</span>
+<h1>Repérer les écarts.<br><em>Sans modifier les données.</em></h1>
+<p>Signaux indicatifs sur les relevés manuels et les factures/recharges courantes. Une baisse d'index peut correspondre à une remise à zéro ou un remplacement. Une référence répétée peut être légitime. Aucun signal ne certifie une fraude, une consommation ou un montant.</p></section>
+<section class="panel"><h2>1. Mon périmètre</h2><div class="controle-grille">
+<label for="site">Site autorisé<select id="site" disabled><option value="">Vérification de la session Core…</option></select></label>
+<label for="source">Données contrôlées<select id="source"><option value="RELEVES">Index des compteurs</option><option value="DOCUMENTS">Factures et recharges (versions actuelles)</option></select></label>
+</div><p id="etat" role="status">Chargement…</p><button type="button" id="actualiser">Actualiser</button></section>
+<section class="panel"><h2>2. Constats de la page</h2>
+<p class="note" id="information">Le diagnostic est limité à la page chargée, avec un maximum de 50 éléments. Il ne mesure pas l'ensemble du site.</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Date</th><th scope="col">Élément</th><th scope="col">Donnée déclarée</th><th scope="col">Constats</th><th scope="col">Action</th></tr></thead>
+<tbody id="resultats"><tr><td colspan="5">Choisissez un site.</td></tr></tbody></table></div>
+<div class="pagination"><button type="button" id="precedent" disabled>← Précédent</button><span id="page">Page 1</span><button type="button" id="suivant" disabled>Suivant →</button></div>
+<p class="note"><strong>À vérifier</strong> n'est pas une anomalie confirmée. <strong>Information</strong> ne bloque rien. « Aucun signal détecté » ne signifie jamais « donnée vérifiée ».</p>
+</section>
+<p class="note">Lecture seule : aucun index, montant, date, facture ou justificatif n'est modifié. Ni différence de relevés, ni kWh, ni tarif, ni paiement, ni économie calculés. Le moteur Engineering/Simulation reste indépendant. Recette locale avec données fictives uniquement.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-controles.js?v=1c2" defer></script></body></html>

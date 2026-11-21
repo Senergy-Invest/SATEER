@@ -1,0 +1,8 @@
+.controle-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.qualite-etat{font-weight:600}
+.qualite-alerte{color:#914321}
+.qualite-info{color:#315f83}
+.qualite-vide{color:#4b635c}
+.qualite-detail{display:block;font-size:.85rem;margin-top:4px;line-height:1.45}
+.qualite-code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.8rem;overflow-wrap:anywhere}
+@media(max-width:700px){.table-wrap{overflow-x:auto}}

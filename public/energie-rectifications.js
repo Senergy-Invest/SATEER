@@ -75,6 +75,7 @@
  async function init(){try{
   if(!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant))throw Error('TENANT_INVALIDE');
   el('retour').href='/energie-factures.html?tenant='+encodeURIComponent(tenant);
+  el('versControles').href='/energie-controles.html?tenant='+encodeURIComponent(tenant);
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;
   if(!ctx.organisations?.some(x=>x.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
