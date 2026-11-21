@@ -2,7 +2,8 @@
 /** E-METER-1C2 — Affichage texte seul, aucune mutation ni résultat certifié. */
 (async()=>{
  const $=id=>document.getElementById(id);
- const tenant=new URLSearchParams(location.search).get('tenant');
+ const query=new URLSearchParams(location.search),tenant=query.get('tenant');
+ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
  const api='/api/energy/qualite/v1';
  let sites=[],index=0,offset=0,suivant=false,sequence=0;
  const txt=(id,v)=>{$(id).textContent=String(v);};
@@ -22,7 +23,8 @@
    for(const s of item.signaux){const strong=document.createElement('strong');strong.textContent=s.code+' · '+(s.niveau==='A_VERIFIER'?'À vérifier':'Information');
     strong.className='qualite-code '+(s.niveau==='A_VERIFIER'?'qualite-alerte':'qualite-info');
     const detail=document.createElement('span');detail.className='qualite-detail';detail.textContent=s.explication;td.append(strong,detail);}
-   const act=cell(tr,'');if(!reading){const a=document.createElement('a');a.href='/energie-rectifications.html?tenant='+encodeURIComponent(tenant);
+   const act=cell(tr,'');if(!reading){const a=document.createElement('a');
+    a.href='/energie-rectifications.html?'+new URLSearchParams({tenant,from:'controles',site:sites[index].id,document:item.id}).toString();
     a.textContent='Voir les versions';act.append(a);}else act.textContent='À examiner dans les relevés';b.append(tr);
   }
   if(!data.items?.length){const tr=document.createElement('tr');const td=cell(tr,'Aucune donnée déclarée pour cette page.');td.colSpan=5;b.append(tr);}
@@ -39,12 +41,15 @@
  async function init(){try{
   if(!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant))throw Error('TENANT_INVALIDE');
   $('retour').href='/energie-rectifications.html?tenant='+encodeURIComponent(tenant);
+  if(query.get('source')==='DOCUMENTS')$('source').value='DOCUMENTS';
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;
   if(!ctx.organisations?.some(o=>o.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
   const list=await get(url('/sites'));sites=list.sites||[];const select=$('site');select.replaceChildren();
   if(!sites.length){select.append(option('','Aucun site autorisé'));txt('etat','Aucun site autorisé.');return;}
   for(let i=0;i<sites.length;i++)select.append(option(String(i),sites[i].nom));
+  const requestedSite=query.get('site');
+  if(requestedSite&&UUID.test(requestedSite)){const i=sites.findIndex(s=>s.id===requestedSite);if(i>=0){index=i;select.value=String(i);}}
   select.disabled=false;await load();if(list.suivant)txt('etat','Liste de sites partielle : 50 premiers sites seulement.');
  }catch(e){txt('etat','Accès indisponible : '+e.message);}}
  $('site').addEventListener('change',()=>{index=Number($('site').value)||0;offset=0;load();});

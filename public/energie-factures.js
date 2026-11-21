@@ -1,10 +1,11 @@
 'use strict';
 /** Présentation seule : aucune somme, kWh ou tarif déduit. Toutes les valeurs serveur sont du texte. */
 (async()=>{
- const el=id=>document.getElementById(id),tenant=new URLSearchParams(location.search).get('tenant');
+ const el=id=>document.getElementById(id),query=new URLSearchParams(location.search),tenant=query.get('tenant');
+ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
  const api='/api/energy/facturation/v1';
  const goRevision=document.getElementById('versRectifications');
- if(goRevision&&tenant)goRevision.href='/energie-rectifications.html?tenant='+encodeURIComponent(tenant);let sites=[],siteIndex=0,offset=0,suivant=false,sequence=0,points=[];
+ if(goRevision&&tenant)goRevision.href='/energie-rectifications.html?'+new URLSearchParams({tenant,from:'factures'}).toString();let sites=[],siteIndex=0,offset=0,suivant=false,sequence=0,points=[];
  let lastSubmission={fingerprint:null,key:null};
  let uploadRetry={fingerprint:null,key:null};let declarationList=[];let evidenceRequest=0;
  const text=(id,v)=>{el(id).textContent=v;};
@@ -60,12 +61,20 @@
  }
  async function init(){try{
   if(!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant))throw Error('TENANT_INVALIDE');
-  el('retour').href='/energie-releves.html?tenant='+encodeURIComponent(tenant);
+  if(query.get('from')==='rectifications'){
+   el('retour').textContent='← Rectifications';
+   el('retour').href='/energie-rectifications.html?'+new URLSearchParams({tenant,
+    from:query.get('returnFrom')==='controles'?'controles':'factures',
+    ...(UUID.test(query.get('site')||'')?{site:query.get('site')}:{}),
+    ...(UUID.test(query.get('document')||'')?{document:query.get('document')}:{})}).toString();
+  }else{el('retour').textContent='← Mes compteurs';el('retour').href='/energie-releves.html?tenant='+encodeURIComponent(tenant);}
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;if(!ctx.organisations?.some(x=>x.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
   const data=await request(url('/sites'));sites=data.sites||[];const sel=el('site');sel.replaceChildren();
   if(!sites.length){sel.append(option('','Aucun site accessible'));text('etat','Aucun site privé disponible.');return;}
   sites.forEach((s,i)=>sel.append(option(String(i),s.nom)));sel.disabled=false;
+  const requestedSite=query.get('site');if(requestedSite&&UUID.test(requestedSite)){
+   const i=sites.findIndex(s=>s.id===requestedSite);if(i>=0){siteIndex=i;sel.value=String(i);}}
   if(data.suivant)text('etat','Liste partielle : seuls les 50 premiers sites sont affichés.');
   await load();
  }catch(e){el('enregistrer').disabled=true;text('etat','Accès indisponible : '+e.message);}}

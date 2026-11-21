@@ -1,7 +1,9 @@
 'use strict';
 /** E-METER-1C1 UI, aucun calcul ni transfert automatique de fichiers. */
 (async()=>{
- const el=id=>document.getElementById(id),tenant=new URLSearchParams(location.search).get('tenant');
+ const el=id=>document.getElementById(id),query=new URLSearchParams(location.search),tenant=query.get('tenant');
+ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+ const from=query.get('from')==='controles'?'controles':'factures';
  const billing='/api/energy/facturation/v1',revisions='/api/energy/rectifications/v1';
  let sites=[],siteIndex=0,offset=0,suivant=false,documents=[],selected=null,revisionData=null,points=[],seq=0;
  let lastSubmission={fingerprint:null,key:null};
@@ -74,8 +76,13 @@
   }catch(e){if(current!==seq)return;text('etat','Registre indisponible : '+e.message);documents=[];suivant=false;displayList();}}
  async function init(){try{
   if(!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant))throw Error('TENANT_INVALIDE');
-  el('retour').href='/energie-factures.html?tenant='+encodeURIComponent(tenant);
-  el('versControles').href='/energie-controles.html?tenant='+encodeURIComponent(tenant);
+  const requestedSite=query.get('site'),requestedDoc=query.get('document');
+  el('versControles').href='/energie-controles.html?tenant='+encodeURIComponent(tenant)+'&source=DOCUMENTS'+
+   (UUID.test(requestedSite||'')?'&site='+encodeURIComponent(requestedSite):'');
+  const pageControles=el('versControles').href;
+  if(from==='controles'){el('retour').textContent='← Contrôles de qualité';el('retour').href=pageControles;}
+  else {el('retour').textContent='← Mes factures';el('retour').href='/energie-factures.html?'+new URLSearchParams({tenant,from:'rectifications',...(UUID.test(requestedSite||'')?{site:requestedSite}:{})}).toString();}
+  el('versFactures').href='/energie-factures.html?'+new URLSearchParams({tenant,from:'rectifications',returnFrom:from,...(UUID.test(requestedSite||'')?{site:requestedSite}:{}),...(UUID.test(requestedDoc||'')?{document:requestedDoc}:{})}).toString();
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;
   if(!ctx.organisations?.some(x=>x.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
@@ -83,7 +90,11 @@
   const selector=el('site');selector.replaceChildren();
   if(!sites.length){selector.append(option('','Aucun site autorisé'));text('etat','Aucun site disponible.');return;}
   sites.forEach((s,i)=>selector.append(option(i,s.nom)));selector.disabled=false;
-  await load();if(r.suivant)text('etat','Liste des sites partielle : 50 premiers.');
+  if(requestedSite&&UUID.test(requestedSite)){const i=sites.findIndex(s=>s.id===requestedSite);if(i>=0){siteIndex=i;selector.value=String(i);}}
+  await load();
+  if(requestedDoc&&UUID.test(requestedDoc)&&documents.some(x=>x.originalId===requestedDoc))await select(requestedDoc);
+  else if(requestedDoc)text('historiqueEtat','Ce document n’est pas présent sur cette page ; sélectionnez-le dans la liste autorisée.');
+  if(r.suivant)text('etat','Liste des sites partielle : 50 premiers.');
  }catch(e){text('etat','Accès indisponible : '+e.message);}}
  el('nature').addEventListener('change',period);el('pointId').addEventListener('change',meterOptions);
  el('site').addEventListener('change',()=>{siteIndex=Number(el('site').value)||0;offset=0;load();});
