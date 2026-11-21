@@ -2,11 +2,11 @@
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer"><meta name="theme-color" content="#153f3b">
 <title>Factures et recharges déclarées · SUNU Courant</title>
-<link rel="stylesheet" href="/energie-factures.css?v=1b1"></head>
+<link rel="stylesheet" href="/energie-factures.css?v=1b2"></head>
 <body><a class="skip" href="#principal">Aller au contenu</a>
 <header><a id="retour" href="/energie-releves.html">← Mes compteurs</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
 <main id="principal">
-<section class="hero"><span class="eyebrow">E-METER-1B1 · DOCUMENTS DÉCLARATIFS</span><h1>Mes factures <em>et recharges.</em></h1>
+<section class="hero"><span class="eyebrow">E-METER-1B1 + 1B2 · FACTURES, RECHARGES ET JUSTIFICATIFS</span><h1>Mes factures <em>et recharges.</em></h1>
 <p>Conservez les informations d'une facture ou d'une recharge, même pour un site sans compteur. Les sommes sont saisies, non calculées. Aucune consommation ni économie n'est déduite.</p></section>
 <section class="panel"><h2>1. Site autorisé</h2><label for="site">Site</label><select id="site" disabled><option value="">Chargement…</option></select>
 <p id="etat" role="status">Vérification de la session Core…</p><button id="actualiser" type="button">Actualiser</button></section>
@@ -28,5 +28,15 @@
 <section class="panel"><h2>3. Historique des déclarations</h2>
 <div class="table-wrap"><table><thead><tr><th scope="col">Date</th><th scope="col">Nature / énergie</th><th scope="col">Période</th><th scope="col">Montant déclaré</th><th scope="col">Statut</th><th scope="col">Référence</th></tr></thead><tbody id="historique"><tr><td colspan="6">Choisissez un site.</td></tr></tbody></table></div>
 <div class="pagination"><button id="precedent" type="button" disabled>← Précédent</button><span id="page">Page 1</span><button id="suivant" type="button" disabled>Suivant →</button></div></section>
-<p class="note">Toutes les informations sont déclaratives et privées. Ni tarif officiel, ni kWh calculés, ni rapprochement automatique avec les index. Les pièces téléchargées, imports et analyses viendront dans leurs lots prévus.</p>
-</main><script src="/auth-client.js" defer></script><script src="/energie-factures.js?v=1b1" defer></script></body></html>
+<section class="panel" id="justificatifs"><h2>4. Justificatifs privés — E-METER-1B2</h2>
+<p class="note">Associer un PDF ou PNG fictif à une déclaration existante. Fichier chiffré et non certifié ; aucun OCR, antivirus ni calcul. Ne déposez aucune pièce réelle pendant cette recette.</p>
+<label for="declarationFichier">Déclaration concernée</label><select id="declarationFichier" disabled><option value="">Sélectionner une déclaration</option></select>
+<form id="formulaireFichier"><label for="pieceFichier">Fichier PDF ou PNG (maximum 5 Mio)</label>
+<input type="file" id="pieceFichier" accept=".pdf,.png,application/pdf,image/png" required disabled>
+<button type="submit" id="envoyerFichier" disabled>Chiffrer et associer ce justificatif</button></form>
+<p id="etatFichiers" role="status">Choisissez une déclaration.</p>
+<div id="listeFichiers" class="evidence-list" aria-live="polite"></div>
+<p class="note">Téléchargement privé en pièce jointe, jamais affichage direct dans le navigateur. Les politiques de suppression, conservation et antivirus devront être définies avant un usage réel.</p>
+</section>
+<p class="note">Toutes les informations sont déclaratives et privées. Ni tarif officiel, ni kWh calculés, ni rapprochement automatique avec les index. Les imports et analyses viendront dans leurs lots prévus.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-factures.js?v=1b2" defer></script></body></html>
