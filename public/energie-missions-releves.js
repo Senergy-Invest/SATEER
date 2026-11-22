@@ -1,0 +1,93 @@
+'use strict';
+/** EP1 : interface privée sans droits calculés côté navigateur ; aucune insertion directe E-METER. */
+(async()=>{
+ const el=id=>document.getElementById(id),tenant=new URLSearchParams(location.search).get('tenant');
+ const API='/api/energy/participation/v1',METER='/api/energy/mesures/v1';
+ let ownerSites=[],ctx=null,blocked=false;
+ const pending=new Map();
+ const info=(txt,error=false)=>{el('etat').textContent=txt;el('etat').classList.toggle('error',error);};
+ const option=(label,id)=>new Option(label,id);
+ function setOptions(id,arr,caption,value){const node=el(id);node.replaceChildren(option('Choisir…',''));for(const x of arr)node.add(option(caption(x),value(x)));}
+ async function request(base,method,path,data,key){
+  const u=base+path+(path.includes('?')?'&':'?')+'tenant='+encodeURIComponent(tenant);
+  const headers={Accept:'application/json'};
+  if(method!=='GET')headers['Content-Type']='application/json';
+  if(key)headers['Idempotency-Key']=key;
+  const r=await fetch(u,{method,credentials:'same-origin',cache:'no-store',headers,...(method==='GET'?{}:{body:JSON.stringify(data)})});
+  const json=await r.json().catch(()=>({}));if(!r.ok)throw Error(json.statut||'HTTP_'+r.status);return json;
+ }
+ function pendingKey(action,data){const hash=JSON.stringify(data);let p=pending.get(action);
+  if(!p||p.hash!==hash){p={hash,key:crypto.randomUUID()};pending.set(action,p);}return p.key;}
+ function complete(action){pending.delete(action);}
+ const post=async(path,body,action)=>{const key=pendingKey(action,body);const out=await request(API,'POST',path,body,key);complete(action);return out;};
+ async function loadContexte(){const siteId=el('site').value;if(!siteId)return;
+  ctx=await request(API,'GET','/sites/'+encodeURIComponent(siteId)+'/contexte');
+  const distinct=[...new Map(ctx.registres.map(r=>[r.pointId,r])).values()];
+  setOptions('point',distinct,p=>p.pointNom+(p.scopeNodeId?' · déjà lié':''),p=>p.pointId);
+  setOptions('unite',ctx.unites,n=>n.nom+' · '+n.type,n=>n.id);
+  const actifs=ctx.registres.filter(r=>r.registerId&&r.scopeNodeId);
+  setOptions('registre',actifs,r=>r.pointNom+' · '+r.compteur+' · '+r.code+' ['+r.unite+']',r=>r.registerId);
+  setOptions('grant',ctx.responsabilites,g=>g.perimetre+' · '+g.role,g=>g.id);
+  el('contexte').textContent=ctx.registres.length+' registre(s)/point(s) visibles · '+ctx.responsabilites.length+' affectation(s) active(s).'+(ctx.listePartielle?' ATTENTION : liste partielle, aucune nouvelle attribution autorisée.':'');
+  el('lier').querySelector('button').disabled=ctx.listePartielle;
+  el('attribuer').querySelector('button').disabled=ctx.listePartielle;
+  if(!actifs.length)info('Aucun registre associé à un périmètre C1 : commencez par relier un point.');
+ }
+ function label(parent,txt,kind='strong'){const e=document.createElement(kind);e.textContent=txt;parent.append(e);return e;}
+ function makeButton(txt,cb,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger':'secondary';b.textContent=txt;b.addEventListener('click',cb);return b;}
+ const localDate=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,19);};
+ async function refresh(){const r=await request(API,'GET','/mes-missions');el('missions').replaceChildren();
+  el('indication').textContent=r.listePartielle?'Premières 50 missions uniquement : liste partielle.':'Missions privées, visibles uniquement selon vos droits Core/C1.';
+  for(const m of r.missions){const li=document.createElement('li');label(li,m.point+' · '+m.registre+' ['+m.unite+']');
+   const p=document.createElement('p');p.className='muted';p.textContent=m.site+' · '+m.perimetre+' · '+m.statut+(m.valeur!==null?' · index proposé '+m.valeur:'');li.append(p);
+   if(m.attributaire&&m.statut==='A_FAIRE'){
+    const f=document.createElement('form');f.className='mission-form';
+    const a=document.createElement('label');a.textContent='Index affiché';const ix=document.createElement('input');ix.required=true;ix.placeholder='1234.5';ix.inputMode='decimal';a.append(ix);
+    const b=document.createElement('label');b.textContent='Date et heure de lecture';const date=document.createElement('input');date.required=true;date.type='datetime-local';date.step='1';date.value=localDate();b.append(date);
+    const c=document.createElement('label');c.textContent='Observation facultative';const note=document.createElement('input');note.maxLength=240;c.append(note);
+    const btn=document.createElement('button');btn.textContent='Soumettre pour revue';btn.type='submit';f.append(a,b,c,btn);
+    f.addEventListener('submit',async e=>{e.preventDefault();if(blocked)return;
+     const d=new Date(date.value);if(!Number.isFinite(d.getTime()))return info('Date invalide.',true);
+     const body={valeur:ix.value.trim().replace(',','.'),releveLe:d.toISOString(),observation:note.value.trim()||null};
+     blocked=true;btn.disabled=true;try{await post('/missions/'+m.id+'/soumettre',body,'submit:'+m.id);info('Index proposé. Il n’est pas encore dans le registre canonique.');await refresh();}
+     catch(err){info('Soumission non confirmée : '+err.message,true);}finally{blocked=false;btn.disabled=false;}});li.append(f);
+   }
+   if(m.coordinateur&&m.statut==='A_REVOIR'){
+    const actions=document.createElement('div');
+    for(const [txt,decision] of [['Intégrer comme index déclaré à vérifier','INTEGRER'],['Refuser cette déclaration','REFUSER']]){
+     actions.append(makeButton(txt,async()=>{if(blocked||!confirm(decision==='INTEGRER'?'Intégrer cet index comme donnée DÉCLARÉE À VÉRIFIER, sans certification ni calcul ?':'Refuser la déclaration sans effacer sa trace ?'))return;
+      blocked=true;try{const r=await post('/missions/'+m.id+'/decision',{decision},'review:'+m.id+':'+decision);
+       info(r.statut+' · '+(r.qualification||r.statut));await refresh();}catch(err){info('Décision non confirmée : '+err.message,true);}finally{blocked=false;}
+     },decision==='REFUSER'));
+    }li.append(actions);
+   }
+   el('missions').append(li);
+  }
+  if(!r.missions.length){const li=document.createElement('li');li.textContent='Aucune mission accessible pour ce compte.';el('missions').append(li);}
+ }
+ el('actualiser').addEventListener('click',()=>refresh().catch(e=>info(e.message,true)));
+ el('site').addEventListener('change',()=>loadContexte().catch(e=>info(e.message,true)));
+ el('lier').addEventListener('submit',async e=>{e.preventDefault();if(blocked||ctx?.listePartielle)return;
+  const site=el('site').value,point=el('point').value,node=el('unite').value;if(!site||!point||!node)return;
+  blocked=true;try{const r=await post('/sites/'+site+'/points/'+point+'/liaison',{scopeNodeId:node},'link:'+site+':'+point);
+   info(r.statut);await loadContexte();}catch(err){info(err.message,true);}finally{blocked=false;}
+ });
+ el('attribuer').addEventListener('submit',async e=>{e.preventDefault();if(blocked||ctx?.listePartielle)return;
+  const site=el('site').value,reg=ctx.registres.find(r=>r.registerId===el('registre').value),g=ctx.responsabilites.find(x=>x.id===el('grant').value);
+  if(!reg||!g||g.nodeId!==reg.scopeNodeId)return info('Le registre et le responsable doivent appartenir à la même unité C1.',true);
+  blocked=true;try{const r=await post('/sites/'+site+'/missions',{registerId:reg.registerId,grantId:g.id},'assign:'+site+':'+reg.registerId+':'+g.id);
+   info(r.statut);await refresh();}catch(err){info(err.message,true);}finally{blocked=false;}
+ });
+ try{
+  if(!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant))throw Error('TENANT_INVALIDE');
+  el('retour').href='/energie-pilotage.html?tenant='+encodeURIComponent(tenant);
+  if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
+  const context=await window.SATEER_CONTEXT_READY;
+  if(!(context.organisations||[]).some(x=>x.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
+  const r=await request(METER,'GET','/sites').catch(()=>({sites:[]}));ownerSites=r.sites||[];
+  if(ownerSites.length){el('coordination').hidden=false;
+   setOptions('site',ownerSites,s=>s.nom+' · '+s.pays,s=>s.id);el('site').disabled=false;
+   el('site').value=ownerSites[0].id;await loadContexte();}
+  await refresh();info('Session Energy valide · missions déclaratives non certifiées.');
+ }catch(e){info('Accès indisponible : '+e.message,true);}
+})();

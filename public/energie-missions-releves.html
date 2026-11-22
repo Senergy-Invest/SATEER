@@ -1,0 +1,25 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Mes missions de relevé · SUNU COURANT</title>
+<link rel="stylesheet" href="/energie-missions-releves.css?v=ep1-r1"></head><body>
+<a class="skip" href="#principal">Aller au contenu</a>
+<header><a id="retour" href="/energie-pilotage.html">← Pilotage Energy</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE PRIVÉE</small></header>
+<main id="principal"><p class="eyebrow">E-PARTICIPATION-1 · MISSIONS DE RELEVÉ</p>
+<h1>Relever ensemble.<br><em>Garder une preuve claire.</em></h1>
+<p>Le responsable choisit explicitement les points et les personnes habilitées. Les relevés proposés n'entrent au registre canonique qu'après intégration par le coordinateur ; ils restent « déclarés à vérifier ».</p>
+<p class="safety">Sécurité : ne jamais intervenir sur une installation électrique. Un relevé n'est possible que lorsque l'affichage du compteur est accessible sans danger. Aucun index n'est une consommation calculée ni une certification.</p>
+<p role="status" aria-live="polite" id="etat">Vérification de la session…</p>
+<section class="panel" id="coordination" hidden><h2>Coordination du site</h2>
+<label>Site propriétaire <select id="site" disabled><option>Chargement…</option></select></label>
+<p id="contexte" class="muted"></p>
+<form id="lier"><h3>1. Lier un point au périmètre C1</h3><label>Point <select id="point" required></select></label>
+<label>Unité C1 précise <select id="unite" required></select></label><button type="submit">Enregistrer la liaison explicite</button></form>
+<form id="attribuer"><h3>2. Attribuer une mission de relevé</h3>
+<label>Registre actif et point déjà lié <select id="registre" required></select></label>
+<label>Responsabilité C1 active sur la même unité <select id="grant" required></select></label>
+<button type="submit">Attribuer une mission</button></form>
+<p class="muted">Une affectation ne permet de relever que les registres du point lié à son unité exacte. Le propriétaire reste seul habilité à intégrer les déclarations au registre canonique.</p>
+</section>
+<section class="panel"><h2>Mes missions et les déclarations à examiner</h2><button id="actualiser" type="button">Actualiser</button>
+<p id="indication" class="muted"></p><ul id="missions"><li>Chargement…</li></ul></section>
+<p class="muted">Une mission en attente n'est pas un retard. Pas de date limite artificielle, pas de calcul kWh, facture ou économie. Les missions existantes ne sont pas automatiquement transférées après remplacement d'un compteur.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-missions-releves.js?v=ep1-r1" defer></script></body></html>

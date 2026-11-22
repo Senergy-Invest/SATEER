@@ -383,6 +383,27 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-PARTICIPATION-1 R1 — missions de relevés privés, désactivé sauf recette explicite.
+// Le C1 Core décide des droits ; E-METER 1A reste propriétaire-only.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_EP1_R1 === '1') {
+    const {creerEnergyMeterParticipationRouter} = require('./energy/energy-meter-participation-http');
+    const {creerEnergyMeterParticipationStore} = require('./energy/energy-meter-participation-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/participation/v1', exigerSession, creerEnergyMeterParticipationRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyMeterParticipationStore({obtenirClient: obtenirClientDatabase}),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN,
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&
