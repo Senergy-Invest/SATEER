@@ -365,6 +365,24 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-METER-1E1 — remplacement declare, atomique et historise ; recette sateer_test seulement.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1E1 === '1') {
+    const {creerEnergyMeterReplacementRouter}=require('./energy/energy-meter-replacement-http');
+    const {creerEnergyMeterReplacementStore}=require('./energy/energy-meter-replacement-store');
+    const {obtenirClientDatabase}=require('./database');
+    app.use('/api/energy/remplacement/v1',exigerSession,creerEnergyMeterReplacementRouter({
+        router:express.Router(),
+        listerOrganisations:listerOrganisationsPersonneDatabase,
+        store:creerEnergyMeterReplacementStore({obtenirClient:obtenirClientDatabase}),
+        origineAutorisee:process.env.SATEER_PUBLIC_ORIGIN,
+        tenantAutorise:process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&

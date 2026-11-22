@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Remplacer un compteur · SATEER Energy</title>
+<link rel="stylesheet" href="/energie-remplacement.css?v=1e1"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a><header><a id="retour" href="/energie-releves.html">← Mes compteurs</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal"><p class="eyebrow">E-METER-1E1 · TRANSITION HISTORISÉE</p>
+<h1>Remplacer un compteur.<br><em>Conserver toute son histoire.</em></h1>
+<p class="intro">Déclarez un remplacement uniquement après l'intervention réelle d'un professionnel habilité. Cette page ne commande ni compteur ni installation. Les informations restent privées et non vérifiées.</p>
+<p class="danger">Sécurité : ne jamais déposer un compteur, accéder à un tableau sous tension ou effectuer une intervention électrique depuis SATEER. Ce formulaire sert uniquement à documenter un changement déjà réalisé en sécurité.</p>
+<section class="panel"><h2>1. Choisir le contexte</h2><label>Site autorisé <select id="site" disabled><option>Chargement…</option></select></label>
+<label>Point de comptage <select id="point" disabled><option>Choisir un point…</option></select></label>
+<div id="ancien" class="historique" role="status">Sélectionnez un point. L'ancien compteur, ses registres et ses relevés restent consultables dans l'historique.</div>
+<p><a id="versHistorique" href="/energie-releves.html">Voir les registres et l'historique des index</a></p></section>
+<section class="panel"><h2>2. Informations du nouveau compteur</h2>
+<form id="remplacement" novalidate>
+<label>Nom du nouveau compteur <input id="nom" maxlength="120" placeholder="Compteur général neuf" required></label>
+<div class="grid"><label>Technologie <select id="tech"><option value="INCONNUE">Inconnue</option><option value="MECANIQUE">Mécanique</option><option value="ELECTRONIQUE">Électronique</option><option value="COMMUNICANT">Communicant</option></select></label>
+<label>Mode commercial <select id="mode"><option value="INCONNU">Inconnu</option><option value="PREPAYE">Prépayé</option><option value="POSTPAYE">Postpayé</option><option value="SANS_CONTRAT">Sans contrat</option></select></label></div>
+<label>Numéro de série (facultatif) <input id="serie" maxlength="80" autocomplete="off"></label>
+<div class="grid"><label>Premier registre <input id="code" value="INDEX_TOTAL" maxlength="32" pattern="[A-Z0-9][A-Z0-9_-]*" required></label>
+<label>Unité <select id="unite"><option value="KWH">kWh</option><option value="KVARH">kvarh</option><option value="KVAH">kVAh</option><option value="M3">m³</option><option value="L">litre</option><option value="KG">kg</option><option value="H">heure</option><option value="UNITE">unité</option></select></label></div>
+<label>Motif de remplacement (12 à 400 caractères) <textarea id="motif" minlength="12" maxlength="400" required placeholder="Ex. Changement déclaré après remplacement par un professionnel autorisé."></textarea></label>
+<label class="check"><input type="checkbox" id="confirmer" required>Je confirme qu'il s'agit uniquement de données fictives de recette, que le remplacement a été effectué en sécurité et que je souhaite conserver l'ancien compteur en historique.</label>
+<button id="envoyer" type="submit" disabled>Confirmer le remplacement déclaré</button>
+<p id="message" role="status" aria-live="polite">Vérification de la session SATEER…</p>
+</form></section>
+<p class="foot">Aucun index n'est transféré au nouveau compteur. Aucun kWh consommé, coût, économie ou facture n'est calculé. La date de transition est l'heure du serveur et non la date supposée d'une intervention réelle passée.</p></main>
+<script src="/auth-client.js" defer></script><script src="/energie-remplacement.js?v=1e1" defer></script></body></html>

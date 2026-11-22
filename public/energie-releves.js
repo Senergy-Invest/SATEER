@@ -57,6 +57,11 @@
     {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}})
     .then(r=>{if(r.ok){el('versImport').href='/energie-import.html?tenant='+encodeURIComponent(tenant);el('versImport').hidden=false;}})
     .catch(()=>{});
+  // E-METER-1E1 : lien disponible seulement si session et API remplacements autorisees.
+  fetch('/api/energy/remplacement/v1/sites?tenant='+encodeURIComponent(tenant),
+    {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}})
+    .then(r=>{if(r.ok){el('versRemplacement').href='/energie-remplacement.html?tenant='+encodeURIComponent(tenant);el('versRemplacement').hidden=false;}})
+    .catch(()=>{});
   // Navigation vers 1B1 uniquement si sa propre API est activée pour cette session.
   fetch('/api/energy/facturation/v1/sites?tenant='+encodeURIComponent(tenant),
     {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}})
