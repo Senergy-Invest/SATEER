@@ -1,0 +1,20 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="theme-color" content="#153f3b">
+<title>Relevés rapprochés · SATEER Energy</title>
+<link rel="stylesheet" href="/energie-factures.css?v=1b2"><link rel="stylesheet" href="/energie-controles.css?v=1c2"><link rel="stylesheet" href="/energie-rapproches.css?v=1c3"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a>
+<header><a id="retour" href="/energie-controles.html">← Contrôles de qualité</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal"><section class="hero"><span class="eyebrow">E-METER-1C3 · RELEVÉS TRÈS RAPPROCHÉS</span>
+<h1>Vérifier les horaires.<br><em>Sans calculer de kWh.</em></h1>
+<p>Deux relevés successifs du même registre, déclarés à au plus 60 secondes d'intervalle, peuvent nécessiter une revue humaine. Le signal ne prouve ni erreur, ni fraude, ni panne. Les deux valeurs peuvent être identiques ou différentes.</p></section>
+<section class="panel"><h2>1. Site autorisé</h2><label for="site">Site privé</label>
+<select id="site" disabled><option>Vérification de la session Core…</option></select><p id="etat" role="status">Chargement…</p>
+<button type="button" id="actualiser">Actualiser</button></section>
+<section class="panel"><h2>2. Relevés de la page</h2>
+<p id="information" class="note">Page limitée à 50 relevés. Aucun total exhaustif n'est déduit.</p>
+<div class="table-wrap"><table><thead><tr><th>Date UTC</th><th>Registre</th><th>Index déclaré</th><th>Intervalle</th><th>Constat indicatif</th></tr></thead>
+<tbody id="resultats"><tr><td colspan="5">Chargement…</td></tr></tbody></table></div>
+<div class="pagination"><button id="precedent" type="button" disabled>← Précédent</button><span id="page">Page 1</span><button id="suivant" type="button" disabled>Suivant →</button></div>
+<p class="note">Une collision à la même seconde exacte est refusée par la base. Le seuil de 60 secondes est un choix de recette, pas une norme de métrologie. « Aucun signal » ne certifie rien.</p>
+</section><p class="note">Lecture seule · aucune valeur corrigée · aucune consommation, différence d'index, économie, coût ou tarif calculé. Ne jamais approcher de pièces sous tension pour vérifier un index.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-rapproches.js?v=1c3-r1" defer></script></body></html>

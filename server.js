@@ -328,6 +328,24 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-METER-1C3 — releves rapproches READ ONLY, recette sateer_test uniquement.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1C3 === '1') {
+    const {creerEnergyMeterProximityRouter}=require('./energy/energy-meter-proximity-http');
+    const {creerEnergyMeterProximityStore}=require('./energy/energy-meter-proximity-store');
+    const {obtenirClientDatabase}=require('./database');
+    app.use('/api/energy/proximite/v1',exigerSession,creerEnergyMeterProximityRouter({
+        router:express.Router(),
+        listerOrganisations:listerOrganisationsPersonneDatabase,
+        store:creerEnergyMeterProximityStore({obtenirClient:obtenirClientDatabase}),
+        tenantAutorise:process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&

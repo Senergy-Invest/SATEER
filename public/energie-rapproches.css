@@ -1,0 +1,8 @@
+/* E-METER-1C3 : adaptation minimale, héritage de la charte Energy */
+#etat{min-height:1.6em}
+#resultats td{vertical-align:top}
+.proximite-tag{display:block;font-weight:750;margin:0 0 .35rem}
+.proximite-alerte{color:#9b3a12}
+.proximite-info{color:#2b5978}
+.proximite-detail{display:block;max-width:34rem;font-size:.9em}
+.proximite-vide{color:var(--muted,#667775)}

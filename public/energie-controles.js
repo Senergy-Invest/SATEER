@@ -41,6 +41,7 @@
  async function init(){try{
   if(!tenant||!/^[A-Z][A-Z0-9_-]{0,49}$/.test(tenant))throw Error('TENANT_INVALIDE');
   $('retour').href='/energie-rectifications.html?tenant='+encodeURIComponent(tenant);
+  $('versRapproches').href='/energie-rapproches.html?'+new URLSearchParams({tenant});
   if(query.get('source')==='DOCUMENTS')$('source').value='DOCUMENTS';
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;
@@ -50,9 +51,10 @@
   for(let i=0;i<sites.length;i++)select.append(option(String(i),sites[i].nom));
   const requestedSite=query.get('site');
   if(requestedSite&&UUID.test(requestedSite)){const i=sites.findIndex(s=>s.id===requestedSite);if(i>=0){index=i;select.value=String(i);}}
-  select.disabled=false;await load();if(list.suivant)txt('etat','Liste de sites partielle : 50 premiers sites seulement.');
+  select.disabled=false;$('versRapproches').href='/energie-rapproches.html?'+new URLSearchParams({tenant,site:sites[index].id});await load();if(list.suivant)txt('etat','Liste de sites partielle : 50 premiers sites seulement.');
  }catch(e){txt('etat','Accès indisponible : '+e.message);}}
- $('site').addEventListener('change',()=>{index=Number($('site').value)||0;offset=0;load();});
+ $('site').addEventListener('change',()=>{index=Number($('site').value)||0;offset=0;
+  $('versRapproches').href='/energie-rapproches.html?'+new URLSearchParams({tenant,site:sites[index]?.id||''});load();});
  $('source').addEventListener('change',()=>{offset=0;load();});
  $('actualiser').addEventListener('click',load);
  $('precedent').addEventListener('click',()=>{offset=Math.max(0,offset-50);load();});
