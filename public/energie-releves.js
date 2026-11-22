@@ -52,6 +52,11 @@
   el('retour').href='/energie-pilotage.html?tenant='+encodeURIComponent(tenant);
   if(!window.SATEER_CONTEXT_READY)throw Error('SESSION_CORE_INDISPONIBLE');
   const ctx=await window.SATEER_CONTEXT_READY;if(!ctx.organisations?.some(x=>x.tenant_code===tenant))throw Error('TENANT_NON_AUTORISE');
+  // E-METER-1D1 : lien uniquement si l’API du tenant/propriétaire est disponible.
+  fetch('/api/energy/import/v1/sites?tenant='+encodeURIComponent(tenant),
+    {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}})
+    .then(r=>{if(r.ok){el('versImport').href='/energie-import.html?tenant='+encodeURIComponent(tenant);el('versImport').hidden=false;}})
+    .catch(()=>{});
   // Navigation vers 1B1 uniquement si sa propre API est activée pour cette session.
   fetch('/api/energy/facturation/v1/sites?tenant='+encodeURIComponent(tenant),
     {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}})

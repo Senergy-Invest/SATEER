@@ -1,0 +1,32 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>E-METER-1D1 · Import CSV · SUNU COURANT</title>
+<link rel="stylesheet" href="/energie-releves.css?v=1a"><link rel="stylesheet" href="/energie-import.css?v=1d1"></head>
+<body><a class="skip" href="#principal">Aller au contenu</a>
+<header><a id="retour" href="/energie-releves.html">← Compteurs et relevés</a><strong>✺ SATEER <em>ENERGY</em></strong><small>RECETTE LOCALE</small></header>
+<main id="principal"><div class="intro"><p class="eyebrow">E-METER-1D1 · IMPORT CONTRÔLÉ</p>
+<h1>Importer des relevés.<br><em>Les vérifier avant d’enregistrer.</em></h1>
+<p>Pour des registres existants uniquement. Les index restent <strong>déclarés et non vérifiés</strong> : aucune consommation, facture, économie ou puissance n’est calculée.</p>
+<p class="notice">Ne jamais manipuler un tableau électrique ni une partie sous tension pour collecter un index. Si un compteur n'est pas accessible en sécurité, ne pas effectuer le relevé.</p></div>
+<section class="panel"><h2>1. Site autorisé et format du fichier</h2>
+<label>Site privé <select id="site" disabled><option>Chargement…</option></select></label>
+<p>Format CSV UTF-8, virgule comme séparateur, jusqu’à <strong>50 lignes</strong> et <strong>64 Kio</strong>. Une ligne par relevé, avec fuseau horaire explicite :</p>
+<pre class="csv-exemple">registre_id,releve_le,valeur_index,observation
+UUID_DU_REGISTRE,2026-11-20T10:00:00Z,230.000000,Relevé déclaré</pre>
+<p class="hint">Remplacer <code>UUID_DU_REGISTRE</code> par l'identifiant réel du registre de recette. Les unités sont celles des registres autorisés : aucune conversion. Pas de création automatique de compteur ou registre.</p>
+<label>Fichier CSV <input type="file" id="csv" aria-describedby="fichier-etat"></label>
+<p id="fichier-etat" class="hint" role="status">Aucun fichier CSV sélectionné. Sélecteur macOS sans filtre : choisissez un fichier .csv, jamais une archive .zip.</p>
+<button id="apercu" type="button" disabled>Prévisualiser sans écrire en base</button>
+<p id="etat" class="message" role="status">Vérification de la session Core…</p></section>
+<section class="panel"><h2>2. Résultat de la prévisualisation</h2>
+<p id="bilan">Aucun fichier prévisualisé.</p>
+<div class="table-wrap"><table><thead><tr><th>Ligne</th><th>Registre</th><th>Date UTC</th><th>Index déclaré</th><th>Unité du registre</th><th>Statut</th></tr></thead>
+<tbody id="lignes"><tr><td colspan="6">Import non lancé.</td></tr></tbody></table></div>
+<p class="hint">Une prévisualisation n'est ni une importation ni une certification. Une collision d'horodatage peut apparaître entre la prévisualisation et l'enregistrement : le serveur revérifie alors tout le lot.</p></section>
+<section class="panel"><h2>3. Validation humaine</h2>
+<p>Si une ligne est refusée, <strong>aucun relevé du fichier ne sera enregistré</strong>. Les importations acceptées sont historisées et ne peuvent pas être effacées ou modifiées silencieusement.</p>
+<label class="consent"><input type="checkbox" id="consentement" disabled> Je confirme que ce fichier contient uniquement des données fictives de recette et j'autorise l'enregistrement de tous ses relevés déclarés.</label>
+<button id="valider" type="button" disabled>Confirmer et importer le lot</button>
+<p id="resultat" role="status">Aucune écriture réalisée.</p>
+</section>
+<p class="footer">Source de données : saisie manuelle assistée par fichier CSV, identifiée dans l'audit par IMPORT_CSV_V1. Historique append-only, auteur Core et empreinte du fichier. Fonction réservée à sateer_test. Aucun calcul scientifique ni paiement.</p>
+</main><script src="/auth-client.js" defer></script><script src="/energie-import.js?v=1d1-ui-v9" defer></script></body></html>

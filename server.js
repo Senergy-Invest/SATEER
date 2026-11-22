@@ -346,6 +346,25 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-METER-1D1 — import CSV declaratif avec confirmation, recette sateer_test uniquement.
+// Le Core gere les sessions, le store controle tenant/site/proprietaire; aucune migration.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1D1 === '1') {
+    const {creerEnergyMeterImportRouter}=require('./energy/energy-meter-import-http');
+    const {creerEnergyMeterImportStore}=require('./energy/energy-meter-import-store');
+    const {obtenirClientDatabase}=require('./database');
+    app.use('/api/energy/import/v1',exigerSession,creerEnergyMeterImportRouter({
+        router:express.Router(),
+        listerOrganisations:listerOrganisationsPersonneDatabase,
+        store:creerEnergyMeterImportStore({obtenirClient:obtenirClientDatabase}),
+        origineAutorisee:process.env.SATEER_PUBLIC_ORIGIN,
+        tenantAutorise:process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&

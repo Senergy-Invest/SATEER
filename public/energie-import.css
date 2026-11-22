@@ -1,0 +1,8 @@
+/* E-METER-1D1 : s'ajoute à l'apparence Energy existante, sans framework. */
+.csv-exemple{white-space:pre-wrap;overflow-wrap:anywhere;padding:1rem;background:rgba(6,22,45,.08);border:1px solid rgba(16,73,103,.14);border-radius:10px;font-size:.84rem}
+.consent{display:flex;gap:.75rem;align-items:start;margin:1rem 0;line-height:1.5}
+.consent input{margin-top:.25rem;flex:none}
+#bilan,#resultat{overflow-wrap:anywhere}
+#lignes tr[data-etat="REFUSE"]{background:rgba(180,35,35,.09)}
+#lignes tr[data-etat="ADMISSIBLE"]{background:rgba(14,121,74,.05)}
+button:disabled{cursor:not-allowed;opacity:.5}
