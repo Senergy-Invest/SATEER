@@ -404,6 +404,30 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-METER-2 R1 — OCR indicatif dans une mission EP1 en cours, photo traitée en mémoire.
+// Pas de changement du registre canonique ; soumission/validation restent dans EP1.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_EP1_R1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_2_R1 === '1') {
+    const {creerEnergyMeterPhotoRouter} = require('./energy/energy-meter-photo-http');
+    const {creerEnergyMeterPhotoStore} = require('./energy/energy-meter-photo-store');
+    const {createMacVisionOCR} = require('./energy/equipment-label-vision');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/index-photo/v1', exigerSession, creerEnergyMeterPhotoRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyMeterPhotoStore({obtenirClient:obtenirClientDatabase}),
+        ocr: createMacVisionOCR(),
+        origineAutorisee: process.env.SATEER_PUBLIC_ORIGIN,
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&

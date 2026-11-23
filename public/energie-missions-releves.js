@@ -3,7 +3,7 @@
 (async()=>{
  const el=id=>document.getElementById(id),tenant=new URLSearchParams(location.search).get('tenant');
  const API='/api/energy/participation/v1',METER='/api/energy/mesures/v1';
- let ownerSites=[],ctx=null,blocked=false;
+ let ownerSites=[],ctx=null,blocked=false,photoAvailable=false;
  const pending=new Map();
  const info=(txt,error=false)=>{el('etat').textContent=txt;el('etat').classList.toggle('error',error);};
  const option=(label,id)=>new Option(label,id);
@@ -36,6 +36,21 @@
  function label(parent,txt,kind='strong'){const e=document.createElement(kind);e.textContent=txt;parent.append(e);return e;}
  function makeButton(txt,cb,danger=false){const b=document.createElement('button');b.type='button';b.className=danger?'danger':'secondary';b.textContent=txt;b.addEventListener('click',cb);return b;}
  const localDate=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,19);};
+ async function photoToPng(file){
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024||file.size<64)throw Error('PHOTO_NON_ADMISE');
+  const picture=await createImageBitmap(file);
+  try{
+   for(const max of [2400,1800,1200,900]){
+    const scale=Math.min(1,max/Math.max(picture.width,picture.height));
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(picture.width*scale));canvas.height=Math.max(1,Math.round(picture.height*scale));
+    const ctx=canvas.getContext('2d');if(!ctx)throw Error('CANVAS_INDISPONIBLE');
+    ctx.drawImage(picture,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(blob&&blob.size>=64&&blob.size<=3*1024*1024)return blob;
+   }
+   throw Error('PHOTO_TROP_VOLUMINEUSE');
+  }finally{picture.close?.();}
+ }
  async function refresh(){const r=await request(API,'GET','/mes-missions');el('missions').replaceChildren();
   el('indication').textContent=r.listePartielle?'Premières 50 missions uniquement : liste partielle.':'Missions privées, visibles uniquement selon vos droits Core/C1.';
   for(const m of r.missions){const li=document.createElement('li');label(li,m.point+' · '+m.registre+' ['+m.unite+']');
@@ -46,6 +61,41 @@
     const b=document.createElement('label');b.textContent='Date et heure de lecture';const date=document.createElement('input');date.required=true;date.type='datetime-local';date.step='1';date.value=localDate();b.append(date);
     const c=document.createElement('label');c.textContent='Observation facultative';const note=document.createElement('input');note.maxLength=240;c.append(note);
     const btn=document.createElement('button');btn.textContent='Soumettre pour revue';btn.type='submit';f.append(a,b,c,btn);
+    // EMETER2_R1_OCR : photo facultative, OCR indicatif, jamais de soumission automatique.
+    if(photoAvailable){
+     const labelPhoto=document.createElement('label');labelPhoto.textContent='Photo de l’afficheur (facultatif, sans danger)';
+     const photoInput=document.createElement('input');photoInput.type='file';photoInput.accept='image/jpeg,image/png,image/webp';
+     photoInput.setAttribute('capture','environment');labelPhoto.append(photoInput);
+     const scan=makeButton('Lire l’index sur la photo',async()=>{
+      if(blocked)return;
+      const file=photoInput.files?.[0];if(!file)return info('Choisissez une photo de l’afficheur.',true);
+      blocked=true;scan.disabled=true;use.hidden=true;proposal=null;
+      try{
+       const bytes=await photoToPng(file);
+       const url='/api/energy/index-photo/v1/missions/'+encodeURIComponent(m.id)+'/analyser?tenant='+encodeURIComponent(tenant);
+       const response=await fetch(url,{method:'POST',credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/octet-stream'},body:bytes});
+       const result=await response.json().catch(()=>({statut:'REPONSE_ILLISIBLE'}));
+       if(!response.ok)throw Error(result.statut||'HTTP_'+response.status);
+       if(result.statut==='OCR_INDEX_A_CONFIRMER'){
+        proposal=result.valeurProposee;
+        message.textContent='Valeur suggérée : '+proposal+' '+m.unite+' — non vérifiée. Contrôlez-la sur l’afficheur avant de la reprendre.';
+        use.hidden=false;
+       }else message.textContent='Aucun index proposé : '+result.statut+'. Saisissez manuellement après observation.';
+      }catch(err){message.textContent='Lecture non disponible : '+err.message+'. Saisie manuelle possible.';}
+      finally{blocked=false;scan.disabled=false;}
+     });
+     const message=document.createElement('p');message.className='muted';message.setAttribute('role','status');
+     const use=makeButton('Reprendre cet index après vérification visuelle',()=>{
+      if(proposal===null)return;
+      ix.value=proposal;use.hidden=true;
+      message.textContent='Valeur reprise dans le formulaire, non envoyée. Vérifiez la date puis soumettez volontairement.';
+      ix.focus();
+     });
+     use.hidden=true;let proposal=null;
+     photoInput.addEventListener('change',()=>{proposal=null;use.hidden=true;message.textContent='';});
+     f.insertBefore(labelPhoto,btn);f.insertBefore(scan,btn);f.insertBefore(message,btn);f.insertBefore(use,btn);
+    }
+
     f.addEventListener('submit',async e=>{e.preventDefault();if(blocked)return;
      const d=new Date(date.value);if(!Number.isFinite(d.getTime()))return info('Date invalide.',true);
      const body={valeur:ix.value.trim().replace(',','.'),releveLe:d.toISOString(),observation:note.value.trim()||null};
@@ -88,6 +138,7 @@
   if(ownerSites.length){el('coordination').hidden=false;
    setOptions('site',ownerSites,s=>s.nom+' · '+s.pays,s=>s.id);el('site').disabled=false;
    el('site').value=ownerSites[0].id;await loadContexte();}
+  photoAvailable=await fetch('/api/energy/index-photo/v1/capacite?tenant='+encodeURIComponent(tenant),{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}}).then(r=>r.ok).catch(()=>false);
   await refresh();info('Session Energy valide · missions déclaratives non certifiées.');
  }catch(e){info('Accès indisponible : '+e.message,true);}
 })();
