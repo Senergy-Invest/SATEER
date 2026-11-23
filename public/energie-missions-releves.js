@@ -51,6 +51,23 @@
    throw Error('PHOTO_TROP_VOLUMINEUSE');
   }finally{picture.close?.();}
  }
+ // E-METER-3 R1 : avis purement indicatif, affiché avant les décisions du coordinateur.
+ async function afficherPrecontrole(li,m){
+  const box=document.createElement('div');box.className='safety';li.append(box);
+  const title=document.createElement('strong');title.textContent='Précontrôle indicatif avant décision';box.append(title);
+  const say=txt=>{const p=document.createElement('p');p.className='muted';p.textContent=txt;box.append(p);};
+  try{
+   const q=await request('/api/energy/precontrole/v1','GET','/missions/'+encodeURIComponent(m.id)+'/apercu');
+   if(q.statut!=='PRECONTROLE_INDICATIF')throw Error('REPONSE_INATTENDUE');
+   say('Index proposé : '+q.indexPropose+' '+q.unite+' · contrôle non certifiant.');
+   say(q.precedent?'Relevé antérieur du même compteur et registre : '+q.precedent.valeur+' '+q.unite+' ('+q.precedent.date+').':'Aucun relevé antérieur comparable sur ce compteur et ce registre.');
+   if(q.suivant)say('Attention : relevé canonique à la même heure ou plus récent ('+q.suivant.date+').');
+   for(const s of q.signaux||[])say((s.niveau==='A_VERIFIER'?'À VÉRIFIER':'Information')+' · '+s.code+' : '+s.explication);
+   if(q.statutQualite==='REFERENCE_ABSENTE')say('Référence absente : aucune conclusion de cohérence n’est possible.');
+   else if(q.statutQualite==='AUCUN_SIGNAL_DETECTE')say('Aucun signal détecté selon les règles existantes ; cela ne certifie pas la valeur.');
+   else say('Un ou plusieurs signaux nécessitent une revue humaine.');
+  }catch(e){say('Précontrôle indisponible ('+e.message+'). Effectuer la revue manuellement ; ne pas interpréter cette absence comme une validation.');}
+ }
  async function refresh(){const r=await request(API,'GET','/mes-missions');el('missions').replaceChildren();
   el('indication').textContent=r.listePartielle?'Premières 50 missions uniquement : liste partielle.':'Missions privées, visibles uniquement selon vos droits Core/C1.';
   for(const m of r.missions){const li=document.createElement('li');label(li,m.point+' · '+m.registre+' ['+m.unite+']');
@@ -103,6 +120,7 @@
      catch(err){info('Soumission non confirmée : '+err.message,true);}finally{blocked=false;btn.disabled=false;}});li.append(f);
    }
    if(m.coordinateur&&m.statut==='A_REVOIR'){
+    await afficherPrecontrole(li,m);
     const actions=document.createElement('div');
     for(const [txt,decision] of [['Intégrer comme index déclaré à vérifier','INTEGRER'],['Refuser cette déclaration','REFUSER']]){
      actions.append(makeButton(txt,async()=>{if(blocked||!confirm(decision==='INTEGRER'?'Intégrer cet index comme donnée DÉCLARÉE À VÉRIFIER, sans certification ni calcul ?':'Refuser la déclaration sans effacer sa trace ?'))return;

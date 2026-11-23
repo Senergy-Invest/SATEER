@@ -428,6 +428,26 @@ if (process.env.PGDATABASE === 'sateer_test' &&
     }));
 }
 
+// E-METER-3 R1 — apercu qualitatif prive (READ ONLY), sans droit d'integration nouveau.
+if (process.env.PGDATABASE === 'sateer_test' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP01 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_MVP02C2 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_METER_1A === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_EP1_R1 === '1' &&
+    process.env.SATEER_ENABLE_ENERGY_EMETER3_R1 === '1') {
+    const {creerEnergyMeterPrecheckRouter} = require('./energy/energy-meter-precheck-http');
+    const {creerEnergyMeterPrecheckStore} = require('./energy/energy-meter-precheck-store');
+    const {obtenirClientDatabase} = require('./database');
+    app.use('/api/energy/precontrole/v1', exigerSession, creerEnergyMeterPrecheckRouter({
+        router: express.Router(),
+        listerOrganisations: listerOrganisationsPersonneDatabase,
+        store: creerEnergyMeterPrecheckStore({obtenirClient: obtenirClientDatabase}),
+        tenantAutorise: process.env.SATEER_ENERGY_TENANT_CODE
+    }));
+}
+
 // SUNU Courant MVP02-C4C — synthese participative READ ONLY.
 // Les droits viennent du Core et des grants C1 actifs ; aucune mesure ni mission contractuelle.
 if (process.env.PGDATABASE === 'sateer_test' &&
